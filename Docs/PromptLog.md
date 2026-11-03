@@ -1,0 +1,25 @@
+# Hookfall – Prompt Log
+
+Every use of an AI tool on this project: date, tool, what was asked, what came back, and what I changed or decided. Newest entries at the bottom.
+
+| # | Date | Tool | Prompt (summary) | Result | What I changed or decided |
+| --- | --- | --- | --- | --- | --- |
+| 1 | 2026-11-03 | Claude (claude.ai) | Shared the midterm guideline; asked for a step-by-step plan for a solo midterm | 8-step plan: concept, GDD, AI design, AI Tool Plan, technical plan, Unity skeleton, prompt log, final check | Confirmed solo work with the instructor; chose to do everything with Claude in one conversation |
+| 2 | 2026-11-03 | Claude (claude.ai) | Described my game idea: grappling hook between floating islands, Vampire Survivors–style auto-combat that works only in the air, endless growth like Megabonk | Checked the idea against the brief; asked about 3D/2D, aiming, enemies, win condition, name; proposed names | Kept endless growth with no win condition; 3D; mouse-aimed hook; bats and wyverns in the air, golems on islands; picked the name Hookfall; AI = enemy behaviour |
+| 3 | 2026-11-03 | Claude (Claude Docs) | Asked for GDD sections 1–3 | Title page, summary with 3 USPs, core loop diagram, controls | Described air strafe with A/D only (no W/S in the air) |
+| 4 | 2026-11-03 | Claude (Claude Docs) | Asked Claude to propose all starting values for mechanics (section 4) | Values for hook, movement, stats, combat, 6 items, progression, scaling, islands | Items only from chests; level-ups upgrade an owned item or a stat (speed, health, damage, durability…); removed the passive item list |
+| 5 | 2026-11-04 | Claude (Claude Docs) | Asked for the enemy AI design (section 5) | State machines for Bat, Wyvern, Golem with attack tokens and scatter behaviour | Rejected the limits: enemies must attack all the time, no turns, many enemies chasing at once, hit-and-run play like Megabonk. Redesigned as "controlled chaos" with Frenzy when the player lands |
+| 6 | 2026-11-04 | Claude (Claude Docs) | Gave my story idea: a lone tower on a central island with a rare chest on top; the player is a warrior sent to guard something powerful inside it | Story with the Heartstone and the Warden, arena map, tower cache rules | Kept the low-gravity zone around the tower that Claude added |
+| 7 | 2026-11-04 | Claude (claude.ai) | Asked for visual style options and reference examples | Three directions (hand-painted, cel-shaded, stylized PBR) with reference images | Chose cel-shaded (B); asked for normal daylight instead of a dark mood; audio will be licensed, not AI-generated |
+| 8 | 2026-11-04 | Claude (claude.ai) | Asked what a mood board is and what to search for | Explanation and Pinterest search terms | Collected 9 reference images on Pinterest myself |
+| 9 | 2026-11-04 | Claude (Claude Docs) | Asked for scope and references (sections 10–11) and AI Tool Plan Parts A–B | Must/should/nice list, reference list, Parts A–B tables | Accepted the scope split |
+| 10 | 2026-11-04 | Claude (Claude Docs) | Answered the Part C questions in Turkish | Translated my answers into English for Part C | Kept my answers as written |
+| 11 | 2026-11-04 | Claude + Blender MCP (Blender 5.2.3) | "Create a stylized floating island for a 3D game: flat grassy top about 12 m wide, rocky underside tapering to a point about 10 m below, smooth rounded rock forms, grass and stone materials, under 10,000 triangles, origin at top centre, scale applied, viewport screenshot." | Island with 5,632 triangles, all measurements met; saved island.blend, island_viewport.png, make_island.py | Did not like the look. New pipeline: base shapes from Tripo, then fixed and reshaped with Blender MCP (Part D) |
+| 12 | 2026-11-04 | Claude (Claude Docs) | Asked for the technical and production plan | Setup table, folder rules, system diagram, Week 8–14 schedule, risks | Unity 6 URP, GitHub repo Esadyesilyurt/Hookfall |
+| 13 | 2026-11-04 | Claude (claude.ai, linked to my computer) | Asked Claude to build the Unity project skeleton in D:\unity\Hookfall | Folder structure, 22 C# scripts (hook, movement, combat, Bat state machine, EnemyDirector, procedural islands, progression, HUD), an editor menu that builds the Arena scene, README, CLAUDE.md, this log | To fill in after testing in Unity: what worked, what I changed |
+
+## Template for new entries
+
+| # | Date | Tool | Prompt (summary) | Result | What I changed or decided |
+| --- | --- | --- | --- | --- | --- |
+| | | | | | |
