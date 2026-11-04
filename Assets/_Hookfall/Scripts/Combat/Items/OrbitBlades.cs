@@ -36,15 +36,16 @@ namespace Hookfall.Combat.Items
 
         protected override void Attack()
         {
+            // The blades sweep the whole ring several times per second, so every enemy inside the ring
+            // counts as touched. Checking only the blades' exact positions twice a second missed most hits
+            // (found in the first Unity test, see Docs/PromptLog.md #14).
             hitThisAttack.Clear();
-            foreach (Transform blade in blades)
+            Collider[] hits = Physics.OverlapSphere(transform.position, orbitRadius + bladeHitRadius, ~0,
+                QueryTriggerInteraction.Collide);
+            foreach (Collider hit in hits)
             {
-                Collider[] hits = Physics.OverlapSphere(blade.position, bladeHitRadius, ~0, QueryTriggerInteraction.Collide);
-                foreach (Collider hit in hits)
-                {
-                    EnemyBase enemy = hit.GetComponentInParent<EnemyBase>();
-                    if (enemy != null && hitThisAttack.Add(enemy)) enemy.TakeDamage(Damage);
-                }
+                EnemyBase enemy = hit.GetComponentInParent<EnemyBase>();
+                if (enemy != null && hitThisAttack.Add(enemy)) enemy.TakeDamage(Damage);
             }
         }
 
