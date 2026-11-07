@@ -44,7 +44,7 @@ namespace Hookfall.Enemies
 
         [Header("Visuals")]
         [Tooltip("Shader colour property used for the hit flash, elite glow and attack warning (toon Shader Graph).")]
-        [SerializeField] private string glowProperty = "_Emissive_Color";
+        [SerializeField] private string glowProperty = "_EmissionColor";
         [SerializeField] private float flashDuration = 0.08f;
         [SerializeField] private Transform wingLeft;
         [SerializeField] private Transform wingRight;

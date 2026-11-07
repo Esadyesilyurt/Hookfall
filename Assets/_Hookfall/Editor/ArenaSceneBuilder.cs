@@ -11,6 +11,8 @@ using Hookfall.Player;
 using Hookfall.Progression;
 using Hookfall.UI;
 using Hookfall.World;
+using Hookfall.Audio;
+using Hookfall.VFX;
 using Unity.Cinemachine;
 using Unity.Cinemachine.TargetTracking;
 using UnityEditor;
@@ -108,7 +110,9 @@ namespace Hookfall.EditorTools
             var combat = player.AddComponent<CombatSystem>();
             var levelUp = player.AddComponent<LevelUpSystem>();
 
-            var rope = player.AddComponent<LineRenderer>();
+            var ropeGo = new GameObject("Rope") { layer = Layers.NoOutline };
+            ropeGo.transform.SetParent(player.transform, false);
+            var rope = ropeGo.AddComponent<LineRenderer>();
             rope.sharedMaterial = Mat("M_PlayerGlow");
             rope.startWidth = 0.06f;
             rope.endWidth = 0.06f;
@@ -118,9 +122,17 @@ namespace Hookfall.EditorTools
 
             GameObject hookHead = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             hookHead.name = "Hook Head";
+            hookHead.layer = Layers.NoOutline;
             Object.DestroyImmediate(hookHead.GetComponent<Collider>());
             hookHead.transform.localScale = Vector3.one * 0.35f;
             hookHead.GetComponent<Renderer>().sharedMaterial = Mat("M_PlayerGlow");
+            var hookTrail = hookHead.AddComponent<TrailRenderer>();
+            hookTrail.sharedMaterial = ToonSetup.ParticleMaterial();
+            hookTrail.time = 0.12f;
+            hookTrail.startWidth = 0.25f;
+            hookTrail.endWidth = 0f;
+            hookTrail.startColor = new Color(0.3f, 0.95f, 1f, 0.8f);
+            hookTrail.endColor = new Color(0.3f, 0.95f, 1f, 0f);
 
             var itemsRoot = new GameObject("Items");
             itemsRoot.transform.SetParent(player.transform, false);
@@ -201,6 +213,23 @@ namespace Hookfall.EditorTools
             SetRef(director, "golemPrefab", golemPrefab);
             SetRef(director, "boulderPrefab", boulderPrefab);
 
+            // Effects and sound
+            var vfx = new GameObject("VFX").AddComponent<VfxManager>();
+            SetRef(vfx, "particleMaterial", ToonSetup.ParticleMaterial());
+            SetRef(vfx, "player", controller);
+            SetRef(vfx, "cameraTransform", camGo.transform);
+            SetRef(vfx, "pickups", pickups);
+            SetRef(vfx, "chests", chests);
+            SetRef(vfx, "towerCache", cache);
+            var audio = new GameObject("Audio").AddComponent<AudioManager>();
+            SetRef(audio, "player", controller);
+            SetRef(audio, "hook", hook);
+            SetRef(audio, "pickups", pickups);
+            SetRef(audio, "chests", chests);
+            SetRef(audio, "towerCache", cache);
+            SetRef(audio, "levelUp", levelUp);
+            AudioWiring.AssignClips(audio);
+
             // UI
             var hud = new GameObject("HUD").AddComponent<HUD>();
             SetRef(hud, "stats", stats);
@@ -245,6 +274,7 @@ namespace Hookfall.EditorTools
             GetOrCreateMaterial("M_XPGem", new Color(1f, 0.62f, 0.15f), true);
             GetOrCreateMaterial("M_Gold", new Color(1f, 0.85f, 0.3f), true);
             EnemyPrefabs.CreateMaterials();
+            ToonSetup.Run();
         }
 
         private static void AddLightAndSky()
@@ -260,7 +290,7 @@ namespace Hookfall.EditorTools
             RenderSettings.ambientLight = new Color(0.55f, 0.6f, 0.68f);
             RenderSettings.fog = true;
             RenderSettings.fogMode = FogMode.Linear;
-            RenderSettings.fogColor = new Color(0.7f, 0.82f, 0.92f);
+            RenderSettings.fogColor = SkyColor;   // distant islands melt into the sky haze (GDD 8.1)
             RenderSettings.fogStartDistance = 80f;
             RenderSettings.fogEndDistance = 260f;
         }

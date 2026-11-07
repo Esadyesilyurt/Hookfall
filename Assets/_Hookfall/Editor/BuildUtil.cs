@@ -22,7 +22,9 @@ namespace Hookfall.EditorTools
             var existing = AssetDatabase.LoadAssetAtPath<Material>(path);
             if (existing != null) return existing;
 
-            Shader shader = Shader.Find(unlit ? "Universal Render Pipeline/Unlit" : "Universal Render Pipeline/Lit");
+            // Lit materials use the toon Shader Graph (GDD 8.1); URP/Lit only if the graph is missing.
+            Shader shader = unlit ? Shader.Find("Universal Render Pipeline/Unlit")
+                : Shader.Find(ToonSetup.ToonShader) ?? Shader.Find("Universal Render Pipeline/Lit");
             var material = new Material(shader);
             material.SetColor("_BaseColor", color);
             material.enableInstancing = true;

@@ -23,6 +23,7 @@ namespace Hookfall.Combat.Items
             base.Awake();
             GameObject sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             sphere.name = "Storm Field";
+            sphere.layer = Hookfall.Core.Layers.NoOutline;
             Destroy(sphere.GetComponent<Collider>());
             var r = sphere.GetComponent<Renderer>();
             r.sharedMaterial = auraMaterial;

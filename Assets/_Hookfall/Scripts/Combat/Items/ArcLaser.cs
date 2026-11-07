@@ -27,6 +27,7 @@ namespace Hookfall.Combat.Items
         {
             base.Awake();
             var go = new GameObject("Beam");
+            go.layer = Hookfall.Core.Layers.NoOutline;
             go.transform.SetParent(transform, false);
             beam = go.AddComponent<LineRenderer>();
             beam.sharedMaterial = beamMaterial;

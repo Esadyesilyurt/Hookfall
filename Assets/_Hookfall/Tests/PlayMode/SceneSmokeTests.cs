@@ -47,6 +47,9 @@ namespace Hookfall.Tests
                 yield return null;
             }
             LogAssert.NoUnexpectedReceived();
+            Type gmType = Type.GetType("Hookfall.Core.GameManager, Assembly-CSharp");
+            int kills = (int)gmType.GetProperty("Kills").GetValue(gmType.GetProperty("Instance").GetValue(null));
+            Assert.Greater(kills, 0, "25 s in the air with Orbit Blades should kill at least one bat");
         }
 
         /// <summary>Gives every item through the chest code, flies for a while, then opens the tower cache.</summary>
