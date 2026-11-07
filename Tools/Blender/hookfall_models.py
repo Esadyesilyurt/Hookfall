@@ -707,6 +707,11 @@ def hook_head(out_dir, prev_dir):
 # ---------------------------------------------------------------- main
 
 def main():
+    # Second-pass models and the UI icons (2026-11-07) replace the first-pass functions of the same name.
+    sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+    import hookfall_models_v2
+    hookfall_models_v2.install(globals())
+
     argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
     out_dir = os.path.abspath(argv[0]) if argv else os.path.abspath("Assets/_Hookfall/Art/Models")
     prev_dir = os.path.abspath(argv[1]) if len(argv) > 1 else os.path.join(out_dir, "..", "..", "..", "..", "Docs", "ModelPreviews")
@@ -744,6 +749,10 @@ def main():
         "Coin": lambda: coin(out_dir, prev_dir),
         "Warden": lambda: warden(out_dir, prev_dir),
         "Hook": lambda: hook_head(out_dir, prev_dir),
+        "Bush": lambda: bush(out_dir, prev_dir),
+        "Lantern": lambda: lantern(out_dir, prev_dir),
+        "Statue": lambda: statue(out_dir, prev_dir),
+        "Icons": lambda: icons(os.path.join(out_dir, "..", "UI", "Icons"), prev_dir),
     }
     for name, job in jobs.items():
         if not wanted or name in wanted:

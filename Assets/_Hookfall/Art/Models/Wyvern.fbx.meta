@@ -12,6 +12,11 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: M_Fang
+    second: {fileID: 2100000, guid: faa4cf1db1495414c9df0a2a2dbb120a, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: M_Wyvern
     second: {fileID: 2100000, guid: 25dab62e98374ce408010983a2161bed, type: 2}
   - first:

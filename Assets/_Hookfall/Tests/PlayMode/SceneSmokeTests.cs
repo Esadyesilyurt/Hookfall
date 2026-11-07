@@ -135,8 +135,19 @@ namespace Hookfall.Tests
             Component hook = player.GetComponent(hookType);
             var flags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
 
+            // Islands are random: find a clear spot about 35 m out with a free line of sight to the tower.
             Vector3 target = new Vector3(0f, 10f, 0f);
-            player.transform.position = new Vector3(0f, 12f, -38f);
+            Vector3 spot = Vector3.zero;
+            for (int i = 0; i < 72 && spot == Vector3.zero; i++)
+            {
+                float a = i * 25f * Mathf.Deg2Rad;
+                var p = new Vector3(Mathf.Cos(a) * 35f, 12f + (i % 4) * 5f, Mathf.Sin(a) * 35f);
+                if (Physics.CheckSphere(p, 3f, ~0, QueryTriggerInteraction.Ignore)) continue;
+                if (Physics.Raycast(p, (target - p).normalized, out RaycastHit hit, 40f, ~0, QueryTriggerInteraction.Ignore)
+                    && Vector3.Distance(hit.point, target) < 6f) spot = p;   // the first thing hit is the tower
+            }
+            Assert.AreNotEqual(Vector3.zero, spot, "No clear spot with a view of the tower");
+            player.transform.position = spot;
             player.GetComponent<Rigidbody>().linearVelocity = Vector3.zero;
             yield return new WaitForFixedUpdate();
             var aim = new GameObject("Test Aim").transform;
