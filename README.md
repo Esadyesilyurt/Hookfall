@@ -16,6 +16,7 @@ Solo project by Esad Yesilyurt for *Game Studio: AI in Game Development* (Istanb
 | --- | --- |
 | Mouse | Aim and turn the camera |
 | Left mouse button | Throw the hook at an island; hold to swing, release to let go |
+| Right mouse button | Zip: a fast hook that hauls you straight to the island (own cooldown and charges) |
 | A / D | Walk on islands; light air strafe while flying |
 | W / S | Walk on islands |
 | Space | Jump (on islands) |
@@ -29,12 +30,14 @@ Attacks are automatic and only fire while you are in the air.
 ## What is in the game
 
 - Grappling hook with a 120 m/s hook head and a SpringJoint rope, island movement, air strafe, Cinemachine camera with speed FOV
-- Airborne-only combat with all six items: Orbit Blades, Shard Burst, Arc Laser, Ram Strike, Homing Sparks, Storm Aura
+- Right-click Zip: a fast straight pull with its own cooldown and charges, upgraded by two stats and the Tether Coil item
+- Airborne-only combat with all six attack items (Orbit Blades, Shard Burst, Arc Laser, Ram Strike, Homing Sparks, Storm Aura) and the Tether Coil
 - Enemy AI: Bat, Wyvern and Golem finite state machines, steering with separation and island avoidance, Frenzy when you land, elite waves, the GDD 5.7 fallbacks, pooling for 300 enemies
 - XP gems and gold coins, 3-card level-up with 11 stats, chests with rarity and rising cost, the tower cache, the low-gravity circle around the tower
-- Procedural island rings around the fixed tower, dressed with rocks, ruins, crystals and clouds
-- Main menu with intro, pause with lore, settings, run-end screen, saved best run, uGUI HUD
-- Toon Shader Graph with outlines, particle effects, and an audio system waiting for licensed sound files
+- Procedural islands in three height layers around the fixed tower, with waterfalls, ruins, lanterns and crystals; a storm wall closes the arena and far scenery fills the horizon
+- Main menu with intro, pause with items, stats and lore, settings, run-end screen, saved best run, an animated uGUI HUD with rendered icons
+- Toon Shader Graph with outlines, bloom and colour grading, game feel (shake, hit-stop, FOV kicks, damage numbers, knockback), particle effects
+- Placeholder sound effects and layered music synthesised in code, to be replaced by licensed files
 
 ## Tools
 
@@ -42,8 +45,10 @@ Attacks are automatic and only fire while you are in the air.
 | --- | --- |
 | `Tools/Blender/hookfall_models.py` | Builds every model in Blender and exports FBX to `Art/Models`: `blender -b --factory-startup -P Tools/Blender/hookfall_models.py -- Assets/_Hookfall/Art/Models Docs/ModelPreviews` |
 | `Tools/ShaderGraph/make_graphs.js` | Builds `SG_Toon` and `SG_Outline` from Unity's Shader Graph samples: `node Tools/ShaderGraph/make_graphs.js` |
-| Hookfall > Build All Scenes | Rebuilds scenes, prefabs and materials from code |
-| Window > General > Test Runner > PlayMode | Smoke tests: both scenes run with no Console errors; every enemy, item and the tower cache work |
+| `Tools/Audio/make_sfx.js` | Synthesises the placeholder sound effects and music stems: `node Tools/Audio/make_sfx.js` |
+| Hookfall > Build All Scenes | Rebuilds scenes, prefabs, materials, the UI skin and audio wiring from code |
+| Hookfall > Clear Best Run | Forgets the saved best run |
+| Window > General > Test Runner > PlayMode | Smoke tests (both scenes run clean, every enemy, item, the Zip and the tower cache work) and the 300-enemy performance test |
 
 Defaults chosen where the GDD gives no number, and where the build differs from the GDD: [Docs/Defaults.md](Docs/Defaults.md). Audio file names and licences: [Docs/Credits.md](Docs/Credits.md).
 

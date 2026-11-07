@@ -63,6 +63,25 @@ Values the GDD does not give, picked by Claude on 2026-11-07 when building Weeks
 | Heartbeat | Below 30% health | AudioManager |
 | Wind | Full volume at 35 m/s | AudioManager |
 
+### Added after the first playtest (2026-11-07)
+| Value | Default | Where |
+| --- | --- | --- |
+| Island height bands | −32…−14 m, −6…10 m, 18…38 m, plus 4–6 small perches at 28–46 m within 24–60 m of the tower | IslandGenerator |
+| Reachability | Every island within 32 m (centre to centre) of one the player can reach; hook range is 40 m | IslandGenerator |
+| Storm wall | 195 m from the tower, 5 cloud layers from −120 m to 30 m, turns 1.5°/s, lightning every 2.5–7 s | StormWall |
+| Storm wind | Starts pushing at 170 m, up to 80 m/s² at the wall; outward speed removed inside it | StormWall |
+| Spawns | Kept within 180 m of the tower (inside the storm) | EnemyDirector |
+| Far scenery | 14 pieces at 430–600 m, scaled 1.6–3.2, drifting 0.4°/s; no fog, pale colours | Backdrop |
+| Zip | 50 m range, 4 s cooldown, hook head 220 m/s, pull 48 m/s, ends within 3 m or after 1.6 s, +6 m/s lift at the end; the speed cap then decays 18 m/s per second | GrappleHook, PlayerController |
+| Zip stats | Zip cooldown ×0.9 per pick (minimum 0.6 s), Zip range +5 m per pick | PlayerStats |
+| Tether Coil | Cooldown ×0.9/0.85/0.8/0.75/0.7 at levels 1–5, +1 charge at levels 3 and 5, 25 damage (+25% per level) to enemies zipped through, 30-damage 6 m shockwave on landing from level 4 | PF_Item_TetherCoil |
+| Shake | Hook catch 0.15, Zip 0.35, hurt 0.6, elite or golem kill 0.4, landing 0.1–0.5 by fall speed | FeelDirector |
+| Hit-stop | Hurt 0.06 s, elite or golem kill 0.04 s, at 5% time speed | FeelDirector |
+| FOV kick | Zip +14°, landing up to −4° | FeelDirector, CameraRig |
+| Knockback | Bat 7 m/s, wyvern 2.5 m/s, golem 0; hit squash 0.3 / 0.15 / 0.08 | Enemy prefabs |
+| Damage numbers | At most 8 per frame (2 when the frame rate is low), big hits from 40 damage | DamageNumbers |
+| Post-processing | Bloom threshold 1.05, intensity 0.9; vignette 0.2 (0.45 at low health); saturation +8, contrast +6; glowing materials ×2.2 HDR | PP_Hookfall, FeelSetup |
+
 ## Where the build differs from the GDD
 
 | GDD | What was built | Why |
@@ -71,5 +90,8 @@ Values the GDD does not give, picked by Claude on 2026-11-07 when building Weeks
 | Warden rigged and animated with Mixamo; enemies with simple rigs (8.3) | Models are split into parts (arms, legs, wings, cape, lid); `WardenAnimator`, `EnemyBase` and `Golem` animate them in code | Mixamo needs Esad's Adobe login; 300 Animators would also cost more than moving a few transforms |
 | Toon shader made in Shader Graph (8.1) | Shader Graph, generated from Unity's own Custom Lighting Toon sample and Unlit template by `Tools/ShaderGraph/make_graphs.js` | Keeps Shader Graph (Esad's choice) while the graph stays reproducible from a script |
 | Spawn zone beyond 150 m (7.1) | 60 m out of view, 90 m ahead | At 150 m bats need about 12 s to arrive, which empties the screen |
-| Own vector icons (8.3) | Diamond frames with the first letter of the name | Placeholder until icons are drawn |
-| Licensed sound and music (8.3) | AudioManager and file-name wiring are done; no audio files yet | Audio must be chosen and licensed by Esad (see Docs/Credits.md) |
+| Own vector icons (8.3) | 3D symbols rendered in Blender as sprites, in diamond and card frames | Esad's choice on 2026-11-07 |
+| Licensed sound and music (8.3) | Placeholder sound effects and three music stems synthesised in code by Tools/Audio/make_sfx.js | Esad's choice on 2026-11-08 until licensed files are chosen (Docs/Credits.md); no AI audio model is used |
+| Spawn rate 2/s, +15% per minute, flocks of 4–8 (4.8) | 5/s, +20% per minute, flocks of 8–14 | Esad found the first build too calm (2026-11-07) |
+| Six items, eleven stats (4.5, 4.6) | A seventh chest item (Tether Coil) and two Zip stats | Added with the right-click Zip on Esad's request (2026-11-07) |
+| Islands at any height, arena edge not described (4.9, 7.1) | Three height bands with a reachability check, and a storm wall at 195 m with far scenery beyond | Esad's feedback: islands could not be climbed and the edge felt empty |

@@ -121,6 +121,8 @@ namespace Hookfall.UI
                     rows++;
                 }
             UIFactory.Sized(itemList, -1f, Mathf.Max(1, rows) * 62f);
+            // Rows report flexible height; without this the list would swallow the panel's spare space.
+            itemList.GetComponent<LayoutElement>().flexibleHeight = 0f;
 
             if (stats != null)
                 foreach (StatType stat in Enum.GetValues(typeof(StatType)))
