@@ -2,7 +2,7 @@
 // dressed with rocks, ruins and crystals, with clouds below and around. Uses the Blender island models when assigned,
 // otherwise primitive placeholders.
 // AI disclosure: written with Claude (Anthropic) on 2026-11-04 as part of the midterm project skeleton,
-// extended on 2026-11-07 (models, props, clouds, tower top, abyss height). Prompts and changes are recorded in Docs/PromptLog.md.
+// extended on 2026-11-07 (models, props, clouds, tower top, abyss height) and 2026-11-08 (World layer for the camera). Prompts and changes are recorded in Docs/PromptLog.md.
 using System.Collections.Generic;
 using Hookfall.Player;
 using UnityEngine;
@@ -89,6 +89,8 @@ namespace Hookfall.World
             MakeReachable();
             foreach (IslandPlan plan in plans) BuildIsland(plan.position, plan.width, plan.kind);
             PlaceClouds();
+            foreach (Collider c in GetComponentsInChildren<Collider>())
+                if (!c.isTrigger) c.gameObject.layer = Hookfall.Core.Layers.World;   // the camera's deoccluder collides with this layer
 
             Random.state = previous;
 

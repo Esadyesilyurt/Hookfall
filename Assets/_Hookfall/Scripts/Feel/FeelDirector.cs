@@ -77,7 +77,7 @@ namespace Hookfall.Feel
                 hook.ZipEnded += OnZipEnded;
             }
             if (player != null) player.Landed += OnLanded;
-            if (player != null) player.WallJumped += OnWallJump;
+            if (player != null) { player.WallJumped += OnWallJump; player.AirJumped += OnWallJump; player.Dashed += OnDash; }
             if (stats != null) stats.Damaged += OnHurt;
             if (combat != null) combat.AttacksChanged += OnAttacksChanged;
             if (levelUp != null) levelUp.OfferReady += OnLevelUp;
@@ -95,7 +95,7 @@ namespace Hookfall.Feel
                 hook.ZipEnded -= OnZipEnded;
             }
             if (player != null) player.Landed -= OnLanded;
-            if (player != null) player.WallJumped -= OnWallJump;
+            if (player != null) { player.WallJumped -= OnWallJump; player.AirJumped -= OnWallJump; player.Dashed -= OnDash; }
             if (stats != null) stats.Damaged -= OnHurt;
             if (combat != null) combat.AttacksChanged -= OnAttacksChanged;
             if (levelUp != null) levelUp.OfferReady -= OnLevelUp;
@@ -158,6 +158,13 @@ namespace Hookfall.Feel
             Shake(0.15f);
             if (cameraRig != null) cameraRig.Kick(5f);
             if (vfx != null) vfx.Ring(player.transform.position, 14, new Color(0.85f, 0.85f, 0.8f), 5f);
+        }
+
+        private void OnDash()
+        {
+            Shake(0.12f);
+            if (cameraRig != null) cameraRig.Kick(9f);
+            if (vfx != null) vfx.Ring(player.transform.position, 16, new Color(0.6f, 0.9f, 1f), 6f);
         }
 
         private void OnHurt(float amount)

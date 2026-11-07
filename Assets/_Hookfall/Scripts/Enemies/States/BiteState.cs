@@ -23,7 +23,7 @@ namespace Hookfall.Enemies.States
         {
             timer -= deltaTime;
             if (timer <= 0f) { bat.ChangeState(bat.HuntingState); return; }
-            bat.Steer(bat.Player.transform.position, bat.MoveSpeed);
+            bat.Steer(bat.Player.transform.position, bat.ChaseSpeed(bat.MoveSpeed));
         }
     }
 }

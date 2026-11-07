@@ -173,16 +173,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Hookfall.Enemies.Bat
   displayName: Bat
   maxHealth: 10
-  moveSpeed: 12
+  moveSpeed: 18
   contactDamage: 5
   xpReward: 1
   goldReward: 1
   hitRadius: 0.6
-  acceleration: 40
+  acceleration: 60
   separationRadius: 1.6
   separationWeight: 1.2
   avoidLookAhead: 0.5
   avoidWeight: 2.5
+  playerSpeedMatch: 0.8
+  catchUpPerMetre: 0.4
+  catchUpDistance: 15
   nearDistance: 60
   nearThinkInterval: 0.1
   farThinkInterval: 0.5

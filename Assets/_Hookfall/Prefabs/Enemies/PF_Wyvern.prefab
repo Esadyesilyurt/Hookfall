@@ -358,16 +358,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Hookfall.Enemies.Wyvern
   displayName: Wyvern
   maxHealth: 60
-  moveSpeed: 14
+  moveSpeed: 20
   contactDamage: 15
   xpReward: 3
   goldReward: 2
   hitRadius: 1.3
-  acceleration: 40
+  acceleration: 60
   separationRadius: 1.6
   separationWeight: 1.2
   avoidLookAhead: 0.5
   avoidWeight: 2.5
+  playerSpeedMatch: 0.8
+  catchUpPerMetre: 0.4
+  catchUpDistance: 15
   nearDistance: 60
   nearThinkInterval: 0.1
   farThinkInterval: 0.5

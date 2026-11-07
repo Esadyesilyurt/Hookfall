@@ -1,7 +1,7 @@
 // Hookfall - island movement, air strafe and the IsAirborne flag the whole game reads (GDD 4.1, 4.2).
 // AI disclosure: written with Claude (Anthropic) on 2026-11-04 as part of the midterm project skeleton,
 // extended on 2026-11-07 (stat multipliers, current island, Zip overspeed, landing event) and 2026-11-08
-// (heavier, faster air movement and the wall jump). Prompts and changes are recorded in Docs/PromptLog.md.
+// (heavier, faster air movement, the wall jump, then the double jump and the dash). Prompts and changes are recorded in Docs/PromptLog.md.
 using Hookfall.World;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -35,6 +35,18 @@ namespace Hookfall.Player
         [SerializeField] private float wallJumpGrace = 0.2f;
         [SerializeField] private float wallJumpCooldown = 0.3f;
 
+        [Header("Double jump (Space in the air; refilled on landing)")]
+        [SerializeField] private int airJumps = 1;
+        [Tooltip("Added to the upward speed (falling counts as zero).")]
+        [SerializeField] private float airJumpVelocity = 11f;
+
+        [Header("Dash (Left Shift in the air; refilled on landing)")]
+        [SerializeField] private int airDashes = 1;
+        [Tooltip("Dash speed; a faster Warden keeps its speed and only turns.")]
+        [SerializeField] private float dashSpeed = 32f;
+        [Tooltip("How long the dash holds a straight line before gravity takes over again.")]
+        [SerializeField] private float dashDuration = 0.18f;
+
         [SerializeField] private Transform cameraTransform;
 
         private CapsuleCollider capsule;
@@ -46,6 +58,12 @@ namespace Hookfall.Player
         private Vector3 wallNormal;
         private float lastWallTime = -999f;
         private float lastWallJump = -999f;
+        private int airJumpsLeft;
+        private int dashesLeft;
+        private bool airJumpQueued;
+        private bool dashQueued;
+        private Vector3 dashVelocity;
+        private float dashTimer;
 
         /// <summary>True when the player is not standing on an island. Turns combat on and enemy Frenzy off.</summary>
         public bool IsAirborne { get; private set; } = true;
@@ -57,6 +75,10 @@ namespace Hookfall.Player
         /// <summary>Vertical speed of the last landing (positive), for landing effects.</summary>
         public event System.Action<float> Landed;
         public event System.Action WallJumped;
+        public event System.Action AirJumped;
+        public event System.Action Dashed;
+        public int AirJumpsLeft => airJumpsLeft;
+        public int DashesLeft => dashesLeft;
         /// <summary>True for a moment after touching an island side, while a wall jump is possible.</summary>
         public bool TouchingWall => Time.time - lastWallTime < wallJumpGrace;
 
@@ -87,7 +109,9 @@ namespace Hookfall.Player
             {
                 if (!IsAirborne) jumpQueued = true;
                 else if (TouchingWall && Time.time - lastWallJump >= wallJumpCooldown) wallJumpQueued = true;
+                else if (airJumpsLeft > 0) airJumpQueued = true;
             }
+            if (keyboard.leftShiftKey.wasPressedThisFrame && IsAirborne && dashesLeft > 0) dashQueued = true;
         }
 
         private void FixedUpdate()
@@ -98,6 +122,12 @@ namespace Hookfall.Player
             IsAirborne = CurrentIsland == null;
             if (wasAirborne && !IsAirborne) Landed?.Invoke(fallSpeed);
             overspeedCap = Mathf.MoveTowards(overspeedCap, 0f, overspeedDecay * Time.fixedDeltaTime);
+            if (!IsAirborne)
+            {
+                airJumpsLeft = airJumps;
+                dashesLeft = airDashes;
+                dashTimer = 0f;
+            }
 
             Vector3 forward = cameraTransform != null ? cameraTransform.forward : transform.forward;
             Vector3 right = cameraTransform != null ? cameraTransform.right : transform.right;
@@ -124,11 +154,39 @@ namespace Hookfall.Player
             }
             else
             {
-                Body.AddForce(Physics.gravity * (airGravityMultiplier - 1f), ForceMode.Acceleration);
+                if (dashQueued && dashesLeft > 0)
+                {
+                    // Towards W/A/S/D relative to the camera (W follows the camera's pitch), or straight where the camera looks.
+                    Vector3 look = cameraTransform != null ? cameraTransform.forward : transform.forward;
+                    Vector3 dir = look * moveInput.y + right * moveInput.x;
+                    if (dir.sqrMagnitude < 0.01f) dir = look;
+                    dashVelocity = dir.normalized * Mathf.Max(dashSpeed, Speed);
+                    dashTimer = dashDuration;
+                    dashesLeft--;
+                    Dashed?.Invoke();
+                }
+                else if (airJumpQueued && airJumpsLeft > 0)
+                {
+                    Vector3 v = Body.linearVelocity;
+                    v.y = Mathf.Max(v.y, 0f) + airJumpVelocity;
+                    Body.linearVelocity = v;
+                    airJumpsLeft--;
+                    AirJumped?.Invoke();
+                }
 
-                // Air strafe: only A/D. Momentum from the swing stays in charge.
-                if (!Mathf.Approximately(moveInput.x, 0f))
-                    Body.AddForce(right * (moveInput.x * airStrafeAcceleration), ForceMode.Acceleration);
+                if (dashTimer > 0f)
+                {
+                    dashTimer -= Time.fixedDeltaTime;
+                    Body.linearVelocity = dashVelocity;
+                }
+                else
+                {
+                    Body.AddForce(Physics.gravity * (airGravityMultiplier - 1f), ForceMode.Acceleration);
+
+                    // Air strafe: only A/D. Momentum from the swing stays in charge.
+                    if (!Mathf.Approximately(moveInput.x, 0f))
+                        Body.AddForce(right * (moveInput.x * airStrafeAcceleration), ForceMode.Acceleration);
+                }
 
                 float cap = Mathf.Max(MaxAirSpeed, overspeedCap);
                 if (Body.linearVelocity.sqrMagnitude > cap * cap)
@@ -136,6 +194,8 @@ namespace Hookfall.Player
             }
             jumpQueued = false;
             wallJumpQueued = false;
+            airJumpQueued = false;
+            dashQueued = false;
         }
 
         // Island sides (steep contacts) arm the wall jump.

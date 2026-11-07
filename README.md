@@ -19,7 +19,8 @@ Solo project by Esad Yesilyurt for *Game Studio: AI in Game Development* (Istanb
 | Right mouse button | Zip: a power swing; keep holding and it reels you up to the island (own cooldown and charges) |
 | A / D | Walk on islands; light air strafe while flying |
 | W / S | Walk on islands |
-| Space | Jump on islands; wall jump when touching an island side in the air (W/A/S/D steers it) |
+| Space | Jump on islands; wall jump when touching an island side in the air (W/A/S/D steers it); otherwise one double jump per flight |
+| Left Shift | Dash in the air, once per flight, towards W/A/S/D or where the camera looks; refilled on landing |
 | E | Open a chest |
 | 1 / 2 / 3 or click | Pick a level-up card |
 | Esc | Pause |
@@ -31,7 +32,7 @@ Attacks are automatic and only fire while you are in the air.
 
 - Grappling hook with a 120 m/s hook head and a SpringJoint rope, island movement, air strafe, Cinemachine camera with speed FOV
 - Right-click Zip: a power swing that reels you in when held, with its own cooldown and charges, upgraded by two stats and the Tether Coil item
-- Wall jumps off island sides, and flips and barrel rolls when flying fast
+- Wall jumps off island sides, a double jump and a dash per flight, and flips and barrel rolls when flying fast
 - Airborne-only combat with all six attack items (Orbit Blades, Shard Burst, Arc Laser, Ram Strike, Homing Sparks, Storm Aura) and the Tether Coil
 - Enemy AI: Bat, Wyvern and Golem finite state machines, steering with separation and island avoidance, Frenzy when you land, elite waves, the GDD 5.7 fallbacks, pooling for 300 enemies
 - XP gems and gold coins, 3-card level-up with 11 stats, chests with rarity and rising cost, the tower cache, the low-gravity circle around the tower
