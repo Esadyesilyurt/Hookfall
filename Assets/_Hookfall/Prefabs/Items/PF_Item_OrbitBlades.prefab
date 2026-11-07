@@ -1,0 +1,56 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &8091290796363484001
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3145388126593864252}
+  - component: {fileID: 3341990886318005423}
+  m_Layer: 0
+  m_Name: PF_Item_OrbitBlades
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3145388126593864252
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8091290796363484001}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &3341990886318005423
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8091290796363484001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a19d234747a9cae42be129f10a39f848, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Hookfall.Combat.Items.OrbitBlades
+  displayName: Orbit Blades
+  lore: Twin vault blades bound to the Warden by a Tether rune; they circle and cut
+    whatever comes close.
+  baseDamage: 10
+  cooldown: 0.5
+  level: 1
+  orbitRadius: 3
+  orbitSpeed: 240
+  bladeHitRadius: 0.9
+  bladeMaterial: {fileID: 2100000, guid: 32dc8310d699c054eb7dea004a21b8b0, type: 2}
