@@ -81,42 +81,11 @@ namespace Hookfall.UI
         {
             int captured = index;
             Color accent = option.IsItem ? UITheme.Gold : UITheme.Player;
-
-            var cardGo = new GameObject($"Card {index + 1}", typeof(RectTransform));
-            cardGo.transform.SetParent(cardRow, false);
-            var rect = (RectTransform)cardGo.transform;
-            Image frame = UIFactory.Image(rect, Color.Lerp(accent, UITheme.Panel, 0.55f), UISkin.Card);
-            frame.raycastTarget = true;
-            var button = cardGo.AddComponent<Button>();
-            button.targetGraphic = frame;
-            ColorBlock colors = button.colors;
-            colors.highlightedColor = new Color(1.25f, 1.25f, 1.25f);
-            colors.pressedColor = new Color(1.5f, 1.5f, 1.5f);
-            colors.colorMultiplier = 1.5f;
-            button.colors = colors;
-            button.onClick.AddListener(() => Pick(captured));
-            UIFactory.Sized(rect, 400f, 470f);
-            UIFactory.Column(rect, 12f, 30, TextAnchor.UpperCenter);
-            UIPop.Add(rect, 0.08f + index * 0.09f, 0.6f);
-            var hover = cardGo.AddComponent<UIHover>();
-            hover.hoverScale = 1.05f;
-
             string name = option.IsItem ? option.Item.DisplayName : PlayerStats.NameOf(option.Stat);
             string tag = option.IsItem ? $"ITEM  ·  LEVEL {option.Item.Level} → {option.Item.Level + 1}" : "STAT";
             string value = option.IsItem ? option.Item.DescribeNextLevel() : stats.Describe(option.Stat);
             Sprite icon = option.IsItem ? UISkin.Icon(option.Item) : UISkin.Icon(option.Stat);
-
-            RectTransform keyRow = UIFactory.Rect(rect, "Key", Vector2.zero, Vector2.zero, Vector2.zero, Vector2.zero);
-            UIFactory.Sized(keyRow, -1f, 40f);
-            UIFactory.Row(keyRow, 0f, 0, TextAnchor.MiddleCenter);
-            UIFactory.KeyCap(keyRow, (index + 1).ToString(), 38f);
-            UIFactory.Diamond(rect, icon, name.Substring(0, 1), 150f, accent);
-            UIFactory.Sized(UIFactory.Text(rect, "Name", name, 36f, UITheme.Text, TextAlignmentOptions.Center, true), -1f, 50f).fontStyle = FontStyles.Bold;
-            TextMeshProUGUI tagText = UIFactory.Sized(UIFactory.Text(rect, "Tag", tag, 18f, accent), -1f, 26f);
-            tagText.characterSpacing = 4f;
-            tagText.fontStyle = FontStyles.Bold;
-            UIFactory.Sized(UIFactory.Text(rect, "Value", value, 30f, UITheme.Text, TextAlignmentOptions.Center, true), -1f, 90f);
-            return cardGo;
+            return UIFactory.ChoiceCard(cardRow, index, accent, icon, name, tag, value, () => Pick(captured)).gameObject;
         }
 
         private void Update()

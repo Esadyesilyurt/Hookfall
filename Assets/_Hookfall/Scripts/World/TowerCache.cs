@@ -65,10 +65,9 @@ namespace Hookfall.World
             if (progress < 1f) return;
 
             Rarity rarity = ChestSpawner.Roll(rarityWeights, stats.LuckMultiplier);
-            ChestReward reward = combat.Grant(rarity, stats);
             Opened?.Invoke(transform.position, rarity);
             SetReady(false);
-            if (ChestResultUI.Instance != null) ChestResultUI.Instance.Show(reward);
+            ChestResultUI.Offer(combat, stats, rarity);
         }
 
         private void SetReady(bool ready)
