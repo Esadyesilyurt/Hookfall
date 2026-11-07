@@ -51,6 +51,12 @@ namespace Hookfall.Enemies
         [SerializeField] private float flapSpeed = 14f;
         [SerializeField] private float flapAngle = 45f;
 
+        [Header("Game feel")]
+        [Tooltip("Speed added away from the player on every hit (golems ignore it).")]
+        [SerializeField] private float knockback = 6f;
+        [Tooltip("The body swells by this much on a hit and settles back.")]
+        [SerializeField] private float hitPunch = 0.3f;
+
         private readonly StateMachine machine = new StateMachine();
         private Renderer[] renderers;
         private MaterialPropertyBlock block;
@@ -67,6 +73,8 @@ namespace Hookfall.Enemies
         private Vector3 baseScale;
         private float flapPhase;
         private bool built;
+        private Transform visual;
+        private float punch;
 
         public string DisplayName => displayName;
         public float Health { get; private set; }
@@ -92,6 +100,7 @@ namespace Hookfall.Enemies
             block = new MaterialPropertyBlock();
             glowId = Shader.PropertyToID(glowProperty);
             baseScale = transform.localScale;
+            visual = transform.Find("Visual");
             flapPhase = Random.value * 10f;
         }
 
@@ -117,6 +126,8 @@ namespace Hookfall.Enemies
             baseGlow = Color.black;
             warning = false;
             flashTimer = 0f;
+            punch = 0f;
+            if (visual != null) visual.localScale = Vector3.one;
             ApplyGlow();
 
             if (!built)
@@ -188,6 +199,12 @@ namespace Hookfall.Enemies
             if (IsDead) return;
             Health -= amount;
             flashTimer = flashDuration;
+            punch = hitPunch;
+            if (knockback > 0f && Player != null)
+            {
+                Vector3 away = transform.position - Player.transform.position;
+                if (away.sqrMagnitude > 0.01f) Velocity += away.normalized * knockback;
+            }
             ApplyGlow();
             EnemyDirector.RaiseHit(this, amount);
             if (Health <= 0f) Die(true);
@@ -278,6 +295,11 @@ namespace Hookfall.Enemies
 
         private void Animate(float dt)
         {
+            if (visual != null && punch > 0f)
+            {
+                punch = Mathf.MoveTowards(punch, 0f, dt * 2.5f);
+                visual.localScale = new Vector3(1f + punch, 1f - punch * 0.5f, 1f + punch);
+            }
             if (flashTimer > 0f)
             {
                 flashTimer -= dt;

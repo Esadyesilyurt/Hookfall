@@ -42,6 +42,12 @@ namespace Hookfall.Player
         [Tooltip("Visible hook head; flies out at travelSpeed, then sits on the anchor.")]
         [SerializeField] private Transform hookHead;
 
+        [Header("Rope feel")]
+        [SerializeField] private int ropePoints = 16;
+        [SerializeField] private float ropeWobble = 0.6f;
+        [SerializeField] private float throwWobbleTime = 0.35f;
+        [SerializeField] private float attachTwangTime = 0.2f;
+
         private PlayerController controller;
         private PlayerStats stats;
         private SpringJoint joint;
@@ -52,6 +58,8 @@ namespace Hookfall.Player
         private float zipTimer;
         private float lastThrowTime = -999f;
         private int zipCharges;
+        private float wobbleTimer;
+        private float wobbleDuration = 1f;
         private float zipRecharge;
 
         public bool IsAttached => joint != null;
@@ -135,16 +143,28 @@ namespace Hookfall.Player
                 if (visible)
                 {
                     hookHead.position = headPosition;
-                    Vector3 dir = headPosition - transform.position;
-                    if (dir.sqrMagnitude > 0.01f) hookHead.rotation = Quaternion.LookRotation(dir);
+                    Vector3 headDir = headPosition - transform.position;
+                    if (headDir.sqrMagnitude > 0.01f) hookHead.rotation = Quaternion.LookRotation(headDir);
                 }
             }
             if (rope == null) return;
             rope.enabled = visible;
             if (!visible) return;
-            rope.positionCount = 2;
-            rope.SetPosition(0, transform.position);
-            rope.SetPosition(1, headPosition);
+            // A thrown rope snakes out and a caught one twangs, then it pulls straight.
+            wobbleTimer = Mathf.Max(0f, wobbleTimer - Time.deltaTime);
+            float amp = ropeWobble * (wobbleTimer / wobbleDuration);
+            Vector3 from = transform.position;
+            Vector3 dir = headPosition - from;
+            Vector3 side = Vector3.Cross(dir, Vector3.up);
+            side = side.sqrMagnitude > 0.001f ? side.normalized : Vector3.right;
+            rope.positionCount = amp > 0.01f ? ropePoints : 2;
+            for (int i = 0; i < rope.positionCount; i++)
+            {
+                float t = i / (rope.positionCount - 1f);
+                float wave = Mathf.Sin(t * Mathf.PI * 3f + Time.time * 40f) * Mathf.Sin(t * Mathf.PI) * amp;
+                rope.SetPosition(i, from + dir * t + side * wave);
+            }
+            rope.widthMultiplier = IsZipping ? 1.8f : 1f;
         }
 
         private void RechargeZip(float dt)
@@ -192,12 +212,20 @@ namespace Hookfall.Player
             headPosition = transform.position;
             travelling = true;
             zipThrow = zip;
+            Wobble(throwWobbleTime);
             Thrown?.Invoke();
+        }
+
+        private void Wobble(float seconds)
+        {
+            wobbleTimer = seconds;
+            wobbleDuration = seconds;
         }
 
         private void Attach()
         {
             travelling = false;
+            Wobble(attachTwangTime);
             if (zipThrow)
             {
                 IsZipping = true;

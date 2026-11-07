@@ -377,6 +377,8 @@ MonoBehaviour:
   wingRight: {fileID: 1726516099485261614}
   flapSpeed: 7
   flapAngle: 35
+  knockback: 2.5
+  hitPunch: 0.15
   chargeRange: 15
   windUp: 0.3
   windUpOnIsland: 0.15
