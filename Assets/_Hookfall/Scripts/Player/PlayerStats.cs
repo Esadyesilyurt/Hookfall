@@ -1,6 +1,6 @@
 // Hookfall - player health, armor, every stat upgrade and the abyss check (GDD 4.3, 4.6).
 // AI disclosure: written with Claude (Anthropic) on 2026-11-04 as part of the midterm project skeleton,
-// extended on 2026-11-07 with all 11 stat upgrades. Prompts and changes are recorded in Docs/PromptLog.md.
+// extended on 2026-11-07 with all 11 stat upgrades and on 2026-11-08 with a base health regen. Prompts and changes are recorded in Docs/PromptLog.md.
 using System;
 using Hookfall.Core;
 using UnityEngine;
@@ -11,7 +11,8 @@ namespace Hookfall.Player
     {
         [Header("Health")]
         [SerializeField] private float maxHealth = 100f;
-        [SerializeField] private float healthRegenPerSecond = 0f;
+        [Tooltip("Base regen from the start of a run (0 until 2026-11-08); Health regen picks add to it.")]
+        [SerializeField] private float healthRegenPerSecond = 1f;
         [SerializeField] private float armor = 0f;
         [SerializeField] private float invulnerabilityAfterHit = 0.5f;
 

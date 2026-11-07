@@ -9,6 +9,7 @@ Values the GDD does not give, picked by Claude on 2026-11-07 when building Weeks
 | --- | --- | --- |
 | Rope length after attach | 85% of distance (GDD: 15% reel-in; the skeleton used 80%) | GrappleHook |
 | Rope minimum length | 25% of distance | GrappleHook |
+| Base health regen | 1 HP/s from the start of a run (0 until 2026-11-08); each Health regen pick adds 0.5 HP/s | PlayerStats |
 | Movement soft cap | Bonuses count fully up to +100%; above that each pick counts 25% | PlayerStats |
 | Camera | Orbit radius 8 m, target offset 1.6 m, pitch −80° to 80° (−40° to 75° until 2026-11-08), damping 0.1 | Player Camera (Cinemachine) |
 | Camera collision | Cinemachine Deoccluder against the World layer (islands, tower, props): pulls the camera towards the Warden, camera radius 0.45 m, at least 0.6 m from the target, 0.35 s return | Player Camera |
