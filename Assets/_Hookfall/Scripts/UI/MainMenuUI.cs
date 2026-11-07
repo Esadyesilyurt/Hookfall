@@ -34,10 +34,11 @@ namespace Hookfall.UI
             Canvas canvas = UIFactory.Canvas(transform, "Menu Canvas", 0);
             Transform c = canvas.transform;
 
-            TextMeshProUGUI logo = UIFactory.Text(UIFactory.Rect(c, "Logo", new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(-470f, -90f), new Vector2(900f, 160f), new Vector2(0.5f, 1f)),
-                "HOOKFALL", 140f, UITheme.Player);
+            TextMeshProUGUI logo = UIFactory.Text(UIFactory.Rect(c, "Logo", new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(-420f, -80f), new Vector2(1000f, 160f), new Vector2(0.5f, 1f)),
+                "HOOKFALL", 120f, UITheme.Player);
             logo.fontStyle = FontStyles.Bold;
             logo.characterSpacing = 18f;
+            logo.textWrappingMode = TextWrappingModes.NoWrap;
 
             Image panel = UIFactory.Panel(c, "Main", new Vector2(460f, 520f), UITheme.Panel);
             ((RectTransform)panel.transform).anchoredPosition = new Vector2(-560f, -120f);

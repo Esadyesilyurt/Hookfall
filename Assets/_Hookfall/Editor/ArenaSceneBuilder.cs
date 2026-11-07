@@ -120,12 +120,10 @@ namespace Hookfall.EditorTools
             rope.shadowCastingMode = ShadowCastingMode.Off;
             rope.enabled = false;
 
-            GameObject hookHead = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            hookHead.name = "Hook Head";
-            hookHead.layer = Layers.NoOutline;
-            Object.DestroyImmediate(hookHead.GetComponent<Collider>());
-            hookHead.transform.localScale = Vector3.one * 0.35f;
-            hookHead.GetComponent<Renderer>().sharedMaterial = Mat("M_PlayerGlow");
+            var hookHead = new GameObject("Hook Head");
+            if (InstantiateModel("Hook", hookHead.transform) == null)
+                Part(hookHead.transform, "Visual", PrimitiveType.Sphere, Vector3.zero, Vector3.one * 0.35f, Mat("M_PlayerGlow"));
+            Layers.SetRecursive(hookHead, Layers.NoOutline);
             var hookTrail = hookHead.AddComponent<TrailRenderer>();
             hookTrail.sharedMaterial = ToonSetup.ParticleMaterial();
             hookTrail.time = 0.12f;
@@ -133,6 +131,8 @@ namespace Hookfall.EditorTools
             hookTrail.endWidth = 0f;
             hookTrail.startColor = new Color(0.3f, 0.95f, 1f, 0.8f);
             hookTrail.endColor = new Color(0.3f, 0.95f, 1f, 0f);
+
+            AddWarden(player, controller, hook);
 
             var itemsRoot = new GameObject("Items");
             itemsRoot.transform.SetParent(player.transform, false);
@@ -175,6 +175,8 @@ namespace Hookfall.EditorTools
             SetRef(rig, "targetBody", body);
 
             SetRef(controller, "cameraTransform", camGo.transform);
+            WardenAnimator wardenAnimator = player.GetComponentInChildren<WardenAnimator>();
+            if (wardenAnimator != null) SetRef(wardenAnimator, "cameraTransform", camGo.transform);
             SetRef(hook, "aimSource", camGo.transform);
             SetRef(hook, "rope", rope);
             SetRef(hook, "hookHead", hookHead.transform);
@@ -274,6 +276,7 @@ namespace Hookfall.EditorTools
             GetOrCreateMaterial("M_XPGem", new Color(1f, 0.62f, 0.15f), true);
             GetOrCreateMaterial("M_Gold", new Color(1f, 0.85f, 0.3f), true);
             EnemyPrefabs.CreateMaterials();
+            ModelSetup.Run();
             ToonSetup.Run();
         }
 
@@ -301,24 +304,58 @@ namespace Hookfall.EditorTools
             SetRef(generator, "stoneMaterial", Mat("M_Stone"));
             SetRef(generator, "towerMaterial", Mat("M_Tower"));
             if (stats != null) SetRef(generator, "player", stats);
+
+            // Blender models (Tools/Blender/hookfall_models.py); the generator falls back to primitives without them.
+            SetList(generator, "largeIslandModels", ModelSetup.IslandPrefabs("Large"));
+            SetList(generator, "smallIslandModels", ModelSetup.IslandPrefabs("Small"));
+            SetList(generator, "propModels", ModelSetup.PropPrefabs());
+            SetList(generator, "cloudModels", ModelSetup.CloudPrefabs());
+            SetRef(generator, "towerModel", ModelSetup.TowerPrefab());
+        }
+
+        private static void SetList(Object target, string field, GameObject[] values)
+        {
+            var serialized = new SerializedObject(target);
+            SerializedProperty list = serialized.FindProperty(field);
+            list.arraySize = values.Length;
+            for (int i = 0; i < values.Length; i++) list.GetArrayElementAtIndex(i).objectReferenceValue = values[i];
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        /// <summary>The Warden model replaces the capsule's renderer; WardenAnimator moves its parts.</summary>
+        private static void AddWarden(GameObject player, PlayerController controller, GrappleHook hook)
+        {
+            GameObject warden = InstantiateModel("Warden", player.transform);
+            if (warden == null) return;
+            warden.name = "Warden";
+            warden.transform.localPosition = new Vector3(0f, -1f, 0f);   // capsule centre to feet
+            Object.DestroyImmediate(player.GetComponent<MeshRenderer>());
+            Object.DestroyImmediate(player.GetComponent<MeshFilter>());
+            var animator = warden.AddComponent<WardenAnimator>();
+            SetRef(animator, "controller", controller);
+            SetRef(animator, "hook", hook);
+            SetRef(animator, "hookArm", EnemyPrefabs.FindDeep(warden.transform, "Arm_R"));
+            SetRef(animator, "otherArm", EnemyPrefabs.FindDeep(warden.transform, "Arm_L"));
+            SetRef(animator, "legLeft", EnemyPrefabs.FindDeep(warden.transform, "Leg_L"));
+            SetRef(animator, "legRight", EnemyPrefabs.FindDeep(warden.transform, "Leg_R"));
+            SetRef(animator, "cape", EnemyPrefabs.FindDeep(warden.transform, "Cape"));
+            SetRef(animator, "head", EnemyPrefabs.FindDeep(warden.transform, "Head"));
         }
 
         private static Pickup GetOrCreatePickup(string name, PickupKind kind, float size)
         {
             string path = $"{Root}/Prefabs/Items/{name}.prefab";
-            if (AssetDatabase.LoadAssetAtPath<GameObject>(path) == null)
-            {
-                bool gem = kind == PickupKind.XP;
-                var root = new GameObject(name);
-                GameObject visual = Part(root.transform, "Visual", gem ? PrimitiveType.Cube : PrimitiveType.Cylinder, Vector3.zero,
-                    gem ? Vector3.one * size : new Vector3(size, 0.06f, size), Mat(gem ? "M_XPGem" : "M_Gold"),
-                    gem ? new Vector3(45f, 0f, 45f) : new Vector3(90f, 0f, 0f));
-                visual.GetComponent<Renderer>().shadowCastingMode = ShadowCastingMode.Off;
-                var pickup = root.AddComponent<Pickup>();
-                SetEnum(pickup, "kind", (int)kind);
-                SavePrefab(root, path);
-            }
-            return AssetDatabase.LoadAssetAtPath<GameObject>(path).GetComponent<Pickup>();
+            bool gem = kind == PickupKind.XP;
+            var root = new GameObject(name);
+            GameObject visual = InstantiateModel(gem ? "XPGem" : "Coin", root.transform);
+            if (visual != null) visual.transform.localScale = Vector3.one * (gem ? size * 2f : size * 2.2f);
+            else visual = Part(root.transform, "Visual", gem ? PrimitiveType.Cube : PrimitiveType.Cylinder, Vector3.zero,
+                gem ? Vector3.one * size : new Vector3(size, 0.06f, size), Mat(gem ? "M_XPGem" : "M_Gold"),
+                gem ? new Vector3(45f, 0f, 45f) : new Vector3(90f, 0f, 0f));
+            foreach (Renderer r in visual.GetComponentsInChildren<Renderer>()) r.shadowCastingMode = ShadowCastingMode.Off;
+            var pickup = root.AddComponent<Pickup>();
+            SetEnum(pickup, "kind", (int)kind);
+            return SavePrefab(root, path).GetComponent<Pickup>();
         }
 
         private static void ImportTmpEssentials()
