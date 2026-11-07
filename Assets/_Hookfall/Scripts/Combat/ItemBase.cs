@@ -1,6 +1,6 @@
-// Hookfall - base class for the six auto-attack items: cooldown, level, damage (GDD 4.5).
-// AI disclosure: written with Claude (Anthropic) on 2026-11-04 as part of the midterm project skeleton.
-// Prompts and changes are recorded in Docs/PromptLog.md.
+// Hookfall - base class for the six auto-attack items: cooldown, level, damage, lore (GDD 4.5).
+// AI disclosure: written with Claude (Anthropic) on 2026-11-04 as part of the midterm project skeleton,
+// extended on 2026-11-07 (lore, level text, chest levels). Prompts and changes are recorded in Docs/PromptLog.md.
 using Hookfall.Player;
 using UnityEngine;
 
@@ -11,6 +11,7 @@ namespace Hookfall.Combat
         public const int MaxLevel = 5;
 
         [SerializeField] private string displayName = "Item";
+        [SerializeField, TextArea] private string lore = "";
         [SerializeField] private float baseDamage = 10f;
         [SerializeField] private float cooldown = 0.5f;
         [SerializeField, Range(1, MaxLevel)] private int level = 1;
@@ -20,9 +21,12 @@ namespace Hookfall.Combat
         protected PlayerStats Stats { get; private set; }
 
         public string DisplayName => displayName;
+        public string Lore => lore;
         public int Level => level;
-        public float Damage => baseDamage * (Stats != null ? Stats.DamageMultiplier : 1f);
-        private float EffectiveCooldown => cooldown / (Stats != null ? Mathf.Max(0.1f, Stats.AttackSpeedMultiplier) : 1f);
+        public bool IsMaxed => level >= MaxLevel;
+        public virtual float Damage => baseDamage * (Stats != null ? Stats.DamageMultiplier : 1f);
+        protected float BaseDamage => baseDamage;
+        protected float EffectiveCooldown => cooldown / (Stats != null ? Mathf.Max(0.1f, Stats.AttackSpeedMultiplier) : 1f);
 
         protected virtual void Awake() => Stats = GetComponentInParent<PlayerStats>();
 
@@ -36,12 +40,18 @@ namespace Hookfall.Combat
             Attack();
         }
 
-        public void LevelUp()
+        public void LevelUp() => SetLevel(level + 1);
+
+        public void SetLevel(int newLevel)
         {
-            if (level >= MaxLevel) return;
-            level++;
+            newLevel = Mathf.Clamp(newLevel, 1, MaxLevel);
+            if (newLevel == level) return;
+            level = newLevel;
             OnLevelChanged();
         }
+
+        /// <summary>Text for the level-up card, e.g. "2 → 3 blades".</summary>
+        public abstract string DescribeNextLevel();
 
         /// <summary>Show or hide the item's visuals when combat turns on or off.</summary>
         public virtual void SetActiveVisuals(bool active) { }

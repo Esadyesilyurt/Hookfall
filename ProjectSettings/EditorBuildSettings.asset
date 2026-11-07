@@ -6,6 +6,9 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
+    path: Assets/_Hookfall/Scenes/MainMenu.unity
+    guid: d1e4df6464b1c2448b7367c4064493e7
+  - enabled: 1
     path: Assets/_Hookfall/Scenes/Arena.unity
     guid: 82e0026a3791a1d43bdb218a005a9a25
   - enabled: 1

@@ -1,7 +1,10 @@
-// Hookfall - level-up rewards: an owned item level or a stat (GDD 4.6, 4.7).
-// Placeholder: picks a random stat automatically. The 3-card choice screen comes in Week 10.
-// AI disclosure: written with Claude (Anthropic) on 2026-11-04 as part of the midterm project skeleton.
-// Prompts and changes are recorded in Docs/PromptLog.md.
+// Hookfall - level-up: pauses the game and offers 3 random cards, each a level for an owned item or a stat (GDD 4.6, 4.7).
+// AI disclosure: written with Claude (Anthropic) on 2026-11-04 as part of the midterm project skeleton,
+// rewritten on 2026-11-07 for the 3-card choice. Prompts and changes are recorded in Docs/PromptLog.md.
+using System;
+using System.Collections.Generic;
+using Hookfall.Combat;
+using Hookfall.Core;
 using Hookfall.Player;
 using UnityEngine;
 
@@ -10,17 +13,27 @@ namespace Hookfall.Progression
     [RequireComponent(typeof(XPSystem), typeof(PlayerStats))]
     public class LevelUpSystem : MonoBehaviour
     {
+        [SerializeField] private int choices = 3;
+
         private XPSystem xp;
         private PlayerStats stats;
-        private GrappleHook hook;
+        private CombatSystem combat;
+        private int pendingLevels;
+        private readonly List<LevelUpOption> pool = new List<LevelUpOption>();
+        private readonly List<LevelUpOption> offer = new List<LevelUpOption>();
 
-        public string LastReward { get; private set; } = "";
+        public IReadOnlyList<LevelUpOption> Offer => offer;
+        public int PendingLevels => pendingLevels;
+
+        /// <summary>Raised when a new set of cards is ready to show.</summary>
+        public event Action OfferReady;
+        public event Action<LevelUpOption> Picked;
 
         private void Awake()
         {
             xp = GetComponent<XPSystem>();
             stats = GetComponent<PlayerStats>();
-            hook = GetComponent<GrappleHook>();
+            combat = GetComponent<CombatSystem>();
         }
 
         private void OnEnable() => xp.LeveledUp += OnLeveledUp;
@@ -28,19 +41,55 @@ namespace Hookfall.Progression
 
         private void OnLeveledUp(int newLevel)
         {
-            // TODO (Week 10): pause and offer 3 cards (item levels and stats) instead of a random stat.
-            switch (Random.Range(0, 5))
+            pendingLevels++;
+            TryShowNext();
+        }
+
+        private void Update()
+        {
+            // A level gained while another screen was open waits here until the game runs again.
+            if (pendingLevels > 0 && offer.Count == 0) TryShowNext();
+        }
+
+        private void TryShowNext()
+        {
+            if (offer.Count > 0 || pendingLevels == 0) return;
+            GameManager gm = GameManager.Instance;
+            if (gm != null && !gm.OpenModal(RunState.LevelUp)) return;
+
+            BuildOffer();
+            OfferReady?.Invoke();
+        }
+
+        private void BuildOffer()
+        {
+            pool.Clear();
+            foreach (StatType stat in Enum.GetValues(typeof(StatType))) pool.Add(new LevelUpOption(stat));
+            if (combat != null)
+                foreach (ItemBase item in combat.Items)
+                    if (item.Level < ItemBase.MaxLevel) pool.Add(new LevelUpOption(item));
+
+            offer.Clear();
+            for (int i = 0; i < choices && pool.Count > 0; i++)
             {
-                case 0: stats.AddMaxHealth(20f); LastReward = "+20 max health"; break;
-                case 1: stats.AddArmor(1f); LastReward = "+1 armor"; break;
-                case 2: stats.AddDamagePercent(10f); LastReward = "+10% damage"; break;
-                case 3: stats.AddAttackSpeedPercent(8f); LastReward = "+8% attack speed"; break;
-                default:
-                    if (hook != null) { hook.AddRange(5f); LastReward = "+5 m hook range"; }
-                    else { stats.AddRegen(0.5f); LastReward = "+0.5 health regen"; }
-                    break;
+                int index = UnityEngine.Random.Range(0, pool.Count);
+                offer.Add(pool[index]);
+                pool.RemoveAt(index);
             }
-            Debug.Log($"[Hookfall] Level {newLevel}: {LastReward}");
+        }
+
+        public void Pick(int index)
+        {
+            if (index < 0 || index >= offer.Count) return;
+            LevelUpOption option = offer[index];
+            if (option.IsItem) option.Item.LevelUp();
+            else stats.Apply(option.Stat);
+
+            offer.Clear();
+            pendingLevels--;
+            Picked?.Invoke(option);
+            GameManager.Instance?.CloseModal();
+            TryShowNext();
         }
     }
 }

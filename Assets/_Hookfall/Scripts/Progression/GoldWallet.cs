@@ -8,8 +8,14 @@ namespace Hookfall.Progression
     public class GoldWallet : MonoBehaviour
     {
         public int Gold { get; private set; }
+        public int Earned { get; private set; }
 
-        public void Add(int amount) => Gold += Mathf.Max(0, amount);
+        public void Add(int amount)
+        {
+            amount = Mathf.Max(0, amount);
+            Gold += amount;
+            Earned += amount;
+        }
 
         public bool TrySpend(int amount)
         {
