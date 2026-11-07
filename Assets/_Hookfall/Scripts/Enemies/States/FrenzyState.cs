@@ -17,7 +17,7 @@ namespace Hookfall.Enemies.States
         {
             if (bat.Player.IsAirborne) { bat.ChangeState(bat.Chase); return; }
             if (bat.DistanceToPlayer <= bat.BiteRange) { bat.ChangeState(bat.Bite); return; }
-            bat.SteerTowards(bat.Player.transform.position, bat.MoveSpeed * bat.FrenzySpeedMultiplier, deltaTime);
+            bat.Steer(bat.Player.transform.position, bat.MoveSpeed * bat.FrenzySpeedMultiplier);
         }
     }
 }

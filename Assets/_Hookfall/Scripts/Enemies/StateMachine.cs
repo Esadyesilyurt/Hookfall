@@ -3,14 +3,6 @@
 // Prompts and changes are recorded in Docs/PromptLog.md.
 namespace Hookfall.Enemies
 {
-    public interface IEnemyState
-    {
-        string Name { get; }
-        void Enter();
-        void Tick(float deltaTime);
-        void Exit();
-    }
-
     public class StateMachine
     {
         public IEnemyState Current { get; private set; }
@@ -22,6 +14,9 @@ namespace Hookfall.Enemies
             Current = next;
             Current?.Enter();
         }
+
+        /// <summary>Drops the current state without calling Exit (used when a pooled enemy respawns).</summary>
+        public void Reset() => Current = null;
 
         public void Tick(float deltaTime) => Current?.Tick(deltaTime);
     }
