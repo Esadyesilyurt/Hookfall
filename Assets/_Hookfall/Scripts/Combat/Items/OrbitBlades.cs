@@ -1,5 +1,6 @@
 // Hookfall - starting item: blades circle the player and cut what they touch (GDD 4.5).
-// AI disclosure: written with Claude (Anthropic) on 2026-11-04 as part of the midterm project skeleton.
+// AI disclosure: written with Claude (Anthropic) on 2026-11-04 as part of the midterm project skeleton,
+// changed on 2026-11-07 to use the enemy list instead of physics.
 // Prompts and changes are recorded in Docs/PromptLog.md.
 using System.Collections.Generic;
 using Hookfall.Enemies;
@@ -15,7 +16,7 @@ namespace Hookfall.Combat.Items
         [SerializeField] private Material bladeMaterial;
 
         private readonly List<Transform> blades = new List<Transform>();
-        private readonly HashSet<EnemyBase> hitThisAttack = new HashSet<EnemyBase>();
+        private readonly List<EnemyBase> hits = new List<EnemyBase>();
         private Transform pivot;
 
         // Level 1 has 2 blades; each level adds one (GDD: +1 blade per level).
@@ -39,14 +40,9 @@ namespace Hookfall.Combat.Items
             // The blades sweep the whole ring several times per second, so every enemy inside the ring
             // counts as touched. Checking only the blades' exact positions twice a second missed most hits
             // (found in the first Unity test, see Docs/PromptLog.md #14).
-            hitThisAttack.Clear();
-            Collider[] hits = Physics.OverlapSphere(transform.position, orbitRadius + bladeHitRadius, ~0,
-                QueryTriggerInteraction.Collide);
-            foreach (Collider hit in hits)
-            {
-                EnemyBase enemy = hit.GetComponentInParent<EnemyBase>();
-                if (enemy != null && hitThisAttack.Add(enemy)) enemy.TakeDamage(Damage);
-            }
+            // Each attack hits every enemy in the ring once, so an enemy is hit at most every cooldown (0.5 s).
+            EnemyQuery.InRadius(transform.position, orbitRadius + bladeHitRadius, hits);
+            foreach (EnemyBase enemy in hits) enemy.TakeDamage(Damage);
         }
 
         public override void SetActiveVisuals(bool active)

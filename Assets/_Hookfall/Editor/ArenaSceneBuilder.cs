@@ -1,7 +1,7 @@
 // Hookfall - editor tool: menu "Hookfall > Build All Scenes" creates the MainMenu and Arena scenes,
 // their materials and prefabs, and wires every reference. "Build Arena Scene" rebuilds only the arena.
 // AI disclosure: written with Claude (Anthropic) on 2026-11-04 as part of the midterm project skeleton,
-// extended on 2026-11-07 (Cinemachine, uGUI screens, pickups, main menu). Prompts and changes are recorded in Docs/PromptLog.md.
+// extended on 2026-11-07 (Cinemachine, uGUI screens, pickups, main menu, all enemies). Prompts and changes are recorded in Docs/PromptLog.md.
 using System.Collections.Generic;
 using Hookfall.Combat;
 using Hookfall.Combat.Items;
@@ -17,12 +17,12 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.Rendering;
+using static Hookfall.EditorTools.BuildUtil;
 
 namespace Hookfall.EditorTools
 {
     public static class ArenaSceneBuilder
     {
-        private const string Root = "Assets/_Hookfall";
         private const string ArenaPath = Root + "/Scenes/Arena.unity";
         private const string MenuPath = Root + "/Scenes/MainMenu.unity";
         private const string TmpEssentials = "Packages/com.unity.ugui/Package Resources/TMP Essential Resources.unitypackage";
@@ -84,7 +84,11 @@ namespace Hookfall.EditorTools
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             AddLightAndSky();
 
-            Bat batPrefab = GetOrCreateBatPrefab(Mat("M_Bat"));
+            // After NewScene: it unloads assets loaded before it, which would leave these references empty.
+            Bat batPrefab = EnemyPrefabs.Bat();
+            Wyvern wyvernPrefab = EnemyPrefabs.Wyvern();
+            Golem golemPrefab = EnemyPrefabs.Golem();
+            Boulder boulderPrefab = EnemyPrefabs.Boulder();
 
             // Player
             GameObject player = GameObject.CreatePrimitive(PrimitiveType.Capsule);
@@ -177,8 +181,12 @@ namespace Hookfall.EditorTools
 
             // Enemies
             var director = new GameObject("EnemyDirector").AddComponent<EnemyDirector>();
-            SetRef(director, "batPrefab", batPrefab);
             SetRef(director, "player", controller);
+            SetRef(director, "islands", generator);
+            SetRef(director, "batPrefab", batPrefab);
+            SetRef(director, "wyvernPrefab", wyvernPrefab);
+            SetRef(director, "golemPrefab", golemPrefab);
+            SetRef(director, "boulderPrefab", boulderPrefab);
 
             // UI
             var hud = new GameObject("HUD").AddComponent<HUD>();
@@ -207,7 +215,7 @@ namespace Hookfall.EditorTools
 
         private static void Prepare()
         {
-            EnsureFolder(Root + "/Art/Materials");
+            EnsureFolder(MaterialsPath);
             EnsureFolder(Root + "/Prefabs/Enemies");
             EnsureFolder(Root + "/Prefabs/Items");
             EnsureFolder(Root + "/Scenes");
@@ -218,10 +226,10 @@ namespace Hookfall.EditorTools
             GetOrCreateMaterial("M_Stone", new Color(0.55f, 0.52f, 0.5f), false);
             GetOrCreateMaterial("M_Tower", new Color(0.72f, 0.7f, 0.66f), false);
             GetOrCreateMaterial("M_Player", new Color(0.2f, 0.75f, 0.8f), false);
-            GetOrCreateMaterial("M_Bat", new Color(0.55f, 0.2f, 0.6f), false);
             GetOrCreateMaterial("M_PlayerGlow", new Color(0.35f, 0.95f, 1f), true);
             GetOrCreateMaterial("M_XPGem", new Color(1f, 0.62f, 0.15f), true);
             GetOrCreateMaterial("M_Gold", new Color(1f, 0.85f, 0.3f), true);
+            EnemyPrefabs.CreateMaterials();
         }
 
         private static void AddLightAndSky()
@@ -256,117 +264,23 @@ namespace Hookfall.EditorTools
             if (AssetDatabase.LoadAssetAtPath<GameObject>(path) == null)
             {
                 bool gem = kind == PickupKind.XP;
-                GameObject temp = GameObject.CreatePrimitive(gem ? PrimitiveType.Cube : PrimitiveType.Cylinder);
-                temp.name = name;
-                Object.DestroyImmediate(temp.GetComponent<Collider>());
-                temp.transform.localScale = gem ? Vector3.one * size : new Vector3(size, 0.06f, size);
-                temp.transform.rotation = gem ? Quaternion.Euler(45f, 0f, 45f) : Quaternion.Euler(90f, 0f, 0f);
-                var renderer = temp.GetComponent<Renderer>();
-                renderer.sharedMaterial = Mat(gem ? "M_XPGem" : "M_Gold");
-                renderer.shadowCastingMode = ShadowCastingMode.Off;
-
                 var root = new GameObject(name);
-                temp.name = "Visual";
-                temp.transform.SetParent(root.transform, true);
+                GameObject visual = Part(root.transform, "Visual", gem ? PrimitiveType.Cube : PrimitiveType.Cylinder, Vector3.zero,
+                    gem ? Vector3.one * size : new Vector3(size, 0.06f, size), Mat(gem ? "M_XPGem" : "M_Gold"),
+                    gem ? new Vector3(45f, 0f, 45f) : new Vector3(90f, 0f, 0f));
+                visual.GetComponent<Renderer>().shadowCastingMode = ShadowCastingMode.Off;
                 var pickup = root.AddComponent<Pickup>();
                 SetEnum(pickup, "kind", (int)kind);
-                PrefabUtility.SaveAsPrefabAsset(root, path);
-                Object.DestroyImmediate(root);
+                SavePrefab(root, path);
             }
             return AssetDatabase.LoadAssetAtPath<GameObject>(path).GetComponent<Pickup>();
         }
-
-        private static Bat GetOrCreateBatPrefab(Material material)
-        {
-            const string path = Root + "/Prefabs/Enemies/PF_Bat.prefab";
-            if (AssetDatabase.LoadAssetAtPath<GameObject>(path) == null)
-            {
-                GameObject temp = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                temp.name = "PF_Bat";
-                temp.transform.localScale = Vector3.one * 0.8f;
-                temp.GetComponent<Collider>().isTrigger = true;   // bats fly through each other and bite by distance
-                temp.GetComponent<Renderer>().sharedMaterial = material;
-                temp.AddComponent<Bat>();
-
-                PrefabUtility.SaveAsPrefabAsset(temp, path);
-                Object.DestroyImmediate(temp);
-                AssetDatabase.SaveAssets();
-                AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport);
-            }
-
-            // Always load the saved asset from disk, so the scene references the real prefab.
-            GameObject asset = AssetDatabase.LoadAssetAtPath<GameObject>(path);
-            Bat bat = asset != null ? asset.GetComponent<Bat>() : null;
-            if (bat == null) Debug.LogError("[Hookfall] Could not load the Bat component from " + path);
-            return bat;
-        }
-
-        // ---------------------------------------------------------------- asset helpers
 
         private static void ImportTmpEssentials()
         {
             if (AssetDatabase.FindAssets("t:TMP_Settings").Length > 0) return;
             AssetDatabase.ImportPackage(TmpEssentials, false);
             AssetDatabase.Refresh();
-        }
-
-        private static Material Mat(string name) => AssetDatabase.LoadAssetAtPath<Material>($"{Root}/Art/Materials/{name}.mat");
-
-        private static Material GetOrCreateMaterial(string name, Color color, bool unlit)
-        {
-            string path = $"{Root}/Art/Materials/{name}.mat";
-            var existing = AssetDatabase.LoadAssetAtPath<Material>(path);
-            if (existing != null) return existing;
-
-            Shader shader = Shader.Find(unlit ? "Universal Render Pipeline/Unlit" : "Universal Render Pipeline/Lit");
-            var material = new Material(shader);
-            material.SetColor("_BaseColor", color);
-            material.enableInstancing = true;
-            AssetDatabase.CreateAsset(material, path);
-            return material;
-        }
-
-        private static void SetRef(Object target, string field, Object value)
-        {
-            var serialized = new SerializedObject(target);
-            SerializedProperty property = serialized.FindProperty(field);
-            if (property == null)
-            {
-                Debug.LogError($"[Hookfall] Field '{field}' not found on {target.GetType().Name}.");
-                return;
-            }
-            property.objectReferenceValue = value;
-            serialized.ApplyModifiedPropertiesWithoutUndo();
-
-            if (value != null && property.objectReferenceValue == null)
-                Debug.LogError($"[Hookfall] Could not assign {value.name} to '{field}' on {target.GetType().Name}.");
-        }
-
-        private static void SetString(Object target, string field, string value)
-        {
-            var serialized = new SerializedObject(target);
-            SerializedProperty property = serialized.FindProperty(field);
-            if (property == null) { Debug.LogError($"[Hookfall] Field '{field}' not found on {target.GetType().Name}."); return; }
-            property.stringValue = value;
-            serialized.ApplyModifiedPropertiesWithoutUndo();
-        }
-
-        private static void SetEnum(Object target, string field, int value)
-        {
-            var serialized = new SerializedObject(target);
-            SerializedProperty property = serialized.FindProperty(field);
-            if (property == null) { Debug.LogError($"[Hookfall] Field '{field}' not found on {target.GetType().Name}."); return; }
-            property.enumValueIndex = value;
-            serialized.ApplyModifiedPropertiesWithoutUndo();
-        }
-
-        private static void EnsureFolder(string path)
-        {
-            if (AssetDatabase.IsValidFolder(path)) return;
-            int slash = path.LastIndexOf('/');
-            string parent = path.Substring(0, slash);
-            EnsureFolder(parent);
-            AssetDatabase.CreateFolder(parent, path.Substring(slash + 1));
         }
 
         private static void SetBuildScenes()

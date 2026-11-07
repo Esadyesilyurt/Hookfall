@@ -22,7 +22,8 @@ namespace Hookfall.Enemies.States
         public void Tick(float deltaTime)
         {
             timer -= deltaTime;
-            if (timer <= 0f) bat.ChangeState(bat.HuntingState);
+            if (timer <= 0f) { bat.ChangeState(bat.HuntingState); return; }
+            bat.Steer(bat.Player.transform.position, bat.MoveSpeed);
         }
     }
 }

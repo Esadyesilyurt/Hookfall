@@ -1,82 +1,329 @@
-// Hookfall - spawns the horde ahead of and around the player and scales difficulty over time (GDD 4.8, 5.1).
-// AI disclosure: written with Claude (Anthropic) on 2026-11-04 as part of the midterm project skeleton.
-// Prompts and changes are recorded in Docs/PromptLog.md.
+// Hookfall - spawns the horde ahead of and around the player, mixes in wyverns and island golems, sends elite waves,
+// scales difficulty over time and pools every enemy (GDD 4.8, 5.1, 5.7).
+// AI disclosure: written with Claude (Anthropic) on 2026-11-04 as part of the midterm project skeleton,
+// rewritten on 2026-11-07 (pooling, wyverns, golems, elites, performance fallback). Prompts and changes are recorded in Docs/PromptLog.md.
+using System;
 using System.Collections.Generic;
 using Hookfall.Core;
 using Hookfall.Player;
+using Hookfall.World;
 using UnityEngine;
+using UnityEngine.Pool;
+using Random = UnityEngine.Random;
 
 namespace Hookfall.Enemies
 {
     public class EnemyDirector : MonoBehaviour
     {
-        [SerializeField] private EnemyBase batPrefab;
         [SerializeField] private PlayerController player;
+        [SerializeField] private IslandGenerator islands;
+        [SerializeField] private EnemyBase batPrefab;
+        [SerializeField] private EnemyBase wyvernPrefab;
+        [SerializeField] private Golem golemPrefab;
+        [SerializeField] private Boulder boulderPrefab;
 
-        [Header("Spawning")]
+        [Header("Spawning (GDD 4.8)")]
         [SerializeField] private float baseSpawnPerSecond = 2f;
         [Tooltip("+15% spawn rate per minute survived.")]
         [SerializeField] private float spawnGrowthPerMinute = 0.15f;
         [SerializeField] private int maxAlive = 300;
+        [Tooltip("Distance for spawns around the player, placed out of camera view.")]
         [SerializeField] private float spawnDistance = 60f;
+        [Tooltip("Distance for spawns ahead of the flight path; they come out of the haze.")]
+        [SerializeField] private float aheadSpawnDistance = 90f;
         [Tooltip("Share of spawns placed ahead of the player's flight path.")]
         [SerializeField, Range(0f, 1f)] private float aheadSpawnShare = 0.6f;
+        [Tooltip("Bats spawn in flocks of this many (min, max).")]
+        [SerializeField] private Vector2Int flockSize = new Vector2Int(4, 8);
+        [SerializeField] private float flockSpread = 4f;
+
+        [Header("Wyverns")]
+        [SerializeField] private float wyvernFromMinute = 1f;
+        [SerializeField] private float wyvernShareStart = 0.05f;
+        [SerializeField] private float wyvernSharePerMinute = 0.03f;
+        [SerializeField] private float wyvernShareMax = 0.2f;
+
+        [Header("Golems (GDD 4.8: from minute 2)")]
+        [SerializeField] private float golemFromMinute = 2f;
+        [SerializeField] private float golemInterval = 15f;
+        [SerializeField] private int golemsMaxBase = 2;
+        [SerializeField] private float golemsPerMinute = 1f;
+        [SerializeField] private float golemIslandMaxDistance = 110f;
+
+        [Header("Elite waves (GDD 4.8: every 5 minutes)")]
+        [SerializeField] private float eliteInterval = 300f;
+        [SerializeField] private int eliteBats = 15;
+        [SerializeField] private int eliteWyverns = 3;
+        [SerializeField] private int eliteGolems = 1;
+        [SerializeField] private float eliteHealthMultiplier = 3f;
+        [SerializeField] private float eliteDamageMultiplier = 1.5f;
+        [SerializeField] private float eliteScale = 1.4f;
+        [SerializeField] private float eliteRewardMultiplier = 3f;
+        [SerializeField, ColorUsage(false, true)] private Color eliteGlow = new Color(0.9f, 0.2f, 0.85f);
 
         [Header("Scaling")]
         [SerializeField] private float healthGrowthPerMinute = 0.15f;
         [SerializeField] private float damageGrowthPerMinute = 0.08f;
 
-        private readonly List<EnemyBase> alive = new List<EnemyBase>();
-        private float spawnBudget;
+        [Header("Performance fallback (GDD 5.7)")]
+        [SerializeField] private float minFps = 50f;
 
-        public int AliveCount => alive.Count;
+        private readonly Dictionary<EnemyBase, ObjectPool<EnemyBase>> pools = new Dictionary<EnemyBase, ObjectPool<EnemyBase>>();
+        private ObjectPool<Boulder> boulders;
+        private PlayerStats playerStats;
+        private float spawnBudget;
+        private int flockLeft;
+        private Vector3 flockCentre;
+        private float golemTimer;
+        private float nextEliteTime;
+        private float smoothedFps = 60f;
+
+        public static bool LowPerformance { get; private set; }
+        public static event Action<EnemyBase, float> Hit;
+        public static event Action<EnemyBase, bool> Died;
+        public static event Action<Golem> Slammed;
+        public static event Action<Vector3> BoulderBroke;
+        public static event Action EliteWave;
+
+        public int AliveCount => EnemyBase.Active.Count;
+        public float AbyssHeight => islands != null ? islands.AbyssKillHeight : -70f;
 
         private float MinutesSurvived =>
             (GameManager.Instance != null ? GameManager.Instance.RunTime : Time.timeSinceLevelLoad) / 60f;
 
+        public static void RaiseHit(EnemyBase enemy, float damage) => Hit?.Invoke(enemy, damage);
+        public static void RaiseSlam(Golem golem) => Slammed?.Invoke(golem);
+
+        private void Awake()
+        {
+            EnemyBase.Active.Clear();
+            LowPerformance = false;
+            nextEliteTime = eliteInterval;
+            if (player != null) playerStats = player.GetComponent<PlayerStats>();
+            if (batPrefab == null) Debug.LogWarning("[Hookfall] EnemyDirector has no Bat prefab; no enemies will spawn.");
+            boulders = new ObjectPool<Boulder>(
+                () => Instantiate(boulderPrefab, transform),
+                b => b.gameObject.SetActive(true),
+                b => b.gameObject.SetActive(false),
+                b => Destroy(b.gameObject), false, 16, 200);
+        }
+
         private void Update()
         {
-            if (player == null || batPrefab == null) return;
+            if (player == null || batPrefab == null || Time.timeScale <= 0f) return;
+
+            smoothedFps = Mathf.Lerp(smoothedFps, 1f / Mathf.Max(0.0001f, Time.unscaledDeltaTime), 0.05f);
+            LowPerformance = smoothedFps < minFps;
 
             float minutes = MinutesSurvived;
-            float spawnRate = baseSpawnPerSecond * Mathf.Pow(1f + spawnGrowthPerMinute, minutes);
-            spawnBudget += spawnRate * Time.deltaTime;
+            bool full = AliveCount >= maxAlive;
+            if (!full && !LowPerformance)
+            {
+                float spawnRate = baseSpawnPerSecond * Mathf.Pow(1f + spawnGrowthPerMinute, minutes);
+                spawnBudget += spawnRate * Time.deltaTime;
+            }
+            else spawnBudget = 0f;   // fallback: cap reached or frame rate low, pause spawning
 
-            while (spawnBudget >= 1f && alive.Count < maxAlive)
+            while (spawnBudget >= 1f && AliveCount < maxAlive)
             {
                 spawnBudget -= 1f;
-                Spawn(batPrefab, minutes);
+                if (wyvernPrefab != null && Random.value < WyvernShare(minutes)) SpawnFlyer(wyvernPrefab, PickSpawnPoint(), minutes);
+                else SpawnFlockBat(minutes);
             }
-            if (alive.Count >= maxAlive) spawnBudget = 0f;   // fallback: cap reached, pause spawning
+
+            UpdateGolems(minutes);
+
+            float runTime = minutes * 60f;
+            if (runTime >= nextEliteTime)
+            {
+                nextEliteTime += eliteInterval;
+                SpawnEliteWave(minutes);
+            }
         }
 
-        private void Spawn(EnemyBase prefab, float minutes)
+        private float WyvernShare(float minutes) =>
+            minutes < wyvernFromMinute ? 0f : Mathf.Min(wyvernShareMax, wyvernShareStart + wyvernSharePerMinute * (minutes - wyvernFromMinute));
+
+        private void SpawnFlockBat(float minutes)
         {
-            // TODO (Week 11): object pooling instead of Instantiate/Destroy.
-            EnemyBase enemy = Instantiate(prefab, PickSpawnPoint(), Quaternion.identity, transform);
-            enemy.Init(this, player,
-                1f + healthGrowthPerMinute * minutes,
-                1f + damageGrowthPerMinute * minutes);
-            alive.Add(enemy);
+            if (flockLeft <= 0)
+            {
+                flockLeft = Random.Range(flockSize.x, flockSize.y + 1);
+                flockCentre = PickSpawnPoint();
+            }
+            flockLeft--;
+            SpawnFlyer(batPrefab, flockCentre + Random.insideUnitSphere * flockSpread, minutes);
         }
 
-        /// <summary>Ahead of the player's flight path most of the time, otherwise anywhere around them.</summary>
+        private EnemyBase SpawnFlyer(EnemyBase prefab, Vector3 position, float minutes)
+        {
+            EnemyBase enemy = PoolFor(prefab).Get();
+            enemy.transform.SetPositionAndRotation(position, Quaternion.identity);
+            enemy.Init(this, player, 1f + healthGrowthPerMinute * minutes, 1f + damageGrowthPerMinute * minutes);
+            return enemy;
+        }
+
+        // ---------- Golems ----------
+
+        private void UpdateGolems(float minutes)
+        {
+            if (golemPrefab == null || minutes < golemFromMinute) return;
+            golemTimer -= Time.deltaTime;
+            if (golemTimer > 0f) return;
+            golemTimer = golemInterval;
+
+            int golems = 0;
+            foreach (EnemyBase e in EnemyBase.Active) if (e is Golem) golems++;
+            if (golems < golemsMaxBase + Mathf.FloorToInt(golemsPerMinute * (minutes - golemFromMinute)) && AliveCount < maxAlive)
+                SpawnGolem(minutes);
+        }
+
+        private Golem SpawnGolem(float minutes)
+        {
+            Island island = FindFreeIsland();
+            if (island == null) return null;
+            var golem = (Golem)PoolFor(golemPrefab).Get();
+            PlaceGolem(golem, island);
+            golem.Init(this, player, 1f + healthGrowthPerMinute * minutes, 1f + damageGrowthPerMinute * minutes);
+            return golem;
+        }
+
+        private void PlaceGolem(Golem golem, Island island)
+        {
+            if (golem.HomeIsland != null && golem.HomeIsland.Occupant == golem) golem.HomeIsland.Occupant = null;
+            Vector2 offset = Random.insideUnitCircle * island.Width * 0.2f;
+            golem.transform.SetPositionAndRotation(island.Top + new Vector3(offset.x, 0f, offset.y), Quaternion.identity);
+            golem.HomeIsland = island;
+            island.Occupant = golem;
+        }
+
+        private Island FindFreeIsland()
+        {
+            Island best = null;
+            float bestScore = float.MaxValue;
+            Vector3 p = player.transform.position;
+            foreach (Island island in Island.All)
+            {
+                if (island.Kind != IslandKind.Inner || island.Occupant != null) continue;
+                if (player.CurrentIsland == island) continue;
+                float d = Vector3.Distance(p, island.Top);
+                if (d > golemIslandMaxDistance) continue;
+                float score = d + Random.Range(0f, 40f);   // nearby, but not always the nearest
+                if (score < bestScore) { bestScore = score; best = island; }
+            }
+            return best;
+        }
+
+        // ---------- Elite waves ----------
+
+        private void SpawnEliteWave(float minutes)
+        {
+            Vector3 centre = PickSpawnPoint();
+            for (int i = 0; i < eliteBats && AliveCount < maxAlive; i++)
+                MakeElite(SpawnFlyer(batPrefab, centre + Random.insideUnitSphere * flockSpread * 1.5f, minutes));
+            if (wyvernPrefab != null)
+                for (int i = 0; i < eliteWyverns && AliveCount < maxAlive; i++)
+                    MakeElite(SpawnFlyer(wyvernPrefab, PickSpawnPoint(), minutes));
+            if (minutes >= golemFromMinute)
+                for (int i = 0; i < eliteGolems; i++)
+                {
+                    Golem golem = SpawnGolem(minutes);
+                    if (golem != null) MakeElite(golem);
+                }
+            EliteWave?.Invoke();
+        }
+
+        private void MakeElite(EnemyBase enemy) =>
+            enemy.MakeElite(eliteHealthMultiplier, eliteDamageMultiplier, eliteScale, eliteRewardMultiplier, eliteGlow);
+
+        // ---------- Placement and fallbacks ----------
+
+        /// <summary>Ahead of the player's flight path most of the time, otherwise around them and out of camera view.</summary>
         private Vector3 PickSpawnPoint()
         {
             Vector3 velocity = player.Body.linearVelocity;
-            Vector3 direction;
+            Vector3 origin = player.transform.position;
 
             if (velocity.sqrMagnitude > 25f && Random.value < aheadSpawnShare)
-                direction = Quaternion.AngleAxis(Random.Range(-60f, 60f), Vector3.up) * velocity.normalized;
-            else
-                direction = Random.onUnitSphere;
+            {
+                Vector3 ahead = Quaternion.AngleAxis(Random.Range(-60f, 60f), Vector3.up) * velocity.normalized;
+                ahead.y = Mathf.Clamp(ahead.y, -0.3f, 0.5f);
+                return origin + ahead.normalized * aheadSpawnDistance;
+            }
 
-            direction.y = Mathf.Clamp(direction.y, -0.3f, 0.5f);
-            return player.transform.position + direction.normalized * spawnDistance;
+            Camera cam = Camera.main;
+            Vector3 point = origin;
+            for (int attempt = 0; attempt < 8; attempt++)
+            {
+                Vector3 direction = Random.onUnitSphere;
+                direction.y = Mathf.Clamp(direction.y, -0.3f, 0.5f);
+                point = origin + direction.normalized * spawnDistance;
+                if (cam == null) break;
+                Vector3 v = cam.WorldToViewportPoint(point);
+                bool visible = v.z > 0f && v.x > -0.05f && v.x < 1.05f && v.y > -0.05f && v.y < 1.05f;
+                if (!visible) break;
+            }
+            return point;
         }
 
-        public void Relocate(EnemyBase enemy) => enemy.transform.position = PickSpawnPoint();
+        public void Relocate(EnemyBase enemy)
+        {
+            if (enemy is Golem golem)
+            {
+                Island island = FindFreeIsland();
+                if (island != null) PlaceGolem(golem, island);
+                else enemy.Die(false);
+                return;
+            }
+            enemy.transform.position = PickSpawnPoint();
+        }
 
-        public void OnEnemyRemoved(EnemyBase enemy) => alive.Remove(enemy);
+        /// <summary>Called by EnemyBase.Die: returns the enemy to its pool.</summary>
+        public void Release(EnemyBase enemy, bool killed)
+        {
+            Died?.Invoke(enemy, killed);
+            if (enemy.SourcePrefab != null && pools.TryGetValue(enemy.SourcePrefab, out ObjectPool<EnemyBase> pool)) pool.Release(enemy);
+            else Destroy(enemy.gameObject);
+        }
+
+        public void SpawnBoulder(Vector3 position, Vector3 velocity, float damage)
+        {
+            if (boulderPrefab == null) return;
+            boulders.Get().Launch(this, playerStats, position, velocity, damage);
+        }
+
+        public void ReleaseBoulder(Boulder boulder, bool broke)
+        {
+            if (broke) BoulderBroke?.Invoke(boulder.transform.position);
+            boulders.Release(boulder);
+        }
+
+        private ObjectPool<EnemyBase> PoolFor(EnemyBase prefab)
+        {
+            if (pools.TryGetValue(prefab, out ObjectPool<EnemyBase> pool)) return pool;
+            pool = new ObjectPool<EnemyBase>(
+                () =>
+                {
+                    EnemyBase e = Instantiate(prefab, transform);
+                    e.SourcePrefab = prefab;
+                    return e;
+                },
+                e => e.gameObject.SetActive(true),
+                e => e.gameObject.SetActive(false),
+                e => Destroy(e.gameObject),
+                false, 64, maxAlive + 50);
+            pools[prefab] = pool;
+            return pool;
+        }
+
+        private void OnDestroy()
+        {
+            EnemyBase.Active.Clear();
+            Hit = null;
+            Died = null;
+            Slammed = null;
+            BoulderBroke = null;
+            EliteWave = null;
+        }
     }
 }
