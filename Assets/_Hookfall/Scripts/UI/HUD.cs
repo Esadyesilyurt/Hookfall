@@ -38,7 +38,8 @@ namespace Hookfall.UI
         private readonly Image[] slotIcons = new Image[CombatSystem.MaxItems];
         private readonly Image[] slotFrames = new Image[CombatSystem.MaxItems];
         private readonly RectTransform[] slotPips = new RectTransform[CombatSystem.MaxItems];
-        private readonly int[] slotShown = new int[CombatSystem.MaxItems];
+        private readonly ItemBase[] slotItem = new ItemBase[CombatSystem.MaxItems];
+        private readonly int[] slotLevel = new int[CombatSystem.MaxItems];
         private float trail = 1f;
         private int shownLevel = 1;
         private float levelFlash, attackPulse;
@@ -136,7 +137,7 @@ namespace Hookfall.UI
                 RectTransform iconRect = UIFactory.Centre(slot, "Icon", new Vector2(0f, 6f), new Vector2(60f, 60f));
                 slotIcons[i] = UIFactory.Image(iconRect, Color.white);
                 slotIcons[i].preserveAspect = true;
-                slotShown[i] = -1;
+                slotLevel[i] = -1;
             }
 
             // Bottom right: control hints.
@@ -254,9 +255,10 @@ namespace Hookfall.UI
             for (int i = 0; i < CombatSystem.MaxItems; i++)
             {
                 ItemBase item = combat != null && i < combat.Items.Count ? combat.Items[i] : null;
-                int key = item != null ? item.GetInstanceID() * 8 + item.Level : 0;
-                if (slotShown[i] == key) continue;
-                slotShown[i] = key;
+                int level = item != null ? item.Level : 0;
+                if (slotItem[i] == item && slotLevel[i] == level) continue;   // redraw only when the slot changes
+                slotItem[i] = item;
+                slotLevel[i] = level;
                 slotIcons[i].sprite = UISkin.Icon(item);
                 slotIcons[i].enabled = item != null && slotIcons[i].sprite != null;
                 slotFrames[i].color = item != null ? UITheme.PanelLight : new Color(0.15f, 0.19f, 0.26f, 0.7f);

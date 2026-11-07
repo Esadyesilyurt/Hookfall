@@ -31,15 +31,15 @@ Read this first in every session. The full design is in the GDD (Claude Docs art
 | --- | --- |
 | Core | `GameManager` (run state, modal screens, death, record, scene changes), `RunState`, `GameSettings`, `RunRecord`, `Layers` |
 | Player | `PlayerController` (`IsAirborne`, `CurrentIsland`), `GrappleHook` (120 m/s hook head), `PlayerStats` + `StatType` (11 stats), `CameraRig` (drives the Cinemachine orbit camera), `WardenAnimator` (procedural animation of the Warden model) |
-| Combat | `CombatSystem` (airborne rule, chest rewards), `ItemBase`, `ProjectileItem`, `Projectile`, `EnemyQuery`, `Rarity`, `ChestReward`, `Items/` (all 6 items) |
+| Combat | `CombatSystem` (airborne rule, chest rewards), `ItemBase`, `ProjectileItem`, `Projectile`, `EnemyQuery`, `Rarity`, `ChestReward`, `Items/` (the 6 attack items and `TetherCoil`, the Zip item) |
 | Enemies | `StateMachine`, `IEnemyState`, `EnemyBase` (steering, think rate, pooling, glow, fallbacks), `Bat`, `Wyvern`, `Golem`, `Boulder`, `States/`, `EnemyDirector` (spawns, mix, golems, elite waves, pools) |
-| World | `Island`, `IslandKind`, `IslandGenerator` (models, props, clouds), `Chest`, `ChestSpawner`, `TowerCache`, `GravityZone` |
+| World | `Island`, `IslandKind`, `IslandGenerator` (height bands, reachability, models, props, clouds), `Chest`, `ChestSpawner`, `TowerCache`, `GravityZone`, `StormWall` (arena edge, wind push-back), `Backdrop` (far scenery) |
 | Progression | `XPSystem`, `GoldWallet`, `LevelUpSystem` (3 cards), `LevelUpOption`, `Pickup`, `PickupKind`, `PickupSpawner` |
-| UI | uGUI + TextMeshPro built from code by `UIFactory`: `HUD`, `LevelUpUI`, `ChestResultUI`, `PauseMenuUI`, `RunEndUI`, `SettingsPanel`, `MainMenuUI`, `UITheme` |
-| VFX, Audio | `VfxManager` (one world-space particle system for all bursts), `AudioManager` + `SoundId` (licensed clips wired by file name) |
-| Editor | Menu **Hookfall > Build All Scenes** (`ArenaSceneBuilder`) rebuilds MainMenu and Arena; `EnemyPrefabs`, `ItemPrefabs`, `ModelSetup` (**Import Models**), `ToonSetup` (**Setup Toon Rendering**), `AudioWiring`, `BuildUtil` |
-| Tests | `Tests/PlayMode/SceneSmokeTests` (scenes run clean, kills happen, every enemy and item, tower cache), `ScreenshotCapture` (runs only when `HOOKFALL_SHOT_DIR` is set) |
-| Tools | `Tools/Blender/hookfall_models.py` makes every model; `Tools/ShaderGraph/make_graphs.js` makes `SG_Toon` and `SG_Outline` from Unity's samples |
+| UI | uGUI + TextMeshPro built from code by `UIFactory` with the generated skin (`UISkin`, `UIPop`, `UIHover`): `HUD`, `LevelUpUI`, `ChestResultUI`, `PauseMenuUI`, `RunEndUI`, `SettingsPanel`, `MainMenuUI`, `UITheme` |
+| VFX, Audio, Feel | `VfxManager` (one world-space particle system for all bursts), `AudioManager` + `SoundId` (clips wired by file name), `FeelDirector` (shake, hit-stop, FOV kicks, post-FX pulses), `DamageNumbers` |
+| Editor | Menu **Hookfall > Build All Scenes** (`ArenaSceneBuilder`) rebuilds MainMenu and Arena; `EnemyPrefabs`, `ItemPrefabs`, `ModelSetup` (**Import Models**), `ToonSetup` (**Setup Toon Rendering**), `UISetup` (**Build UI Skin**), `FeelSetup`, `AudioWiring`, `RecordTools` (**Clear Best Run**), `BuildUtil` |
+| Tests | `Tests/PlayMode/SceneSmokeTests` (scenes run clean, kills happen, every enemy and item, tower cache), `PerformanceTests` (300 enemies, asserts 60 FPS), `ScreenshotCapture` (runs only when `HOOKFALL_SHOT_DIR` is set), `RecordGuard` (tests never touch the saved best run) |
+| Tools | `Tools/Blender/hookfall_models.py` (+ `hookfall_models_v2.py`) makes every model and the UI icons; `Tools/ShaderGraph/make_graphs.js` makes `SG_Toon`, `SG_Backdrop` and `SG_Outline` from Unity's samples; `Tools/Audio/make_sfx.js` synthesises the placeholder audio |
 
 Scenes and prefabs are generated: change the builder code, not the scene, then run **Build All Scenes**. Defaults the GDD does not give, and deviations from it, are in `Docs/Defaults.md`.
 
@@ -55,14 +55,14 @@ Scenes and prefabs are generated: change the builder code, not the scene, then r
 | --- | --- | --- |
 | 9 | Hook, swing and air strafe feel good; hook projectile; Cinemachine camera | Built; feel needs playtesting |
 | 10 | Core loop playable with placeholders: XP gems and gold pickups, 3-card level-up screen, run-end screen | Built |
-| 11 | Wyvern and Golem state machines, steering separation and island avoidance, object pooling, 300-enemy test at 60 FPS; island model pipeline | Built; 300-enemy Profiler test still to do |
+| 11 | Wyvern and Golem state machines, steering separation and island avoidance, object pooling, 300-enemy test at 60 FPS; island model pipeline | Built; 300 enemies: 118 FPS average at 1080p on an RTX 2060 (PerformanceTests) |
 | 12 | All 6 items, all stats, chests and gold costs, tower cache, gravity zone, elite waves; first playtest | Built; playtest to do |
-| 13 | Toon shader and outline, VFX, licensed audio, final uGUI HUD; second playtest | Built except the audio files |
+| 13 | Toon shader and outline, VFX, licensed audio, final uGUI HUD; second playtest | Built; audio is code-synthesised placeholder until licensed files are chosen |
 | 14 | Bug fixes, optimisation, final build | To do |
 
 ## Known gaps
 
-- No audio files yet: add licensed files named as in `Docs/Credits.md`.
-- Icons are diamond frames with a letter, not drawn icons.
+- Audio is placeholder synthesised by `Tools/Audio/make_sfx.js`; replace with licensed files named as in `Docs/Credits.md`.
 - The Warden and enemies are animated procedurally (no Mixamo rig); see `Docs/Defaults.md`.
-- 300 enemies at 60 FPS is not yet confirmed in the Profiler.
+- The 300-enemy number comes from a batch-mode test; confirm in the Profiler on the target PC.
+- Play-mode tests share PlayerPrefs with the editor: wrap anything that saves in `RecordGuard`.

@@ -90,7 +90,7 @@ namespace Hookfall.Tests
         private static IEnumerator Grab(string name)
         {
             Camera cam = Camera.main;
-            foreach (Canvas canvas in UnityEngine.Object.FindObjectsByType<Canvas>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            foreach (Canvas canvas in UnityEngine.Object.FindObjectsByType<Canvas>(FindObjectsInactive.Include))
             {
                 if (canvas.renderMode != RenderMode.ScreenSpaceOverlay || !canvas.isRootCanvas) continue;
                 canvas.renderMode = RenderMode.ScreenSpaceCamera;

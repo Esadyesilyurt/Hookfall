@@ -1,8 +1,8 @@
 # Hookfall – Credits and licences
 
-## Sound and music (to fill in)
+## Sound and music
 
-No audio is AI-generated (GDD 8.3). Put licensed files in these folders with these exact names, then run **Hookfall > Build All Scenes**; the AudioManager picks them up by name. Any format Unity imports works (.wav, .ogg, .mp3).
+The files there now are **placeholders synthesised by `Tools/Audio/make_sfx.js`** (oscillators, noise, filters and envelopes written in code; no recorded samples and no AI audio model). Replace them with licensed files: no audio is AI-generated (GDD 8.3). Put licensed files in these folders with these exact names, then run **Hookfall > Build All Scenes**; the AudioManager picks them up by name. Any format Unity imports works (.wav, .ogg, .mp3).
 
 `Assets/_Hookfall/Audio/SFX/`
 
@@ -31,7 +31,7 @@ No audio is AI-generated (GDD 8.3). Put licensed files in these folders with the
 
 | File | Source | Author | Licence |
 | --- | --- | --- | --- |
-| | | | |
+| All SFX_ and MUS_ files (placeholder) | `Tools/Audio/make_sfx.js` | Esad Yesilyurt, code written with Claude | Own work |
 
 ## Code and assets
 
@@ -40,4 +40,6 @@ No audio is AI-generated (GDD 8.3). Put licensed files in these folders with the
 | Toon lighting subgraphs (`Art/Shaders/CustomLighting`) and the base of SG_Toon / SG_Outline | Unity Shader Graph package, Custom Lighting sample and Unlit template | Unity Companion License |
 | LiberationSans font (`TextMesh Pro`) | TextMesh Pro Essential Resources | SIL Open Font License |
 | Models (`Art/Models`) | Made with `Tools/Blender/hookfall_models.py` (Blender 5.2, scripted with Claude) | Own work |
+| UI icons (`Art/UI/Resources/Icons`) | Rendered by `Tools/Blender/hookfall_models_v2.py` | Own work |
+| UI skin (`Art/UI/Resources/UI`) | Drawn by `Editor/UISetup.cs` | Own work |
 | Game code | Written with Claude (Anthropic); see Docs/PromptLog.md | Own work |

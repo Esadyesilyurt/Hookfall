@@ -26,6 +26,15 @@ namespace Hookfall.Core
             return true;
         }
 
+        /// <summary>Forgets the best run (Hookfall > Clear Best Run in the editor).</summary>
+        public static void Clear()
+        {
+            PlayerPrefs.DeleteKey(TimeKey);
+            PlayerPrefs.DeleteKey(LevelKey);
+            PlayerPrefs.DeleteKey(KillsKey);
+            PlayerPrefs.Save();
+        }
+
         public static string FormatTime(float seconds)
         {
             int s = Mathf.FloorToInt(seconds);
