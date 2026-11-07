@@ -14,6 +14,8 @@ namespace Hookfall.World
         [SerializeField] private float bobSpeed = 2f;
         [Tooltip("Optional lid that tilts open while the player is close.")]
         [SerializeField] private Transform lid;
+        [Tooltip("The spotlight above the chest; it breathes slowly so the eye catches it.")]
+        [SerializeField] private Light spot;
 
         private ChestSpawner spawner;
         private PlayerController player;
@@ -31,6 +33,7 @@ namespace Hookfall.World
 
         private void Update()
         {
+            if (spot != null) spot.intensity = 9f * (0.85f + 0.15f * Mathf.Sin(Time.time * 2.5f));
             transform.position = basePosition + Vector3.up * (Mathf.Sin(Time.time * bobSpeed) * bobHeight + bobHeight);
             if (player == null || Time.timeScale <= 0f) return;
 

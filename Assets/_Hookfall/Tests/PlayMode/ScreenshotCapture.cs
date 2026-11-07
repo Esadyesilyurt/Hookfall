@@ -79,6 +79,19 @@ namespace Hookfall.Tests
             Render(overview, "arena_overview");
             overview.transform.SetPositionAndRotation(new Vector3(14f, 10f, -22f), Quaternion.LookRotation(new Vector3(-14f, 2f, 22f)));
             Render(overview, "tower_close");
+
+            // A chest with its spotlight: spawn one now and look at it from 30 m.
+            Type spawnerType = Type.GetType("Hookfall.World.ChestSpawner, Assembly-CSharp");
+            var spawner = (Component)UnityEngine.Object.FindAnyObjectByType(spawnerType);
+            spawnerType.GetField("timer", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(spawner, 0f);
+            yield return null;
+            yield return null;
+            if (spawner.transform.childCount > 0)
+            {
+                Vector3 chest = spawner.transform.GetChild(0).position;
+                overview.transform.SetPositionAndRotation(chest + new Vector3(18f, 14f, -22f), Quaternion.LookRotation(new Vector3(-18f, -10f, 22f)));
+                Render(overview, "chest_light");
+            }
             UnityEngine.Object.Destroy(overview.gameObject);
 
             gmType.GetMethod("EndRun").Invoke(gm, new object[] { "Fell into the abyss" });

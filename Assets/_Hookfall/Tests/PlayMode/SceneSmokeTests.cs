@@ -129,7 +129,7 @@ namespace Hookfall.Tests
             LogAssert.NoUnexpectedReceived();
         }
 
-        /// <summary>Right-click Zip: aimed at the tower from 40 m away, it hauls the Warden most of the way there.</summary>
+        /// <summary>Right-click Zip (power swing): held from 35 m away, it swings and then reels the Warden in close.</summary>
         [UnityTest]
         public IEnumerator ZipHaulsThePlayer()
         {
@@ -162,10 +162,11 @@ namespace Hookfall.Tests
 
             float start = Vector3.Distance(player.transform.position, target);
             hookType.GetMethod("TryThrow", flags).Invoke(hook, new object[] { true });
+            int chargesAfterThrow = (int)hookType.GetProperty("ZipCharges").GetValue(hook);
             var zipping = hookType.GetProperty("IsZipping");
             bool sawZip = false;
             float closest = start;
-            float end = Time.realtimeSinceStartup + 4f;
+            float end = Time.realtimeSinceStartup + 6f;   // with no mouse the power swing is "held" until zipMaxTime
             while (Time.realtimeSinceStartup < end)
             {
                 bool z = (bool)zipping.GetValue(hook);
@@ -178,7 +179,68 @@ namespace Hookfall.Tests
             LogAssert.NoUnexpectedReceived();
             Assert.IsTrue(sawZip, "The Zip never started");
             Assert.Less(closest, start - 20f, "The Zip should haul the Warden most of the way to the anchor");
-            Assert.AreEqual(0, (int)hookType.GetProperty("ZipCharges").GetValue(hook), "The Zip should use its charge");
+            Assert.AreEqual(0, chargesAfterThrow, "The Zip should use its charge");
+        }
+
+        /// <summary>Wall jump: touching the tower's side in the air, Space throws the Warden up and away from the wall.</summary>
+        [UnityTest]
+        public IEnumerator WallJumpPushesOffAndUp()
+        {
+            SceneManager.LoadScene("Arena");
+            yield return null;
+            GameObject player = GameObject.Find("Player");
+            var body = player.GetComponent<Rigidbody>();
+            Type pcType = Type.GetType("Hookfall.Player.PlayerController, Assembly-CSharp");
+            Component controller = player.GetComponent(pcType);
+            var flags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+
+            // Press into the tower's side at mid height until the wall contact registers.
+            bool touching = false;
+            float end = Time.realtimeSinceStartup + 3f;
+            while (Time.realtimeSinceStartup < end && !touching)
+            {
+                KeepAlive(player);
+                player.transform.position = new Vector3(0f, 8f, -3.65f);
+                body.linearVelocity = new Vector3(0f, 0f, 4f);
+                yield return new WaitForFixedUpdate();
+                touching = (bool)pcType.GetProperty("TouchingWall").GetValue(controller);
+            }
+            Assert.IsTrue(touching, "Pressing into the tower side should count as touching a wall");
+
+            pcType.GetField("wallJumpQueued", flags).SetValue(controller, true);   // Space, without a keyboard
+            yield return new WaitForFixedUpdate();
+            yield return new WaitForFixedUpdate();
+            LogAssert.NoUnexpectedReceived();
+            Assert.Greater(body.linearVelocity.y, 8f, "A wall jump should launch upwards");
+            Assert.Less(body.linearVelocity.z, 0f, "A wall jump should push away from the wall");
+        }
+
+        /// <summary>Air tricks: flying fast with no rope out, the Warden starts a flip.</summary>
+        [UnityTest]
+        public IEnumerator FastFlightStartsATrick()
+        {
+            SceneManager.LoadScene("Arena");
+            yield return null;
+            GameObject player = GameObject.Find("Player");
+            Type animatorType = Type.GetType("Hookfall.Player.WardenAnimator, Assembly-CSharp");
+            var animator = player.GetComponentInChildren(animatorType);
+            Assert.IsNotNull(animator, "The Warden model should have a WardenAnimator");
+            bool started = false;
+            Action onTrick = () => started = true;
+            var trickEvent = animatorType.GetEvent("TrickStarted");
+            trickEvent.AddEventHandler(animator, onTrick);
+
+            float end = Time.realtimeSinceStartup + 3f;
+            while (Time.realtimeSinceStartup < end && !started)
+            {
+                KeepAlive(player);
+                player.transform.position = new Vector3(0f, 60f, -60f);   // high and clear of islands
+                player.GetComponent<Rigidbody>().linearVelocity = new Vector3(30f, 2f, 0f);
+                yield return null;
+            }
+            trickEvent.RemoveEventHandler(animator, onTrick);
+            LogAssert.NoUnexpectedReceived();
+            Assert.IsTrue(started, "Flying at 30 m/s with no rope should start a trick");
         }
 
         /// <summary>Jumps the run clock to 4:55 so wyverns, golems and the first elite wave all appear.</summary>

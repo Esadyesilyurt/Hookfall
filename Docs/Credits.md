@@ -2,7 +2,7 @@
 
 ## Sound and music
 
-The files there now are **placeholders synthesised by `Tools/Audio/make_sfx.js`** (oscillators, noise, filters and envelopes written in code; no recorded samples and no AI audio model). Replace them with licensed files: no audio is AI-generated (GDD 8.3). Put licensed files in these folders with these exact names, then run **Hookfall > Build All Scenes**; the AudioManager picks them up by name. Any format Unity imports works (.wav, .ogg, .mp3).
+The one-shot effects are **Kenney recordings (CC0)**, copied in by `Tools/Audio/use_kenney.js`. The wind loop, heartbeat and music are **synthesised by `Tools/Audio/make_sfx.js`** (oscillators, noise, filters and envelopes written in code; no AI audio model). No audio is AI-generated (GDD 8.3). Put licensed files in these folders with these exact names, then run **Hookfall > Build All Scenes**; the AudioManager picks them up by name. Any format Unity imports works (.wav, .ogg, .mp3).
 
 `Assets/_Hookfall/Audio/SFX/`
 
@@ -31,7 +31,10 @@ The files there now are **placeholders synthesised by `Tools/Audio/make_sfx.js`*
 
 | File | Source | Author | Licence |
 | --- | --- | --- | --- |
-| All SFX_ and MUS_ files (placeholder) | `Tools/Audio/make_sfx.js` | Esad Yesilyurt, code written with Claude | Own work |
+| SFX_HookThrow (cloth1), SFX_HookAttach (metalLatch), SFX_HookRelease (cloth3), SFX_WeaponHit (knifeSlice), SFX_GoldPickup (handleCoins), SFX_ChestOpen (doorOpen_1), SFX_PlayerHurt (dropLeather), SFX_GolemSlam (doorClose_4), SFX_BoulderBreak (chop), SFX_WallJump (cloth4), SFX_Trick (cloth2) | RPG Audio pack, www.kenney.nl (via opengameart.org/content/50-rpg-sound-effects) | Kenney Vleugels | CC0 |
+| SFX_EnemyDeath (pluck_001), SFX_XPPickup (glass_002), SFX_TowerCacheBeam (maximize_006), SFX_LevelUp (confirmation_002), SFX_EliteWave (bong_001), SFX_RunEnd (minimize_009) | Interface Sounds, www.kenney.nl (via opengameart.org/content/interface-sounds) | Kenney | CC0 |
+| SFX_TowerCacheOpen (jingles_STEEL00) | Music Jingles, www.kenney.nl (via opengameart.org/content/85-short-music-jingles) | Kenney Vleugels | CC0 |
+| SFX_WindLoop, SFX_HeartbeatLoop, MUS_Layer1-3 | `Tools/Audio/make_sfx.js` | Esad Yesilyurt, code written with Claude | Own work |
 
 ## Code and assets
 

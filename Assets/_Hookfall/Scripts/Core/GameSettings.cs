@@ -22,13 +22,13 @@ namespace Hookfall.Core
 
         public static float MusicVolume
         {
-            get => PlayerPrefs.GetFloat(MusicKey, 0.7f);
+            get => PlayerPrefs.GetFloat(MusicKey, 0.45f);
             set { PlayerPrefs.SetFloat(MusicKey, Mathf.Clamp01(value)); Changed?.Invoke(); }
         }
 
         public static float EffectsVolume
         {
-            get => PlayerPrefs.GetFloat(EffectsKey, 0.8f);
+            get => PlayerPrefs.GetFloat(EffectsKey, 0.6f);
             set { PlayerPrefs.SetFloat(EffectsKey, Mathf.Clamp01(value)); Changed?.Invoke(); }
         }
 

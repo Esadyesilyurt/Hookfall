@@ -77,6 +77,7 @@ namespace Hookfall.Feel
                 hook.ZipEnded += OnZipEnded;
             }
             if (player != null) player.Landed += OnLanded;
+            if (player != null) player.WallJumped += OnWallJump;
             if (stats != null) stats.Damaged += OnHurt;
             if (combat != null) combat.AttacksChanged += OnAttacksChanged;
             if (levelUp != null) levelUp.OfferReady += OnLevelUp;
@@ -94,6 +95,7 @@ namespace Hookfall.Feel
                 hook.ZipEnded -= OnZipEnded;
             }
             if (player != null) player.Landed -= OnLanded;
+            if (player != null) player.WallJumped -= OnWallJump;
             if (stats != null) stats.Damaged -= OnHurt;
             if (combat != null) combat.AttacksChanged -= OnAttacksChanged;
             if (levelUp != null) levelUp.OfferReady -= OnLevelUp;
@@ -149,6 +151,13 @@ namespace Hookfall.Feel
             Shake(0.1f + strength * 0.4f);
             if (cameraRig != null) cameraRig.Kick(landKick * strength);
             if (vfx != null) vfx.Ring(player.transform.position + Vector3.down * 0.9f, 18, new Color(0.85f, 0.85f, 0.8f), 4f + strength * 6f);
+        }
+
+        private void OnWallJump()
+        {
+            Shake(0.15f);
+            if (cameraRig != null) cameraRig.Kick(5f);
+            if (vfx != null) vfx.Ring(player.transform.position, 14, new Color(0.85f, 0.85f, 0.8f), 5f);
         }
 
         private void OnHurt(float amount)
