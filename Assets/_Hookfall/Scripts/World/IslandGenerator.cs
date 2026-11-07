@@ -3,6 +3,7 @@
 // AI disclosure: written with Claude (Anthropic) on 2026-11-04 as part of the midterm project skeleton.
 // Prompts and changes are recorded in Docs/PromptLog.md.
 using System.Collections.Generic;
+using Hookfall.Player;
 using UnityEngine;
 
 namespace Hookfall.World
@@ -36,9 +37,15 @@ namespace Hookfall.World
         [SerializeField] private Material stoneMaterial;
         [SerializeField] private Material towerMaterial;
 
+        [Header("Abyss")]
+        [SerializeField] private PlayerStats player;
+        [Tooltip("The run ends this far below the lowest island top (GDD 4.3).")]
+        [SerializeField] private float abyssDepth = 60f;
+
         private readonly List<Vector3> placed = new List<Vector3>();
 
         public int UsedSeed { get; private set; }
+        public float AbyssKillHeight { get; private set; } = -70f;
 
         private void Awake() => Generate();
 
@@ -56,6 +63,12 @@ namespace Hookfall.World
             PlaceRing(Random.Range(outerCount.x, outerCount.y + 1), outerRadius, outerWidth, IslandKind.Outer);
 
             Random.state = previous;
+
+            // GDD 4.3: falling 60 m below the lowest island ends the run.
+            float lowest = 0f;
+            foreach (Vector3 p in placed) lowest = Mathf.Min(lowest, p.y);
+            AbyssKillHeight = lowest - abyssDepth;
+            if (player != null) player.SetAbyssKillHeight(AbyssKillHeight);
         }
 
         private void PlaceRing(int count, Vector2 radius, Vector2 width, IslandKind kind)

@@ -37,8 +37,6 @@ namespace Hookfall.Enemies
         public EnemyDirector Director { get; private set; }
         public PlayerController Player { get; private set; }
         public PlayerStats PlayerStats { get; private set; }
-        private XPSystem playerXP;
-        private GoldWallet playerGold;
 
         /// <summary>Called by the EnemyDirector right after spawning.</summary>
         public void Init(EnemyDirector director, PlayerController player, float healthMultiplier, float damageMult)
@@ -46,8 +44,6 @@ namespace Hookfall.Enemies
             Director = director;
             Player = player;
             PlayerStats = player.GetComponent<PlayerStats>();
-            playerXP = player.GetComponent<XPSystem>();
-            playerGold = player.GetComponent<GoldWallet>();
 
             Health = maxHealth * healthMultiplier;
             damageMultiplier = damageMult;
@@ -85,9 +81,12 @@ namespace Hookfall.Enemies
             if (giveReward)
             {
                 if (GameManager.Instance != null) GameManager.Instance.RegisterKill();
-                // TODO (Week 10): drop XP gems and coins to pick up instead of granting them directly.
-                if (playerXP != null) playerXP.AddXP(xpReward);
-                if (playerGold != null) playerGold.Add(goldReward);
+                PickupSpawner drops = PickupSpawner.Instance;
+                if (drops != null)
+                {
+                    drops.DropXP(transform.position, xpReward);
+                    drops.DropGold(transform.position, goldReward);
+                }
             }
             if (Director != null) Director.OnEnemyRemoved(this);
             Destroy(gameObject);

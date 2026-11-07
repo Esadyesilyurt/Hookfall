@@ -1,22 +1,31 @@
-// Hookfall - run state: timer, kills, pause, death and restart.
-// AI disclosure: written with Claude (Anthropic) on 2026-11-04 as part of the midterm project skeleton.
-// Prompts and changes are recorded in Docs/PromptLog.md.
+// Hookfall - run state: timer, kills, pause, modal screens (level-up, chest), death, record and scene changes.
+// AI disclosure: written with Claude (Anthropic) on 2026-11-04 as part of the midterm project skeleton,
+// extended on 2026-11-07 (modal states, record, menu). Prompts and changes are recorded in Docs/PromptLog.md.
+using System;
+using Hookfall.Progression;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 
 namespace Hookfall.Core
 {
-    public enum RunState { Playing, Paused, LevelUp, Dead }
-
     public class GameManager : MonoBehaviour
     {
+        public const string MenuScene = "MainMenu";
+        public const string ArenaScene = "Arena";
+
+        [SerializeField] private XPSystem playerXP;
+
         public static GameManager Instance { get; private set; }
 
         public RunState State { get; private set; } = RunState.Playing;
         public float RunTime { get; private set; }
         public int Kills { get; private set; }
         public string EndReason { get; private set; } = "";
+        public bool NewRecord { get; private set; }
+
+        public event Action<RunState> StateChanged;
+        public event Action RunEnded;
 
         private void Awake()
         {
@@ -44,36 +53,53 @@ namespace Hookfall.Core
 
             if (keyboard.escapeKey.wasPressedThisFrame)
             {
-                if (State == RunState.Playing) SetPaused(true);
-                else if (State == RunState.Paused) SetPaused(false);
+                if (State == RunState.Playing) SetState(RunState.Paused);
+                else if (State == RunState.Paused) SetState(RunState.Playing);
             }
-
-            if (State == RunState.Dead && keyboard.rKey.wasPressedThisFrame) Restart();
         }
 
         public void RegisterKill() => Kills++;
 
-        public void SetPaused(bool paused)
+        public void SetPaused(bool paused) => SetState(paused ? RunState.Paused : RunState.Playing);
+
+        /// <summary>Pauses the game for a screen that needs a choice (level-up, chest result).</summary>
+        public bool OpenModal(RunState modal)
         {
-            State = paused ? RunState.Paused : RunState.Playing;
-            Time.timeScale = paused ? 0f : 1f;
-            LockCursor(!paused);
+            if (State != RunState.Playing) return false;
+            SetState(modal);
+            return true;
+        }
+
+        public void CloseModal()
+        {
+            if (State == RunState.LevelUp || State == RunState.ChestResult) SetState(RunState.Playing);
         }
 
         public void EndRun(string reason)
         {
             if (State == RunState.Dead) return;
-            State = RunState.Dead;
             EndReason = reason;
-            Time.timeScale = 0f;
-            LockCursor(false);
+            NewRecord = RunRecord.Submit(RunTime, playerXP != null ? playerXP.Level : 1, Kills);
+            SetState(RunState.Dead);
             Debug.Log($"[Hookfall] Run over ({reason}). Time {RunTime:F1} s, kills {Kills}.");
+            RunEnded?.Invoke();
         }
 
-        public void Restart()
+        public void Restart() => LoadScene(ArenaScene);
+        public void QuitToMenu() => LoadScene(MenuScene);
+
+        private static void LoadScene(string scene)
         {
             Time.timeScale = 1f;
-            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+            SceneManager.LoadScene(scene);
+        }
+
+        private void SetState(RunState next)
+        {
+            State = next;
+            Time.timeScale = next == RunState.Playing ? 1f : 0f;
+            LockCursor(next == RunState.Playing);
+            StateChanged?.Invoke(next);
         }
 
         private static void LockCursor(bool locked)

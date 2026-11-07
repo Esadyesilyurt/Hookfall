@@ -1,6 +1,6 @@
 // Hookfall - island movement, air strafe and the IsAirborne flag the whole game reads (GDD 4.1, 4.2).
-// AI disclosure: written with Claude (Anthropic) on 2026-11-04 as part of the midterm project skeleton.
-// Prompts and changes are recorded in Docs/PromptLog.md.
+// AI disclosure: written with Claude (Anthropic) on 2026-11-04 as part of the midterm project skeleton,
+// extended on 2026-11-07 (stat multipliers, current island). Prompts and changes are recorded in Docs/PromptLog.md.
 using Hookfall.World;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -23,17 +23,23 @@ namespace Hookfall.Player
         [SerializeField] private Transform cameraTransform;
 
         private CapsuleCollider capsule;
+        private PlayerStats stats;
         private Vector2 moveInput;
         private bool jumpQueued;
 
         /// <summary>True when the player is not standing on an island. Turns combat on and enemy Frenzy off.</summary>
         public bool IsAirborne { get; private set; } = true;
+        /// <summary>The island the player stands on, or null while airborne.</summary>
+        public Island CurrentIsland { get; private set; }
         public Rigidbody Body { get; private set; }
+        public float Speed => Body.linearVelocity.magnitude;
+        public float MaxAirSpeed => maxAirSpeed * (stats != null ? stats.FlightSpeedMultiplier : 1f);
 
         private void Awake()
         {
             Body = GetComponent<Rigidbody>();
             capsule = GetComponent<CapsuleCollider>();
+            stats = GetComponent<PlayerStats>();
             Body.freezeRotation = true;
             Body.interpolation = RigidbodyInterpolation.Interpolate;
             Body.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
@@ -54,7 +60,8 @@ namespace Hookfall.Player
 
         private void FixedUpdate()
         {
-            IsAirborne = !IsOnIsland();
+            CurrentIsland = FindIslandBelow();
+            IsAirborne = CurrentIsland == null;
 
             Vector3 forward = cameraTransform != null ? cameraTransform.forward : transform.forward;
             Vector3 right = cameraTransform != null ? cameraTransform.right : transform.right;
@@ -63,7 +70,8 @@ namespace Hookfall.Player
 
             if (!IsAirborne)
             {
-                Vector3 target = (right * moveInput.x + forward * moveInput.y) * walkSpeed;
+                float speed = walkSpeed * (stats != null ? stats.WalkSpeedMultiplier : 1f);
+                Vector3 target = (right * moveInput.x + forward * moveInput.y) * speed;
                 Vector3 velocity = Body.linearVelocity;
                 velocity.x = target.x;
                 velocity.z = target.z;
@@ -76,13 +84,14 @@ namespace Hookfall.Player
                 if (!Mathf.Approximately(moveInput.x, 0f))
                     Body.AddForce(right * (moveInput.x * airStrafeAcceleration), ForceMode.Acceleration);
 
-                if (Body.linearVelocity.sqrMagnitude > maxAirSpeed * maxAirSpeed)
-                    Body.linearVelocity = Body.linearVelocity.normalized * maxAirSpeed;
+                float cap = MaxAirSpeed;
+                if (Body.linearVelocity.sqrMagnitude > cap * cap)
+                    Body.linearVelocity = Body.linearVelocity.normalized * cap;
             }
             jumpQueued = false;
         }
 
-        private bool IsOnIsland()
+        private Island FindIslandBelow()
         {
             Bounds bounds = capsule.bounds;
             float radius = capsule.radius * 0.95f;
@@ -91,9 +100,9 @@ namespace Hookfall.Player
             if (Physics.SphereCast(bounds.center, radius, Vector3.down, out RaycastHit hit, distance,
                     ~0, QueryTriggerInteraction.Ignore))
             {
-                return hit.collider.GetComponentInParent<Island>() != null;
+                return hit.collider.GetComponentInParent<Island>();
             }
-            return false;
+            return null;
         }
     }
 }

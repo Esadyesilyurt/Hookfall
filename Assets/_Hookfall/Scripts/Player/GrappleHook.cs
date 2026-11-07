@@ -1,6 +1,7 @@
-// Hookfall - mouse-aimed grappling hook with a SpringJoint rope (GDD 4.1).
-// AI disclosure: written with Claude (Anthropic) on 2026-11-04 as part of the midterm project skeleton.
-// Prompts and changes are recorded in Docs/PromptLog.md.
+// Hookfall - mouse-aimed grappling hook: a 120 m/s hook projectile, then a SpringJoint rope (GDD 4.1).
+// AI disclosure: written with Claude (Anthropic) on 2026-11-04 as part of the midterm project skeleton,
+// extended on 2026-11-07 with the hook projectile. Prompts and changes are recorded in Docs/PromptLog.md.
+using System;
 using Hookfall.World;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -11,13 +12,12 @@ namespace Hookfall.Player
     public class GrappleHook : MonoBehaviour
     {
         [Header("Hook")]
-        [SerializeField] private float maxRange = 40f;
+        [SerializeField] private float travelSpeed = 120f;
         [SerializeField] private float rethrowCooldown = 0.2f;
-        // TODO (Week 9): the hook attaches instantly; add a visible hook projectile at 120 m/s.
 
         [Header("Rope (SpringJoint)")]
-        [Tooltip("Rope length right after attaching, as a share of the distance. 0.8 = 20% reel-in.")]
-        [SerializeField] private float maxDistanceFactor = 0.8f;
+        [Tooltip("Rope length right after attaching, as a share of the distance. 0.85 = 15% reel-in.")]
+        [SerializeField] private float maxDistanceFactor = 0.85f;
         [SerializeField] private float minDistanceFactor = 0.25f;
         [SerializeField] private float spring = 4.5f;
         [SerializeField] private float damper = 7f;
@@ -27,19 +27,32 @@ namespace Hookfall.Player
         [Tooltip("Usually the main camera: the hook fires through the screen centre.")]
         [SerializeField] private Transform aimSource;
         [SerializeField] private LineRenderer rope;
+        [Tooltip("Visible hook head; flies out at travelSpeed, then sits on the anchor.")]
+        [SerializeField] private Transform hookHead;
 
+        private PlayerStats stats;
         private SpringJoint joint;
         private Vector3 anchorPoint;
+        private Vector3 headPosition;
+        private bool travelling;
         private float lastThrowTime = -999f;
 
         public bool IsAttached => joint != null;
+        public bool IsOut => travelling || IsAttached;
         public bool HasTargetInRange { get; private set; }
-        public float MaxRange => maxRange;
+        public float MaxRange => stats != null ? stats.HookRange : 40f;
+        public Vector3 AnchorPoint => anchorPoint;
+
+        public event Action Thrown;
+        public event Action Attached;
+        public event Action Released;
 
         private void Awake()
         {
+            stats = GetComponent<PlayerStats>();
             if (aimSource == null && Camera.main != null) aimSource = Camera.main.transform;
             if (rope != null) rope.enabled = false;
+            if (hookHead != null) hookHead.gameObject.SetActive(false);
         }
 
         private void Update()
@@ -50,29 +63,46 @@ namespace Hookfall.Player
             if (mouse == null || Time.timeScale <= 0f) return;
 
             if (mouse.leftButton.wasPressedThisFrame && Time.time - lastThrowTime >= rethrowCooldown)
-                TryAttach();
+                TryThrow();
             if (mouse.leftButton.wasReleasedThisFrame)
                 Release();
+
+            if (travelling)
+            {
+                headPosition = Vector3.MoveTowards(headPosition, anchorPoint, travelSpeed * Time.deltaTime);
+                if ((headPosition - anchorPoint).sqrMagnitude < 0.0001f) Attach();
+            }
         }
 
         private void LateUpdate()
         {
+            bool visible = IsOut;
+            if (IsAttached) headPosition = anchorPoint;
+            if (hookHead != null)
+            {
+                hookHead.gameObject.SetActive(visible);
+                if (visible)
+                {
+                    hookHead.position = headPosition;
+                    Vector3 dir = headPosition - transform.position;
+                    if (dir.sqrMagnitude > 0.01f) hookHead.rotation = Quaternion.LookRotation(dir);
+                }
+            }
             if (rope == null) return;
-            rope.enabled = IsAttached;
-            if (!IsAttached) return;
+            rope.enabled = visible;
+            if (!visible) return;
             rope.positionCount = 2;
             rope.SetPosition(0, transform.position);
-            rope.SetPosition(1, anchorPoint);
+            rope.SetPosition(1, headPosition);
         }
-
-        public void AddRange(float metres) => maxRange += metres;
 
         private bool TryFindTarget(out Vector3 point)
         {
             point = default;
             if (aimSource == null) return false;
 
-            float rayLength = maxRange + Vector3.Distance(aimSource.position, transform.position);
+            float range = MaxRange;
+            float rayLength = range + Vector3.Distance(aimSource.position, transform.position);
             RaycastHit[] hits = Physics.RaycastAll(aimSource.position, aimSource.forward, rayLength,
                 ~0, QueryTriggerInteraction.Ignore);
 
@@ -84,19 +114,27 @@ namespace Hookfall.Player
                 if (hit.distance >= best) continue;
                 best = hit.distance;
                 found = hit.collider.GetComponentInParent<Island>() != null
-                        && Vector3.Distance(transform.position, hit.point) <= maxRange;
+                        && Vector3.Distance(transform.position, hit.point) <= range;
                 point = hit.point;
             }
             return found;
         }
 
-        private void TryAttach()
+        private void TryThrow()
         {
             if (!TryFindTarget(out Vector3 point)) return;
             Release();
 
             lastThrowTime = Time.time;
             anchorPoint = point;
+            headPosition = transform.position;
+            travelling = true;
+            Thrown?.Invoke();
+        }
+
+        private void Attach()
+        {
+            travelling = false;
             float distance = Vector3.Distance(transform.position, anchorPoint);
 
             joint = gameObject.AddComponent<SpringJoint>();
@@ -107,13 +145,19 @@ namespace Hookfall.Player
             joint.spring = spring;
             joint.damper = damper;
             joint.massScale = massScale;
+            Attached?.Invoke();
         }
 
         public void Release()
         {
-            if (joint == null) return;
-            Destroy(joint);
-            joint = null;
+            bool wasOut = IsOut;
+            travelling = false;
+            if (joint != null)
+            {
+                Destroy(joint);
+                joint = null;
+            }
+            if (wasOut) Released?.Invoke();
         }
     }
 }

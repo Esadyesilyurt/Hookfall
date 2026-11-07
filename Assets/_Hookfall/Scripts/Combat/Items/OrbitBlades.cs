@@ -56,6 +56,8 @@ namespace Hookfall.Combat.Items
 
         protected override void OnLevelChanged() => RebuildBlades();
 
+        public override string DescribeNextLevel() => $"{BladeCount} → {BladeCount + 1} blades";
+
         private void RebuildBlades()
         {
             foreach (Transform blade in blades) Destroy(blade.gameObject);
