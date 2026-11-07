@@ -397,6 +397,73 @@ namespace Hookfall.Tests
             LogAssert.NoUnexpectedReceived();
         }
 
+        /// <summary>Ledge climb: flying into an island's side a little below its top lands the Warden on that island.</summary>
+        [UnityTest]
+        public IEnumerator LedgeClimbLandsOnTheIsland()
+        {
+            SceneManager.LoadScene("Arena");
+            yield return null;
+            GameObject player = GameObject.Find("Player");
+            var body = player.GetComponent<Rigidbody>();
+            Type pcType = Type.GetType("Hookfall.Player.PlayerController, Assembly-CSharp");
+            Component controller = player.GetComponent(pcType);
+            Type islandType = Type.GetType("Hookfall.World.Island, Assembly-CSharp");
+            var all = (IList)islandType.GetField("All").GetValue(null);
+            bool climbed = false;
+            Action onClimb = () => climbed = true;
+            var climbEvent = pcType.GetEvent("LedgeClimbed");
+            climbEvent.AddEventHandler(controller, onClimb);
+
+            // Try inner islands until one has a clear side: start 3 m below the top, 1.5 m out from the rim, flying in.
+            Component landedOn = null;
+            foreach (Component island in all)
+            {
+                if (islandType.GetProperty("Kind").GetValue(island).ToString() != "Inner") continue;
+                Vector3 top = (Vector3)islandType.GetProperty("Top").GetValue(island);
+                float width = (float)islandType.GetProperty("Width").GetValue(island);
+                Vector3 outward = new Vector3(1f, 0f, 0.3f).normalized;
+                climbed = false;
+                float end = Time.realtimeSinceStartup + 3f;
+                player.transform.position = top + outward * (width * 0.5f + 1.5f) + Vector3.down * 3f;
+                body.linearVelocity = -outward * 8f;
+                yield return new WaitForFixedUpdate();
+                while (Time.realtimeSinceStartup < end && landedOn == null)
+                {
+                    KeepAlive(player);
+                    if (!climbed && !(bool)pcType.GetProperty("IsAirborne").GetValue(controller)) break;   // landed somewhere else first
+                    if (climbed && !(bool)pcType.GetProperty("IsAirborne").GetValue(controller))
+                        landedOn = (Component)pcType.GetProperty("CurrentIsland").GetValue(controller);
+                    yield return new WaitForFixedUpdate();
+                }
+                if (landedOn != null) break;
+            }
+            climbEvent.RemoveEventHandler(controller, onClimb);
+            LogAssert.NoUnexpectedReceived();
+            Assert.IsNotNull(landedOn, "Flying into an island side 3 m below its top should climb onto an island");
+        }
+
+        /// <summary>Speed cap: 40 m/s before Flight speed picks; Zip and release boosts add at most 15%.</summary>
+        [UnityTest]
+        public IEnumerator AirSpeedIsCapped()
+        {
+            SceneManager.LoadScene("Arena");
+            yield return null;
+            GameObject player = GameObject.Find("Player");
+            var body = player.GetComponent<Rigidbody>();
+            Type pcType = Type.GetType("Hookfall.Player.PlayerController, Assembly-CSharp");
+            Component controller = player.GetComponent(pcType);
+            float cap = (float)pcType.GetProperty("MaxAirSpeed").GetValue(controller);
+            Assert.AreEqual(40f, cap, 0.01f, "The base air speed cap should be 40 m/s");
+
+            player.transform.position = new Vector3(0f, 70f, -60f);
+            pcType.GetMethod("Boost").Invoke(controller, new object[] { 500f });
+            body.linearVelocity = new Vector3(200f, 0f, 0f);
+            yield return new WaitForFixedUpdate();
+            yield return new WaitForFixedUpdate();
+            Assert.LessOrEqual(body.linearVelocity.magnitude, cap * 1.15f + 1f, "Boosts should not lift the speed far past the cap");
+            LogAssert.NoUnexpectedReceived();
+        }
+
         /// <summary>Jumps the run clock to 4:55 so wyverns, golems and the first elite wave all appear.</summary>
         [UnityTest]
         public IEnumerator LateRunSpawnsEveryEnemy()

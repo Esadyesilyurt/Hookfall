@@ -1,7 +1,7 @@
 // Hookfall - island movement, air strafe and the IsAirborne flag the whole game reads (GDD 4.1, 4.2).
 // AI disclosure: written with Claude (Anthropic) on 2026-11-04 as part of the midterm project skeleton,
 // extended on 2026-11-07 (stat multipliers, current island, Zip overspeed, landing event) and 2026-11-08
-// (heavier, faster air movement, the wall jump, then the double jump and the dash). Prompts and changes are recorded in Docs/PromptLog.md.
+// (heavier, faster air movement, the wall jump, the double jump and the dash, the ledge climb and a hard speed cap). Prompts and changes are recorded in Docs/PromptLog.md.
 using Hookfall.World;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -19,12 +19,24 @@ namespace Hookfall.Player
         [Header("In the air")]
         [Tooltip("Sideways push with A/D; momentum from the swing stays in charge.")]
         [SerializeField] private float airStrafeAcceleration = 12f;
-        [Tooltip("Raised from the GDD's 35 m/s on 2026-11-08 so swings can build real speed.")]
-        [SerializeField] private float maxAirSpeed = 55f;
+        [Tooltip("Air speed cap before Flight speed picks (GDD 35 m/s; 55 for a while on 2026-11-08, lowered to 40 the same day because chained swings got too fast).")]
+        [SerializeField] private float maxAirSpeed = 40f;
         [Tooltip("Gravity multiplier in the air: a heavier Warden swings faster down and slows harder going up.")]
         [SerializeField] private float airGravityMultiplier = 1.8f;
         [Tooltip("After a Zip the speed cap drops back to the normal max air speed at this rate (m/s per second).")]
         [SerializeField] private float overspeedDecay = 18f;
+        [Tooltip("Zips and rope releases may push past the cap by at most this factor, for a moment.")]
+        [SerializeField] private float maxOverspeedFactor = 1.15f;
+
+        [Header("Ledge climb (touching an island's side or rim near its top moves the Warden over the edge)")]
+        [Tooltip("How far below an island's top the Warden's feet can be for the climb.")]
+        [SerializeField] private float ledgeReach = 8f;
+        [Tooltip("How high above the island top the climb carries the Warden over the rim.")]
+        [SerializeField] private float ledgeClearance = 1.2f;
+        [Tooltip("How long the climb takes: out past the rim and up, then in onto the top.")]
+        [SerializeField] private float ledgeClimbTime = 0.35f;
+        [Tooltip("How far inside the rim the climb lands.")]
+        [SerializeField] private float ledgeLandInset = 1.5f;
 
         [Header("Wall jump (Space while touching an island side)")]
         [SerializeField] private float wallJumpUp = 14f;
@@ -64,6 +76,9 @@ namespace Hookfall.Player
         private bool dashQueued;
         private Vector3 dashVelocity;
         private float dashTimer;
+        private Island ledgeIsland;
+        private float climbT = -1f;   // 0..1 while climbing, -1 otherwise
+        private Vector3 climbFrom, climbOver, climbTo;
 
         /// <summary>True when the player is not standing on an island. Turns combat on and enemy Frenzy off.</summary>
         public bool IsAirborne { get; private set; } = true;
@@ -77,13 +92,14 @@ namespace Hookfall.Player
         public event System.Action WallJumped;
         public event System.Action AirJumped;
         public event System.Action Dashed;
+        public event System.Action LedgeClimbed;
         public int AirJumpsLeft => airJumpsLeft;
         public int DashesLeft => dashesLeft;
         /// <summary>True for a moment after touching an island side, while a wall jump is possible.</summary>
         public bool TouchingWall => Time.time - lastWallTime < wallJumpGrace;
 
         /// <summary>Lets the player fly faster than the air speed cap for a moment (Zip); the cap decays back.</summary>
-        public void Boost(float speed) => overspeedCap = Mathf.Max(overspeedCap, speed);
+        public void Boost(float speed) => overspeedCap = Mathf.Max(overspeedCap, Mathf.Min(speed, MaxAirSpeed * maxOverspeedFactor));
 
         private void Awake()
         {
@@ -116,6 +132,8 @@ namespace Hookfall.Player
 
         private void FixedUpdate()
         {
+            if (climbT >= 0f && Climb()) return;
+
             bool wasAirborne = IsAirborne;
             float fallSpeed = -Body.linearVelocity.y;
             CurrentIsland = FindIslandBelow();
@@ -143,6 +161,10 @@ namespace Hookfall.Player
                 velocity.z = target.z;
                 if (jumpQueued) velocity.y = jumpVelocity;
                 Body.linearVelocity = velocity;
+            }
+            else if (ledgeIsland != null)
+            {
+                StartClimb(ledgeIsland);
             }
             else if (wallJumpQueued)
             {
@@ -196,19 +218,75 @@ namespace Hookfall.Player
             wallJumpQueued = false;
             airJumpQueued = false;
             dashQueued = false;
+            ledgeIsland = null;
         }
 
-        // Island sides (steep contacts) arm the wall jump.
+        /// <summary>
+        /// Plans the climb: out past the rim (so an overhang cannot block it) at a little above the top, then in onto
+        /// the island's surface just inside the rim. The collider is off for the move, so nothing snags it.
+        /// </summary>
+        private void StartClimb(Island island)
+        {
+            Vector3 centre = island.Top;
+            Vector3 flat = Body.position - centre;
+            flat.y = 0f;
+            float distance = flat.magnitude;
+            Vector3 dir = distance > 0.01f ? flat / distance : Vector3.forward;
+            float rim = island.Width * 0.5f;
+            float pivotAboveFeet = Body.position.y - capsule.bounds.min.y;
+
+            Vector3 landing = centre + dir * Mathf.Max(0f, rim - ledgeLandInset);
+            float surface = centre.y;
+            foreach (RaycastHit hit in Physics.RaycastAll(landing + Vector3.up * 10f, Vector3.down, 20f,
+                         1 << Hookfall.Core.Layers.World, QueryTriggerInteraction.Ignore))
+                if (hit.collider.GetComponentInParent<Island>() == island) surface = Mathf.Max(surface, hit.point.y);
+            landing.y = surface;
+
+            climbFrom = Body.position;
+            climbTo = landing + Vector3.up * (pivotAboveFeet + 0.05f);
+            climbOver = centre + dir * Mathf.Max(distance, rim + capsule.radius + 0.3f);
+            climbOver.y = climbTo.y + ledgeClearance;
+            climbT = 0f;
+            dashTimer = 0f;
+            capsule.enabled = false;
+            LedgeClimbed?.Invoke();
+        }
+
+        /// <summary>One step of the climb. Returns true while it is still moving; the step after it arrives ends it.</summary>
+        private bool Climb()
+        {
+            float dt = Time.fixedDeltaTime;
+            if (climbT >= 1f)
+            {
+                climbT = -1f;
+                capsule.enabled = true;
+                Body.linearVelocity = Vector3.zero;
+                return false;
+            }
+            climbT = Mathf.Min(1f, climbT + dt / ledgeClimbTime);
+            Vector3 next = climbT < 0.5f ? Vector3.Lerp(climbFrom, climbOver, climbT * 2f) : Vector3.Lerp(climbOver, climbTo, climbT * 2f - 1f);
+            Body.linearVelocity = (next - Body.position) / dt;
+            jumpQueued = wallJumpQueued = airJumpQueued = dashQueued = false;
+            ledgeIsland = null;
+            return true;
+        }
+
+        // Island sides (steep contacts) arm the wall jump. Any side or underside contact near the top starts a ledge climb.
         private void OnCollisionStay(Collision collision)
         {
-            if (!IsAirborne || collision.collider.GetComponentInParent<Island>() == null) return;
+            if (!IsAirborne || climbT >= 0f) return;
+            Island island = collision.collider.GetComponentInParent<Island>();
+            if (island == null) return;
+            float feet = capsule.bounds.min.y;
+            bool nearTop = feet < island.Top.y && feet >= island.Top.y - ledgeReach;
             for (int i = 0; i < collision.contactCount; i++)
             {
                 Vector3 n = collision.GetContact(i).normal;
-                if (Mathf.Abs(n.y) > 0.55f) continue;
+                if (n.y > 0.55f) continue;   // a floor: landing handles it
+                if (nearTop) ledgeIsland = island;
+                if (n.y < -0.55f) continue;  // an underside: no wall to jump off
                 wallNormal = new Vector3(n.x, 0f, n.z).normalized;
                 lastWallTime = Time.time;
-                return;
             }
         }
 

@@ -26,7 +26,8 @@ namespace Hookfall.Player
         [SerializeField] private float damagePercentPerPick = 10f;
         [SerializeField] private float attackSpeedPercentPerPick = 8f;
         [SerializeField] private float walkSpeedPercentPerPick = 8f;
-        [SerializeField] private float flightSpeedPercentPerPick = 5f;
+        [Tooltip("Raises the air speed cap (5% until 2026-11-08, when the cap became a real limit).")]
+        [SerializeField] private float flightSpeedPercentPerPick = 10f;
         [SerializeField] private float hookRangePerPick = 5f;
         [SerializeField] private float pickupRadiusPercentPerPick = 25f;
         [SerializeField] private float regenPerPick = 0.5f;
@@ -139,7 +140,7 @@ namespace Hookfall.Player
                 case StatType.Damage: return "Damage";
                 case StatType.AttackSpeed: return "Attack speed";
                 case StatType.WalkSpeed: return "Walk speed";
-                case StatType.FlightSpeed: return "Flight speed";
+                case StatType.FlightSpeed: return "Max flight speed";
                 case StatType.HookRange: return "Hook range";
                 case StatType.PickupRadius: return "Pickup radius";
                 case StatType.Regen: return "Health regen";

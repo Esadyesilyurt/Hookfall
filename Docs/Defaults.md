@@ -27,6 +27,7 @@ Values the GDD does not give, picked by Claude on 2026-11-07 when building Weeks
 | --- | --- | --- |
 | First chest | 20 s into the run, then every 45 s (GDD) | ChestSpawner |
 | Chest islands | Any non-tower island at least 5 m wide | ChestSpawner |
+| Chest reach | E opens a chest within 7 m, standing or flying (3 m and on the ground only until 2026-11-08) | Chest |
 | Luck | Multiplies the Rare and Epic weights | ChestSpawner.Roll |
 | Rarity effect | New item starts at level 1 / 2 / 3 (Common / Rare / Epic); an owned item gains +1 / +2 / +3 levels | CombatSystem |
 | Chest choice | 3 different choices of the rolled rarity (single random item until 2026-11-08): new items while a slot is free, levels for owned items that are not maxed; the game pauses until one is picked | CombatSystem.RollChest, ChestResultUI |
@@ -91,15 +92,16 @@ Values the GDD does not give, picked by Claude on 2026-11-07 when building Weeks
 | --- | --- | --- |
 | Rope | Taut rope: spring 60, damper 0.6, slack allowed, 10% reel-in on attach | GrappleHook |
 | Swing pump | +10 m/s² along the swing while it is going down | GrappleHook |
-| Letting go | Speed ×1.1, +3 m/s up when rising; the speed cap follows | GrappleHook |
+| Letting go | Speed ×1.1, +3 m/s up when rising; the speed cap follows, up to 15% over the cap | GrappleHook, PlayerController |
 | Air gravity | ×1.8 while airborne (faster swings, harder climbs) | PlayerController |
-| Max air speed | 55 m/s (GDD 4.1: 35) | PlayerController |
+| Max air speed | 40 m/s, +10% per Max flight speed pick (soft-capped at +100%); Zip and release boosts at most 15% over it (55 m/s with uncapped boosts until later on 2026-11-08; GDD 4.1: 35) | PlayerController, PlayerStats |
+| Ledge climb | Touching an island side or rim underside with the feet up to 8 m below the top: a 0.35 s move out past the rim, 1.2 m above the top, then onto the surface 1.5 m inside the rim | PlayerController |
 | Air strafe | 12 m/s² (GDD 4.1: 6) | PlayerController |
 | Zip (power swing) | Spring 120, pump 22 m/s², 20% reel-in; after 0.9 s held it reels in at 10 m/s with a 16 m/s² pull, down to 4 m; ends after 4 s or on release | GrappleHook |
 | Wall jump | Space within 0.2 s of touching an island side: 14 m/s up, 8 m/s off the wall, 9 m/s towards W/A/S/D; 0.3 s cooldown | PlayerController |
 | Air tricks | Above 24 m/s, airborne, no rope out, after 0.2 s: front flip, back flip or barrel roll at 620°/s, finishing the turn | WardenAnimator |
 | Chest light | Spotlight 14 m above the chest (26°, warm gold, breathing), plus an additive light cone | PF_Chest |
-| Speed FOV | Full at 55 m/s | CameraRig |
+| Speed FOV | Full at 40 m/s | CameraRig |
 | Double jump | Space in the air when no wall is near: +11 m/s up (a fall counts as 0), once per flight, refilled on landing | PlayerController |
 | Dash | Left Shift in the air: 32 m/s (or the current speed if faster) for 0.18 s towards W/A/S/D relative to the camera, or where the camera looks; once per flight, refilled on landing | PlayerController |
 | Props | Rocks, ruins, crystals, bushes, lanterns and statues have mesh colliders (none before 2026-11-08) | ModelSetup |
@@ -115,7 +117,7 @@ Values the GDD does not give, picked by Claude on 2026-11-07 when building Weeks
 | Spawn zone beyond 150 m (7.1) | 60 m out of view, 90 m ahead | At 150 m bats need about 12 s to arrive, which empties the screen |
 | Own vector icons (8.3) | 3D symbols rendered in Blender as sprites, in diamond and card frames | Esad's choice on 2026-11-07 |
 | Licensed sound and music (8.3) | Kenney CC0 recordings for the effects; wind, heartbeat and music synthesised in code by Tools/Audio/make_sfx.js | Esad's choices on 2026-11-08 (Docs/Credits.md); no AI audio model is used |
-| Hook values 4.1: spring 4.5, damper 7, max air speed 35, strafe 6 | A taut rope with a downhill pump, 1.8x air gravity, 55 m/s, strafe 12, a power-swing Zip, wall jumps, air tricks | Esad found the swing slow and islands hard to climb (2026-11-08) |
+| Hook values 4.1: spring 4.5, damper 7, max air speed 35, strafe 6 | A taut rope with a downhill pump, 1.8x air gravity, 40 m/s with capped boosts, strafe 12, a power-swing Zip, wall jumps, air tricks | Esad found the swing slow and islands hard to climb (2026-11-08) |
 | Spawn rate 2/s, +15% per minute, flocks of 4–8 (4.8) | 5/s, +20% per minute, flocks of 8–14 | Esad found the first build too calm (2026-11-07) |
 | Six items, eleven stats (4.5, 4.6) | A seventh chest item (Tether Coil) and two Zip stats | Added with the right-click Zip on Esad's request (2026-11-07) |
 | Islands at any height, arena edge not described (4.9, 7.1) | Three height bands with a reachability check, and a storm wall at 195 m with far scenery beyond | Esad's feedback: islands could not be climbed and the edge felt empty |
