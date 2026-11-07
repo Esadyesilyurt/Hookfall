@@ -23,9 +23,10 @@ namespace Hookfall.Enemies
         [SerializeField] private Boulder boulderPrefab;
 
         [Header("Spawning (GDD 4.8)")]
-        [SerializeField] private float baseSpawnPerSecond = 2f;
-        [Tooltip("+15% spawn rate per minute survived.")]
-        [SerializeField] private float spawnGrowthPerMinute = 0.15f;
+        [Tooltip("GDD 4.8 started at 2 per second; raised to 5 on 2026-11-07 for more chaos (Docs/Defaults.md).")]
+        [SerializeField] private float baseSpawnPerSecond = 5f;
+        [Tooltip("+20% spawn rate per minute survived.")]
+        [SerializeField] private float spawnGrowthPerMinute = 0.2f;
         [SerializeField] private int maxAlive = 300;
         [Tooltip("Distance for spawns around the player, placed out of camera view.")]
         [SerializeField] private float spawnDistance = 60f;
@@ -34,7 +35,7 @@ namespace Hookfall.Enemies
         [Tooltip("Share of spawns placed ahead of the player's flight path.")]
         [SerializeField, Range(0f, 1f)] private float aheadSpawnShare = 0.6f;
         [Tooltip("Bats spawn in flocks of this many (min, max).")]
-        [SerializeField] private Vector2Int flockSize = new Vector2Int(4, 8);
+        [SerializeField] private Vector2Int flockSize = new Vector2Int(8, 14);
         [SerializeField] private float flockSpread = 4f;
 
         [Header("Wyverns")]
@@ -67,6 +68,10 @@ namespace Hookfall.Enemies
 
         [Header("Performance fallback (GDD 5.7)")]
         [SerializeField] private float minFps = 50f;
+
+        [Header("Arena")]
+        [Tooltip("Spawns stay inside this horizontal radius (inside the storm wall).")]
+        [SerializeField] private float arenaRadius = 180f;
 
         private readonly Dictionary<EnemyBase, ObjectPool<EnemyBase>> pools = new Dictionary<EnemyBase, ObjectPool<EnemyBase>>();
         private ObjectPool<Boulder> boulders;
@@ -248,7 +253,7 @@ namespace Hookfall.Enemies
             {
                 Vector3 ahead = Quaternion.AngleAxis(Random.Range(-60f, 60f), Vector3.up) * velocity.normalized;
                 ahead.y = Mathf.Clamp(ahead.y, -0.3f, 0.5f);
-                return origin + ahead.normalized * aheadSpawnDistance;
+                return InsideArena(origin + ahead.normalized * aheadSpawnDistance);
             }
 
             Camera cam = Camera.main;
@@ -263,7 +268,15 @@ namespace Hookfall.Enemies
                 bool visible = v.z > 0f && v.x > -0.05f && v.x < 1.05f && v.y > -0.05f && v.y < 1.05f;
                 if (!visible) break;
             }
-            return point;
+            return InsideArena(point);
+        }
+
+        private Vector3 InsideArena(Vector3 p)
+        {
+            var flat = new Vector2(p.x, p.z);
+            if (flat.magnitude <= arenaRadius) return p;
+            flat = flat.normalized * arenaRadius;
+            return new Vector3(flat.x, p.y, flat.y);
         }
 
         public void Relocate(EnemyBase enemy)

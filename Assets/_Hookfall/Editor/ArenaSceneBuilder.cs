@@ -75,6 +75,7 @@ namespace Hookfall.EditorTools
 
             var generator = new GameObject("IslandGenerator").AddComponent<IslandGenerator>();
             WireIslandGenerator(generator, null);
+            AddArenaEdge(null);
 
             new GameObject("Main Menu").AddComponent<MainMenuUI>();
             EditorSceneManager.SaveScene(scene, MenuPath);
@@ -186,6 +187,7 @@ namespace Hookfall.EditorTools
 
             var generator = new GameObject("IslandGenerator").AddComponent<IslandGenerator>();
             WireIslandGenerator(generator, stats);
+            AddArenaEdge(body);
 
             // Pickups
             var pickups = new GameObject("Pickups").AddComponent<PickupSpawner>();
@@ -311,6 +313,17 @@ namespace Hookfall.EditorTools
             SetList(generator, "propModels", ModelSetup.PropPrefabs());
             SetList(generator, "cloudModels", ModelSetup.CloudPrefabs());
             SetRef(generator, "towerModel", ModelSetup.TowerPrefab());
+        }
+
+        /// <summary>The storm wall that closes the arena, and the far scenery beyond it.</summary>
+        private static void AddArenaEdge(Rigidbody body)
+        {
+            var storm = new GameObject("StormWall").AddComponent<StormWall>();
+            if (body != null) SetRef(storm, "player", body);
+            SetList(storm, "cloudPrefabs", ModelSetup.StormCloudPrefabs());
+            SetRef(storm, "lightningMaterial", ToonSetup.ParticleMaterial());
+            var backdrop = new GameObject("Backdrop").AddComponent<Backdrop>();
+            SetList(backdrop, "prefabs", ModelSetup.BackdropPrefabs());
         }
 
         private static void SetList(Object target, string field, GameObject[] values)

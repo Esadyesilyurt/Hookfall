@@ -30,12 +30,21 @@ namespace Hookfall.EditorTools
             ("M_Gold", new Color(1f, 0.85f, 0.3f), true), ("M_WardenCloth", new Color(0.12f, 0.42f, 0.46f), false),
             ("M_WardenCape", new Color(0.08f, 0.28f, 0.32f), false), ("M_WardenArmor", new Color(0.42f, 0.45f, 0.5f), false),
             ("M_WardenSkin", new Color(0.85f, 0.66f, 0.52f), false), ("M_PlayerGlow", new Color(0.35f, 0.95f, 1f), true),
+            ("M_GrassTuft", new Color(0.52f, 0.68f, 0.4f), false), ("M_Flower", new Color(0.96f, 0.86f, 0.48f), true),
+            ("M_Water", new Color(0.62f, 0.86f, 0.96f), true), ("M_StormCloud", new Color(0.4f, 0.44f, 0.56f), false),
+            ("M_Root", new Color(0.33f, 0.37f, 0.24f), false),
         };
+
+        /// <summary>Far scenery colours: pale and blue-shifted, so it reads as distant haze (SG_Backdrop has no fog).</summary>
+        private static readonly Color BackdropRock = new Color(0.6f, 0.68f, 0.8f);
+        private static readonly Color BackdropGrass = new Color(0.62f, 0.76f, 0.78f);
 
         [MenuItem("Hookfall/Import Models")]
         public static void Run()
         {
             foreach (var (name, color, unlit) in Materials) GetOrCreateMaterial(name, color, unlit);
+            BackdropMaterial("M_BackdropRock", BackdropRock);
+            BackdropMaterial("M_BackdropGrass", BackdropGrass);
             ToonSetup.ConvertMaterials();
             if (!AssetDatabase.IsValidFolder(ModelsPath)) return;
             foreach (string guid in AssetDatabase.FindAssets("t:Model", new[] { ModelsPath }))
@@ -71,6 +80,21 @@ namespace Hookfall.EditorTools
         public static GameObject[] IslandPrefabs(string size) => ModelPrefabs($"Island_{size}_", true, false);
         public static GameObject[] PropPrefabs() => Combine(ModelPrefabs("Rock_", false, false), ModelPrefabs("Ruin", false, false), ModelPrefabs("Crystals", false, false));
         public static GameObject[] CloudPrefabs() => ModelPrefabs("Cloud_", false, true);
+        public static GameObject[] StormCloudPrefabs() => ModelPrefabs("StormCloud_", false, true);
+        public static GameObject[] BackdropPrefabs() => ModelPrefabs("Backdrop_", false, true, BackdropFor);
+
+        private static Material BackdropFor(Material source) =>
+            Mat(source != null && (source.name.Contains("Grass") || source.name.Contains("Moss")) ? "M_BackdropGrass" : "M_BackdropRock");
+
+        private static void BackdropMaterial(string name, Color color)
+        {
+            string path = $"{MaterialsPath}/{name}.mat";
+            if (AssetDatabase.LoadAssetAtPath<Material>(path) != null) return;
+            Shader shader = Shader.Find("Hookfall/SG_Backdrop") ?? Shader.Find(ToonSetup.ToonShader);
+            var m = new Material(shader);
+            m.SetColor("_BaseColor", color);
+            AssetDatabase.CreateAsset(m, path);
+        }
         public static GameObject TowerPrefab()
         {
             GameObject[] towers = ModelPrefabs("Tower", true, false);
@@ -78,7 +102,7 @@ namespace Hookfall.EditorTools
         }
 
         /// <summary>One prefab per model whose name starts with prefix: the model plus optional mesh colliders.</summary>
-        private static GameObject[] ModelPrefabs(string prefix, bool colliders, bool noOutline)
+        private static GameObject[] ModelPrefabs(string prefix, bool colliders, bool noOutline, System.Func<Material, Material> remap = null)
         {
             var result = new List<GameObject>();
             if (!AssetDatabase.IsValidFolder(ModelsPath)) return result.ToArray();
@@ -96,8 +120,17 @@ namespace Hookfall.EditorTools
                 GameObject visual = InstantiateModel(name, root.transform);
                 foreach (MeshFilter mf in visual.GetComponentsInChildren<MeshFilter>())
                 {
-                    if (colliders) mf.gameObject.AddComponent<MeshCollider>().sharedMesh = mf.sharedMesh;
+                    // Deco (grass tufts, flowers, waterfalls) gets no collider and no ink outline.
+                    bool deco = mf.name.StartsWith("Deco");
+                    if (colliders && !deco) mf.gameObject.AddComponent<MeshCollider>().sharedMesh = mf.sharedMesh;
                     var r = mf.GetComponent<MeshRenderer>();
+                    if (deco) { mf.gameObject.layer = Core.Layers.NoOutline; r.shadowCastingMode = ShadowCastingMode.Off; }
+                    if (remap != null)
+                    {
+                        Material[] mats = r.sharedMaterials;
+                        for (int i = 0; i < mats.Length; i++) mats[i] = remap(mats[i]);
+                        r.sharedMaterials = mats;
+                    }
                     if (noOutline)
                     {
                         mf.gameObject.layer = Core.Layers.NoOutline;   // clouds: soft shapes, no ink line

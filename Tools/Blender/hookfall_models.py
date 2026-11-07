@@ -21,6 +21,8 @@ PALETTE = {
     "M_ChestTrim": (1.00, 0.72, 0.20), "M_CacheGlow": (1.00, 0.85, 0.40), "M_XPGem": (1.00, 0.62, 0.15),
     "M_Gold": (1.00, 0.85, 0.30), "M_WardenCloth": (0.12, 0.42, 0.46), "M_WardenCape": (0.08, 0.28, 0.32),
     "M_WardenArmor": (0.42, 0.45, 0.50), "M_WardenSkin": (0.85, 0.66, 0.52), "M_PlayerGlow": (0.35, 0.95, 1.00),
+    "M_GrassTuft": (0.52, 0.68, 0.40), "M_Flower": (0.96, 0.86, 0.48), "M_Water": (0.62, 0.86, 0.96),
+    "M_StormCloud": (0.40, 0.44, 0.56), "M_Root": (0.33, 0.37, 0.24),
 }
 
 
@@ -184,23 +186,27 @@ def preview(name, out_dir):
 
 # ---------------------------------------------------------------- islands
 
-def island(name, radius, depth, seed, segments, boulders, out_dir, prev_dir):
-    """Flat grassy top with a rounded lip, chunky rock underside tapering to a point (GDD 8.1, mood board 1-2)."""
-    reset()
+def island_body(b, radius, depth, seed, segments, boulders, details=True):
+    """Flat grassy top with a rounded lip, chunky layered rock underside tapering to a point (GDD 8.1, mood board 1-2),
+    with hanging roots and glowing Heartstone shards (the relic's pull is what keeps the island up). Returns the
+    random generator and the outline function, for the decoration pass."""
     rnd = random.Random(seed)
-    b = Builder(name)
     bm = b.bm
     phase = [rnd.uniform(0, 6.28) for _ in range(4)]
 
     def outline(a):
         return 1 + 0.09 * math.sin(3 * a + phase[0]) + 0.05 * math.sin(5 * a + phase[1]) + 0.03 * math.sin(9 * a + phase[2])
 
+    def profile(t):
+        return max(0.05, 0.97 * (1 - t ** 1.4) ** 0.9)
+
     # (z, radius factor, material, jitter): top surface, grass lip, grass edge, then the rock rings.
     rings = [(0.0, 0.55, "M_Grass", 0), (0.0, 1.0, "M_Grass", 0), (-0.22, 1.035, "M_Grass", 0), (-0.55, 1.0, "M_Grass", 0)]
-    rock_rings = 9
+    rock_rings = 12
     for i in range(1, rock_rings + 1):
         t = i / rock_rings
-        rings.append((-0.55 - t * depth, max(0.05, 0.97 * (1 - t ** 1.4) ** 0.9), "M_Stone", 0.08))
+        ledge = 1.07 if i % 3 == 1 and t < 0.75 else 1.0      # rock strata: a ledge every third ring
+        rings.append((-0.55 - t * depth, profile(t) * ledge, "M_Stone", 0.07))
 
     loops = []
     for z, f, _, jitter in rings:
@@ -235,14 +241,139 @@ def island(name, radius, depth, seed, segments, boulders, out_dir, prev_dir):
         size = radius * rnd.uniform(0.22, 0.38)
         # Deep enough that the boulder (plus its displacement) stays below the grass, so the top stays clean.
         t = max(rnd.uniform(0.15, 0.6), (size * 1.15 + 0.4) / depth)
-        r = radius * (0.97 * (1 - t ** 1.4) ** 0.9) * rnd.uniform(0.7, 0.9)
+        r = radius * profile(t) * rnd.uniform(0.7, 0.9)
         verts = b.ico("M_Stone", M((math.cos(a) * r, math.sin(a) * r, -0.55 - t * depth), (size, size, size * 0.85),
                                    (rnd.uniform(0, 90), rnd.uniform(0, 90), 0)))
         b.displace(verts, amp=size * 0.35, freq=2.2 / size, seed=seed + i + 1)
 
+    if details:
+        # Roots and moss strands hanging from under the grass lip.
+        for i in range(max(4, segments // 3)):
+            a = rnd.uniform(0, math.tau)
+            r = radius * outline(a) * 0.93
+            length = rnd.uniform(0.8, 2.6) * (radius / 7) ** 0.5
+            b.cone("M_Root", M((math.cos(a) * r, math.sin(a) * r, -0.6 - length / 2), r=(rnd.uniform(-8, 8), rnd.uniform(-8, 8), 0)),
+                   0.07 * radius / 7 + 0.04, 0.0, length, segments=5)
+        # Heartstone shards growing out of the rock.
+        for i in range(rnd.randint(3, 6)):
+            a = rnd.uniform(0, math.tau)
+            t = rnd.uniform(0.25, 0.7)
+            r = radius * profile(t) * 0.8
+            size = radius * rnd.uniform(0.06, 0.12)
+            tilt = math.degrees(a)
+            b.cone("M_Heartstone", M((math.cos(a) * r, math.sin(a) * r, -0.55 - t * depth), r=(0, 115, tilt)) @ M((0, 0, size)),
+                   size * 0.45, 0.0, size * 2.6, segments=6)
+    return rnd, outline
+
+
+def island_deco(radius, rnd, outline, waterfall):
+    """Grass tufts and flowers near the rim, and sometimes a waterfall spilling into the abyss. A separate object
+    named Deco, so it gets no collider in Unity and never trips the player."""
+    d = Builder("Deco")
+    for i in range(int(radius * 5)):
+        a = rnd.uniform(0, math.tau)
+        r = radius * outline(a) * math.sqrt(rnd.uniform(0.35, 0.97))
+        x, y = math.cos(a) * r, math.sin(a) * r
+        for k in range(3):
+            h = rnd.uniform(0.25, 0.5)
+            d.cone("M_GrassTuft", M((x + rnd.uniform(-0.12, 0.12), y + rnd.uniform(-0.12, 0.12), h / 2 - 0.02),
+                                    r=(rnd.uniform(-20, 20), rnd.uniform(-20, 20), 0)), 0.05, 0.0, h, segments=3, caps=False)
+        if rnd.random() < 0.18:
+            d.sphere("M_Flower", M((x + 0.15, y, 0.18), (0.07, 0.07, 0.05)), u=6, v=4)
+    if waterfall:
+        a = rnd.uniform(0, math.tau)
+        r = radius * outline(a) * 1.0
+        cx, cy = math.cos(a) * r, math.sin(a) * r
+        w = radius * 0.28
+        length = radius * 1.8
+        # A ribbon facing outwards from the rim, falling and widening.
+        tangent = Vector((-math.sin(a), math.cos(a), 0))
+        out = Vector((math.cos(a), math.sin(a), 0))
+        pts = []
+        for s in range(7):
+            t = s / 6
+            centre = Vector((cx, cy, -0.05)) + out * (0.3 + t * t * 2.5) + Vector((0, 0, -t * length))
+            pts.append(centre)
+        left = [p - tangent * (w * (1 + i * 0.12)) for i, p in enumerate(pts)]
+        right = [p + tangent * (w * (1 + i * 0.12)) for i, p in enumerate(pts)]
+        bm = d.bm
+        lv = [bm.verts.new(p) for p in left]
+        rv = [bm.verts.new(p) for p in right]
+        idx = d.mat_index("M_Water")
+        lb = [bm.verts.new(p - out * 0.03) for p in left]   # back side needs its own vertices
+        rb = [bm.verts.new(p - out * 0.03) for p in right]
+        for i in range(len(pts) - 1):
+            bm.faces.new((lv[i], rv[i], rv[i + 1], lv[i + 1])).material_index = idx
+            bm.faces.new((lb[i + 1], rb[i + 1], rb[i], lb[i])).material_index = idx
+        d.sphere("M_Water", M((cx, cy, -0.02), (w * 1.2, w * 1.2, 0.08)), u=8, v=4)   # pool at the lip
+    d.build()
+
+
+def island(name, radius, depth, seed, segments, boulders, out_dir, prev_dir, waterfall=False):
+    reset()
+    b = Builder(name)
+    rnd, outline = island_body(b, radius, depth, seed, segments, boulders)
     b.build()
+    island_deco(radius, rnd, outline, waterfall)
     export(name, out_dir)
     preview(name, prev_dir)
+
+
+# ---------------------------------------------------------------- far scenery beyond the storm wall
+
+def backdrop_spire(out_dir, prev_dir):
+    """A huge floating rock with a needle of stone on top. Seen only as a distant silhouette."""
+    reset()
+    b = Builder("Spire")
+    island_body(b, 16, 55, 701, 32, 4, details=False)
+    verts = b.cone("M_Stone", M((2, 1, 16)), 7.5, 1.2, 34, segments=12)
+    b.displace(verts, amp=2.2, freq=0.18, seed=7)
+    verts = b.cone("M_Stone", M((-6, -3, 8)), 4.0, 0.8, 18, segments=10)
+    b.displace(verts, amp=1.2, freq=0.25, seed=8)
+    b.build()
+    export("Backdrop_Spire", out_dir)
+    preview("Backdrop_Spire", prev_dir)
+
+
+def backdrop_fortress(out_dir, prev_dir):
+    """The broken fortress that once guarded the Heartstone: a ring of shattered walls and towers on a great island."""
+    reset()
+    rnd = random.Random(702)
+    b = Builder("Fortress")
+    island_body(b, 24, 40, 702, 36, 5, details=False)
+    for i in range(16):
+        if rnd.random() < 0.3:
+            continue   # breaches in the wall
+        a = i / 16 * math.tau
+        h = rnd.uniform(3, 7)
+        b.cube("M_Tower", M((math.cos(a) * 17, math.sin(a) * 17, h / 2), (7, 2, h), (0, 0, math.degrees(a) + 90)))
+    for x, y, h in ((0, 0, 22), (10, -6, 13), (-9, 7, 9), (-11, -9, 16)):
+        verts = b.cone("M_Tower", M((x, y, h / 2)), 3.2, 2.8, h, segments=12)
+        for v in verts:   # broken, uneven tops
+            if v.co.z > h - 0.5:
+                v.co.z -= rnd.uniform(0, 3)
+    b.build()
+    export("Backdrop_Fortress", out_dir)
+    preview("Backdrop_Fortress", prev_dir)
+
+
+def backdrop_arch(out_dir, prev_dir):
+    """A fallen bridge: two rock chunks with pillars and the remains of the arch between them."""
+    reset()
+    b = Builder("Arch")
+    for side in (-1, 1):
+        verts = b.ico("M_Stone", M((side * 22, 0, -6), (9, 8, 10)))
+        b.displace(verts, amp=2.5, freq=0.2, seed=703 + side)
+        b.cone("M_Tower", M((side * 22, 0, 12)), 3.5, 3.0, 26, segments=10)
+    for i in range(14):
+        t = i / 13
+        if 0.55 < t < 0.8:
+            continue   # the broken span
+        a = math.pi * t
+        b.cube("M_Tower", M((-22 * math.cos(a), 0, 25 + 14 * math.sin(a)), (4.5, 4, 2.5), (0, -math.degrees(a) + 90, 0)))
+    b.build()
+    export("Backdrop_Arch", out_dir)
+    preview("Backdrop_Arch", prev_dir)
 
 
 # ---------------------------------------------------------------- tower and Heartstone
@@ -339,14 +470,14 @@ def crystals(out_dir, prev_dir):
     preview("Crystals", prev_dir)
 
 
-def cloud(name, seed, out_dir, prev_dir):
+def cloud(name, seed, out_dir, prev_dir, mat="M_Cloud", u=14, v=8):
     """Puffy, flat-bottomed cloud for the hard-edged toon sky (mood board 3). About 10 m across at scale 1."""
     reset()
     rnd = random.Random(seed)
     b = Builder(name)
     for i in range(rnd.randint(6, 9)):
         r = rnd.uniform(1.2, 2.4)
-        b.sphere("M_Cloud", M((rnd.uniform(-4, 4), rnd.uniform(-1.5, 1.5), rnd.uniform(0, 1.2)), (r, r, r * 0.8)), u=14, v=8)
+        b.sphere(mat, M((rnd.uniform(-4, 4), rnd.uniform(-1.5, 1.5), rnd.uniform(0, 1.2)), (r, r, r * 0.8)), u=u, v=v)
     for v in b.bm.verts:
         if v.co.z < 0:
             v.co.z *= 0.15
@@ -584,12 +715,12 @@ def main():
     os.makedirs(prev_dir, exist_ok=True)
 
     jobs = {
-        "Island_Large_1": lambda: island("Island_Large_1", 7.0, 8.5, 101, 48, 4, out_dir, prev_dir),
+        "Island_Large_1": lambda: island("Island_Large_1", 7.0, 8.5, 101, 48, 4, out_dir, prev_dir, waterfall=True),
         "Island_Large_2": lambda: island("Island_Large_2", 7.0, 10.5, 202, 48, 3, out_dir, prev_dir),
         "Island_Large_3": lambda: island("Island_Large_3", 7.0, 7.0, 303, 48, 5, out_dir, prev_dir),
         "Island_Small_1": lambda: island("Island_Small_1", 3.0, 5.0, 404, 28, 2, out_dir, prev_dir),
         "Island_Small_2": lambda: island("Island_Small_2", 3.0, 6.5, 505, 28, 1, out_dir, prev_dir),
-        "Island_Small_3": lambda: island("Island_Small_3", 3.0, 4.2, 606, 28, 3, out_dir, prev_dir),
+        "Island_Small_3": lambda: island("Island_Small_3", 3.0, 4.2, 606, 28, 3, out_dir, prev_dir, waterfall=True),
         "Tower": lambda: tower(out_dir, prev_dir),
         "Rock_1": lambda: rock("Rock_1", 21, out_dir, prev_dir),
         "Rock_2": lambda: rock("Rock_2", 22, out_dir, prev_dir),
@@ -598,6 +729,11 @@ def main():
         "Cloud_1": lambda: cloud("Cloud_1", 31, out_dir, prev_dir),
         "Cloud_2": lambda: cloud("Cloud_2", 32, out_dir, prev_dir),
         "Cloud_3": lambda: cloud("Cloud_3", 33, out_dir, prev_dir),
+        "StormCloud_1": lambda: cloud("StormCloud_1", 41, out_dir, prev_dir, "M_StormCloud", 9, 6),
+        "StormCloud_2": lambda: cloud("StormCloud_2", 42, out_dir, prev_dir, "M_StormCloud", 9, 6),
+        "Backdrop_Spire": lambda: backdrop_spire(out_dir, prev_dir),
+        "Backdrop_Fortress": lambda: backdrop_fortress(out_dir, prev_dir),
+        "Backdrop_Arch": lambda: backdrop_arch(out_dir, prev_dir),
         "Bat": lambda: bat(out_dir, prev_dir),
         "Wyvern": lambda: wyvern(out_dir, prev_dir),
         "Golem": lambda: golem(out_dir, prev_dir),

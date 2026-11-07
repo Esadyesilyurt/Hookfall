@@ -30,8 +30,15 @@ namespace Hookfall.World
 
         [Header("Placement")]
         [SerializeField] private float minSpacing = 15f;
-        [SerializeField] private Vector2 heightRange = new Vector2(-10f, 10f);
         [SerializeField] private int attemptsPerIsland = 30;
+        [Tooltip("Height bands (low, middle, high) so islands stack in layers and the hook can lift you onto higher ones.")]
+        [SerializeField] private Vector2[] heightTiers = { new Vector2(-32f, -14f), new Vector2(-6f, 10f), new Vector2(18f, 38f) };
+        [Tooltip("Small high perches near the tower, above its top, for vertical play.")]
+        [SerializeField] private Vector2Int perchCount = new Vector2Int(4, 6);
+        [SerializeField] private Vector2 perchRadius = new Vector2(24f, 60f);
+        [SerializeField] private Vector2 perchHeight = new Vector2(28f, 46f);
+        [Tooltip("Every island must be this close (centre to centre) to one the player can already reach; hook range is 40 m.")]
+        [SerializeField] private float maxLinkDistance = 32f;
 
         [Header("Models (optional; primitives are used when empty)")]
         [SerializeField] private GameObject[] largeIslandModels;
@@ -72,11 +79,15 @@ namespace Hookfall.World
             Random.InitState(UsedSeed);
 
             placed.Clear();
+            plans.Clear();
             BuildIsland(Vector3.zero, towerIslandWidth, IslandKind.Tower);
             BuildTower();
 
-            PlaceRing(Random.Range(innerCount.x, innerCount.y + 1), innerRadius, innerWidth, IslandKind.Inner);
-            PlaceRing(Random.Range(outerCount.x, outerCount.y + 1), outerRadius, outerWidth, IslandKind.Outer);
+            PlanRing(Random.Range(innerCount.x, innerCount.y + 1), innerRadius, innerWidth, IslandKind.Inner);
+            PlanRing(Random.Range(outerCount.x, outerCount.y + 1), outerRadius, outerWidth, IslandKind.Outer);
+            PlanPerches();
+            MakeReachable();
+            foreach (IslandPlan plan in plans) BuildIsland(plan.position, plan.width, plan.kind);
             PlaceClouds();
 
             Random.state = previous;
@@ -88,28 +99,103 @@ namespace Hookfall.World
             if (player != null) player.SetAbyssKillHeight(AbyssKillHeight);
         }
 
-        private void PlaceRing(int count, Vector2 radius, Vector2 width, IslandKind kind)
+        private struct IslandPlan
+        {
+            public Vector3 position;
+            public float width;
+            public IslandKind kind;
+        }
+
+        private readonly List<IslandPlan> plans = new List<IslandPlan>();
+
+        private void PlanRing(int count, Vector2 radius, Vector2 width, IslandKind kind)
         {
             for (int i = 0; i < count; i++)
             {
+                Vector2 tier = heightTiers[Random.Range(0, heightTiers.Length)];
+                float w = Random.Range(width.x, width.y);
                 for (int attempt = 0; attempt < attemptsPerIsland; attempt++)
                 {
                     float angle = Random.Range(0f, Mathf.PI * 2f);
                     float r = Random.Range(radius.x, radius.y);
-                    Vector3 position = new Vector3(Mathf.Cos(angle) * r, Random.Range(heightRange.x, heightRange.y), Mathf.Sin(angle) * r);
-                    if (!FarEnough(position)) continue;
-
-                    BuildIsland(position, Random.Range(width.x, width.y), kind);
+                    var position = new Vector3(Mathf.Cos(angle) * r, Random.Range(tier.x, tier.y), Mathf.Sin(angle) * r);
+                    if (!FarEnough(position, w)) continue;
+                    plans.Add(new IslandPlan { position = position, width = w, kind = kind });
                     break;
                 }
             }
         }
 
-        private bool FarEnough(Vector3 position)
+        private void PlanPerches()
         {
-            foreach (Vector3 other in placed)
-                if (Vector3.Distance(position, other) < minSpacing) return false;
-            return true;
+            int count = Random.Range(perchCount.x, perchCount.y + 1);
+            for (int i = 0; i < count; i++)
+                for (int attempt = 0; attempt < attemptsPerIsland; attempt++)
+                {
+                    float angle = Random.Range(0f, Mathf.PI * 2f);
+                    float r = Random.Range(perchRadius.x, perchRadius.y);
+                    var position = new Vector3(Mathf.Cos(angle) * r, Random.Range(perchHeight.x, perchHeight.y), Mathf.Sin(angle) * r);
+                    float w = Random.Range(outerWidth.x, outerWidth.y);
+                    if (!FarEnough(position, w)) continue;
+                    plans.Add(new IslandPlan { position = position, width = w, kind = IslandKind.Outer });
+                    break;
+                }
+        }
+
+        /// <summary>Islands hang deep below their tops, so the check is mostly horizontal: bodies must not overlap.</summary>
+        private bool FarEnough(Vector3 position, float width)
+        {
+            foreach (IslandPlan other in plans)
+            {
+                Vector2 d = new Vector2(position.x - other.position.x, position.z - other.position.z);
+                float needed = Mathf.Max(minSpacing, (width + other.width) * 0.6f);
+                bool stackedClear = Mathf.Abs(position.y - other.position.y) > (width + other.width) * 1.4f;
+                if (d.magnitude < needed && !stackedClear) return false;
+            }
+            return Vector2.Distance(new Vector2(position.x, position.z), Vector2.zero) > towerIslandWidth * 0.5f + width * 0.6f + 4f;
+        }
+
+        /// <summary>Walks out from the tower island; any island out of hook reach of the reachable ones is pulled
+        /// towards the nearest reachable island until it is in reach, so every layer can be climbed.</summary>
+        private void MakeReachable()
+        {
+            var reachable = new List<Vector3> { Vector3.zero, Vector3.up * towerHeight };
+            var open = new List<int>();
+            for (int i = 0; i < plans.Count; i++) open.Add(i);
+
+            while (open.Count > 0)
+            {
+                bool grew = false;
+                for (int k = open.Count - 1; k >= 0; k--)
+                {
+                    IslandPlan plan = plans[open[k]];
+                    foreach (Vector3 r in reachable)
+                    {
+                        if (Vector3.Distance(plan.position, r) > maxLinkDistance) continue;
+                        reachable.Add(plan.position);
+                        open.RemoveAt(k);
+                        grew = true;
+                        break;
+                    }
+                }
+                if (grew) continue;
+
+                // Nothing new is reachable: move the closest open island into reach of its nearest reachable one.
+                // shortcut: the moved island is not re-checked for overlap; rare, and only a visual clip if it happens.
+                int best = -1;
+                Vector3 anchor = Vector3.zero;
+                float bestDistance = float.MaxValue;
+                foreach (int index in open)
+                    foreach (Vector3 r in reachable)
+                    {
+                        float d = Vector3.Distance(plans[index].position, r);
+                        if (d < bestDistance) { bestDistance = d; best = index; anchor = r; }
+                    }
+                IslandPlan moved = plans[best];
+                Vector3 offset = moved.position - anchor;
+                moved.position = anchor + offset.normalized * (maxLinkDistance * 0.9f);
+                plans[best] = moved;
+            }
         }
 
         /// <summary>Top surface sits at the given position; the rocky underside hangs below it.</summary>
@@ -202,7 +288,7 @@ namespace Hookfall.World
                 bool below = i % 2 == 0;
                 float angle = Random.Range(0f, Mathf.PI * 2f);
                 float r = below ? Random.Range(0f, 220f) : Random.Range(230f, 320f);
-                float y = below ? Random.Range(-55f, -35f) : Random.Range(-30f, 40f);
+                float y = below ? Random.Range(-85f, -62f) : Random.Range(-40f, 60f);
                 GameObject cloud = Instantiate(cloudModels[Random.Range(0, cloudModels.Length)], clouds);
                 cloud.transform.localPosition = new Vector3(Mathf.Cos(angle) * r, y, Mathf.Sin(angle) * r);
                 cloud.transform.localRotation = Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);

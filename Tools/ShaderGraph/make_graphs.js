@@ -138,6 +138,14 @@ function make(objs) {
   t.edge(colorNode.m_ObjectId, 0, mul.m_ObjectId, 1);
   t.edge(mul.m_ObjectId, 2, litToon.m_ObjectId, BASE);
 
+  // SG_Backdrop: the same toon look without fog, for the far scenery beyond the storm wall. Fog would turn
+  // anything 400 m away into flat sky colour; pale material colours give the haze instead.
+  {
+    const backdrop = clone(objs);
+    backdrop[0].m_Path = 'Hookfall';
+    write(path.join(outDir, 'SG_Backdrop.shadergraph'), backdrop);
+  }
+
   // Scene fog (the sample leaves it out): Lit Toon -> Fog subgraph -> Base Color, so far islands fade into the
   // pale blue haze of the abyss (GDD 8.1).
   const simple = parse(path.join(sampleDir, 'Components', 'Core Models', 'LightSimple.shadersubgraph'));
