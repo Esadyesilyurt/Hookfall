@@ -33,6 +33,9 @@ namespace Hookfall.EditorTools
             ("M_GrassTuft", new Color(0.52f, 0.68f, 0.4f), false), ("M_Flower", new Color(0.96f, 0.86f, 0.48f), true),
             ("M_Water", new Color(0.62f, 0.86f, 0.96f), true), ("M_StormCloud", new Color(0.4f, 0.44f, 0.56f), false),
             ("M_Root", new Color(0.33f, 0.37f, 0.24f), false),
+            ("M_Banner", new Color(0.15f, 0.62f, 0.7f), false), ("M_BatBelly", new Color(0.78f, 0.36f, 0.7f), false),
+            ("M_Fang", new Color(0.95f, 0.93f, 0.85f), false), ("M_Bush", new Color(0.36f, 0.55f, 0.32f), false),
+            ("M_Chain", new Color(0.3f, 0.31f, 0.34f), false),
         };
 
         /// <summary>Far scenery colours: pale and blue-shifted, so it reads as distant haze (SG_Backdrop has no fog).</summary>
@@ -78,7 +81,9 @@ namespace Hookfall.EditorTools
         // ---------------------------------------------------------------- world prefabs
 
         public static GameObject[] IslandPrefabs(string size) => ModelPrefabs($"Island_{size}_", true, false);
-        public static GameObject[] PropPrefabs() => Combine(ModelPrefabs("Rock_", false, false), ModelPrefabs("Ruin", false, false), ModelPrefabs("Crystals", false, false));
+        public static GameObject[] PropPrefabs() => Combine(ModelPrefabs("Rock_", false, false), ModelPrefabs("Ruin", false, false),
+            ModelPrefabs("Crystals", false, false), ModelPrefabs("Bush", false, false), ModelPrefabs("Lantern", false, false),
+            ModelPrefabs("Statue", false, false));
         public static GameObject[] CloudPrefabs() => ModelPrefabs("Cloud_", false, true);
         public static GameObject[] StormCloudPrefabs() => ModelPrefabs("StormCloud_", false, true);
         public static GameObject[] BackdropPrefabs() => ModelPrefabs("Backdrop_", false, true, BackdropFor);
@@ -121,7 +126,7 @@ namespace Hookfall.EditorTools
                 foreach (MeshFilter mf in visual.GetComponentsInChildren<MeshFilter>())
                 {
                     // Deco (grass tufts, flowers, waterfalls) gets no collider and no ink outline.
-                    bool deco = mf.name.StartsWith("Deco");
+                    bool deco = mf.name.StartsWith("Deco") || mf.name.StartsWith("Banners");
                     if (colliders && !deco) mf.gameObject.AddComponent<MeshCollider>().sharedMesh = mf.sharedMesh;
                     var r = mf.GetComponent<MeshRenderer>();
                     if (deco) { mf.gameObject.layer = Core.Layers.NoOutline; r.shadowCastingMode = ShadowCastingMode.Off; }

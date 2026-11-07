@@ -376,6 +376,7 @@ namespace Hookfall.EditorTools
             SetRef(animator, "legLeft", EnemyPrefabs.FindDeep(warden.transform, "Leg_L"));
             SetRef(animator, "legRight", EnemyPrefabs.FindDeep(warden.transform, "Leg_R"));
             SetRef(animator, "cape", EnemyPrefabs.FindDeep(warden.transform, "Cape"));
+            SetRef(animator, "scarf", EnemyPrefabs.FindDeep(warden.transform, "Scarf"));
             SetRef(animator, "head", EnemyPrefabs.FindDeep(warden.transform, "Head"));
         }
 

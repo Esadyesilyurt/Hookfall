@@ -15,6 +15,7 @@ namespace Hookfall.Player
         [SerializeField] private Transform legLeft;
         [SerializeField] private Transform legRight;
         [SerializeField] private Transform cape;
+        [SerializeField] private Transform scarf;
         [SerializeField] private Transform head;
 
         [SerializeField] private float turnSpeed = 10f;
@@ -70,6 +71,7 @@ namespace Hookfall.Player
                 float speed = velocity.magnitude;
                 float angle = -Mathf.Clamp(8f + speed * 2.2f, 0f, 75f) + Mathf.Sin(Time.time * (6f + speed * 0.3f)) * Mathf.Min(10f, speed * 0.5f);
                 SetX(cape, angle, dt);
+                SetX(scarf, angle * 0.8f + Mathf.Sin(Time.time * 11f) * Mathf.Min(14f, speed), dt);
             }
             if (head != null && airborne) SetX(head, -lean * 0.5f, dt);
             else SetX(head, 0f, dt);

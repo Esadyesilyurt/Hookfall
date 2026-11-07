@@ -12,8 +12,18 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: M_BatBelly
+    second: {fileID: 2100000, guid: 4074158e21867a74a85862f0201696e6, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: M_EnemyEye
     second: {fileID: 2100000, guid: e67c396514a3c31469e5e5ed979f6479, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_Fang
+    second: {fileID: 2100000, guid: faa4cf1db1495414c9df0a2a2dbb120a, type: 2}
   materials:
     materialImportMode: 1
     materialName: 1
