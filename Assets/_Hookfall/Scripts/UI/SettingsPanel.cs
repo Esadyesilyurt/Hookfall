@@ -14,10 +14,13 @@ namespace Hookfall.UI
     {
         public static GameObject Build(Transform parent, Action onBack)
         {
-            Image panel = UIFactory.Panel(parent, "Settings", new Vector2(780f, 640f), UITheme.Panel);
-            UIFactory.Column(panel, 18f, 40, TextAnchor.UpperCenter);
+            Image panel = UIFactory.Panel(parent, "Settings", new Vector2(800f, 660f), UITheme.Panel);
+            UIFactory.Column(panel, 18f, 44, TextAnchor.UpperCenter);
+            UIPop.Add(panel, 0f, 0.85f);
 
-            UIFactory.Sized(UIFactory.Text(panel.transform, "Title", "Settings", 46f, UITheme.Player), -1f, 64f);
+            TMPro.TextMeshProUGUI title = UIFactory.Sized(UIFactory.Text(panel.transform, "Title", "SETTINGS", 46f, UITheme.Player, TMPro.TextAlignmentOptions.Center, true), -1f, 64f);
+            title.fontStyle = TMPro.FontStyles.Bold;
+            title.characterSpacing = 10f;
             UIFactory.Slider(panel.transform, "Mouse sensitivity", 0.1f, 3f, GameSettings.MouseSensitivity, v => GameSettings.MouseSensitivity = v);
             UIFactory.Slider(panel.transform, "Music volume", 0f, 1f, GameSettings.MusicVolume, v => GameSettings.MusicVolume = v);
             UIFactory.Slider(panel.transform, "Effects volume", 0f, 1f, GameSettings.EffectsVolume, v => GameSettings.EffectsVolume = v);

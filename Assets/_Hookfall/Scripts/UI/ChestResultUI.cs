@@ -1,11 +1,14 @@
-// Hookfall - chest result: one item card in its rarity colour, marked as a new item or a level-up (GDD 9.1).
-// AI disclosure: written with Claude (Anthropic) on 2026-11-07. Prompts and changes are recorded in Docs/PromptLog.md.
+// Hookfall - chest result: one item card in its rarity colour with turning light rays behind it, marked as a new
+// item or a level-up (GDD 9.1). Continue by click, E, Space or Enter.
+// AI disclosure: written with Claude (Anthropic) on 2026-11-07, restyled the same day with the UI skin.
+// Prompts and changes are recorded in Docs/PromptLog.md.
 using Hookfall.Combat;
 using Hookfall.Core;
 using Hookfall.Player;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.UI;
 
 namespace Hookfall.UI
 {
@@ -14,7 +17,8 @@ namespace Hookfall.UI
         public static ChestResultUI Instance { get; private set; }
 
         private GameObject root;
-        private RectTransform card;
+        private RectTransform card, rays;
+        private Image raysImage;
         private float shownAt;
 
         private void Awake()
@@ -22,7 +26,9 @@ namespace Hookfall.UI
             Instance = this;
             Canvas canvas = UIFactory.Canvas(transform, "Chest Canvas", 25);
             root = canvas.gameObject;
-            UIFactory.Image(UIFactory.Fill(canvas.transform, "Dim"), UITheme.Dim);
+            UIFactory.Image(UIFactory.Fill(canvas.transform, "Dim"), new Color(0.02f, 0.04f, 0.08f, 0.72f));
+            rays = UIFactory.Centre(canvas.transform, "Rays", new Vector2(0f, 40f), new Vector2(1100f, 1100f));
+            raysImage = UIFactory.Image(rays, Color.white, UISkin.Rays);
             root.SetActive(false);
         }
 
@@ -39,21 +45,33 @@ namespace Hookfall.UI
 
             if (card != null) Destroy(card.gameObject);
             Color color = UITheme.ForRarity(reward.Rarity);
-            var panel = UIFactory.Panel(root.transform, "Card", new Vector2(460f, 560f), UITheme.Panel);
+            raysImage.color = new Color(color.r, color.g, color.b, 0.3f);
+
+            Image panel = UIFactory.Image(UIFactory.Centre(root.transform, "Card", new Vector2(0f, 20f), new Vector2(500f, 640f)),
+                Color.Lerp(color, UITheme.Panel, 0.5f), UISkin.Card);
             card = (RectTransform)panel.transform;
-            UIFactory.Column(panel, 18f, 34, TextAnchor.UpperCenter);
+            UIFactory.Column(panel, 14f, 36, TextAnchor.UpperCenter);
+            UIPop.Add(panel, 0f, 0.4f);
 
             string name = reward.Item != null ? reward.Item.DisplayName : PlayerStats.NameOf(reward.FallbackStat);
-            string kind = reward.IsNewItem ? $"New item  ·  Level {reward.Item.Level}"
-                : reward.Item != null ? $"Level up  +{reward.LevelsGained}  ·  Level {reward.Item.Level}"
-                : $"All items maxed  ·  {name} ×{reward.LevelsGained}";
+            Sprite icon = reward.Item != null ? UISkin.Icon(reward.Item) : UISkin.Icon(reward.FallbackStat);
+            string kind = reward.IsNewItem ? "NEW ITEM"
+                : reward.Item != null ? $"LEVEL UP  +{reward.LevelsGained}"
+                : $"ALL ITEMS MAXED  ·  ×{reward.LevelsGained}";
 
-            UIFactory.Sized(UIFactory.Text(panel.transform, "Rarity", reward.Rarity.ToString().ToUpper(), 30f, color), -1f, 40f).fontStyle = FontStyles.Bold;
-            UIFactory.Diamond(panel.transform, name.Substring(0, 1), 150f, color);
-            UIFactory.Sized(UIFactory.Text(panel.transform, "Name", name, 40f, UITheme.Text), -1f, 56f);
-            UIFactory.Sized(UIFactory.Text(panel.transform, "Kind", kind, 24f, color), -1f, 36f);
+            TextMeshProUGUI rarity = UIFactory.Sized(UIFactory.Text(panel.transform, "Rarity", reward.Rarity.ToString().ToUpper(), 34f, color, TextAlignmentOptions.Center, true), -1f, 44f);
+            rarity.fontStyle = FontStyles.Bold;
+            rarity.characterSpacing = 10f;
+            UIFactory.Diamond(panel.transform, icon, name.Substring(0, 1), 190f, color);
+            UIFactory.Sized(UIFactory.Text(panel.transform, "Name", name, 42f, UITheme.Text, TextAlignmentOptions.Center, true), -1f, 56f).fontStyle = FontStyles.Bold;
+            TextMeshProUGUI kindText = UIFactory.Sized(UIFactory.Text(panel.transform, "Kind", kind, 22f, UITheme.Gold), -1f, 30f);
+            kindText.characterSpacing = 4f;
+            kindText.fontStyle = FontStyles.Bold;
             if (reward.Item != null)
-                UIFactory.Sized(UIFactory.Text(panel.transform, "Lore", $"<i>{reward.Item.Lore}</i>", 22f, UITheme.TextMuted), -1f, 90f);
+            {
+                UIFactory.Sized(UIFactory.Text(panel.transform, "Level", $"Level {reward.Item.Level}  ·  {reward.Item.DescribeNextLevel()}", 22f, UITheme.Text), -1f, 30f);
+                UIFactory.Sized(UIFactory.Text(panel.transform, "Lore", $"<i>{reward.Item.Lore}</i>", 21f, UITheme.TextMuted), -1f, 84f);
+            }
             UIFactory.Button(panel.transform, "Continue", Close, 300f, 60f);
 
             shownAt = Time.unscaledTime;
@@ -63,7 +81,9 @@ namespace Hookfall.UI
 
         private void Update()
         {
-            if (!root.activeSelf || Time.unscaledTime - shownAt < 0.3f) return;
+            if (!root.activeSelf) return;
+            rays.Rotate(0f, 0f, -18f * Time.unscaledDeltaTime);
+            if (Time.unscaledTime - shownAt < 0.3f) return;
             Keyboard k = Keyboard.current;
             if (k != null && (k.eKey.wasPressedThisFrame || k.spaceKey.wasPressedThisFrame || k.enterKey.wasPressedThisFrame)) Close();
         }
