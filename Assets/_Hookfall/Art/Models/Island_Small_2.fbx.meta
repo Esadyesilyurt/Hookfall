@@ -7,8 +7,28 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: M_Flower
+    second: {fileID: 2100000, guid: e14cf7887c181eb4ca3b2d0d21cac1ea, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: M_Grass
     second: {fileID: 2100000, guid: 3f46b46e3e9fc3f498f37c2834aac135, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_GrassTuft
+    second: {fileID: 2100000, guid: 45e19803ac561ff4fbdd2675a450eec4, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_Heartstone
+    second: {fileID: 2100000, guid: 4b2f76bdf4e97a1418039753f6165f11, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_Root
+    second: {fileID: 2100000, guid: 47f4b9c7a1dcd1e489d17f19c6e68861, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
