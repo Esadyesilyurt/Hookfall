@@ -28,7 +28,10 @@ namespace Hookfall.EditorTools
                 SerializedProperty e = list.GetArrayElementAtIndex(list.arraySize - 1);
                 e.FindPropertyRelative("id").enumValueIndex = (int)id;
                 e.FindPropertyRelative("clip").objectReferenceValue = clip;
-                e.FindPropertyRelative("volume").floatValue = 1f;
+                (float volume, float interval, int voices) mix = Mix(id);
+                e.FindPropertyRelative("volume").floatValue = mix.volume;
+                e.FindPropertyRelative("minInterval").floatValue = mix.interval;
+                e.FindPropertyRelative("maxVoices").intValue = mix.voices;
             }
             if (sfx.TryGetValue("SFX_WindLoop", out AudioClip wind)) serialized.FindProperty("windLoop").objectReferenceValue = wind;
             if (sfx.TryGetValue("SFX_HeartbeatLoop", out AudioClip beat)) serialized.FindProperty("heartbeatLoop").objectReferenceValue = beat;
@@ -45,6 +48,28 @@ namespace Hookfall.EditorTools
             }
             serialized.ApplyModifiedPropertiesWithoutUndo();
             Debug.Log($"[Hookfall] Audio: {list.arraySize} sound effects and {layers.arraySize} music layers connected.");
+        }
+
+        /// <summary>The mix: frequent sounds are quiet and spaced out, rare ones a little louder (2026-11-08, after the
+        /// first playtest found the sound tiring).</summary>
+        private static (float volume, float interval, int voices) Mix(SoundId id)
+        {
+            switch (id)
+            {
+                case SoundId.WeaponHit: return (0.22f, 0.09f, 2);
+                case SoundId.EnemyDeath: return (0.28f, 0.07f, 3);
+                case SoundId.XPPickup: return (0.2f, 0.06f, 2);
+                case SoundId.GoldPickup: return (0.3f, 0.08f, 2);
+                case SoundId.PlayerHurt: return (0.45f, 0.25f, 1);
+                case SoundId.BoulderBreak: return (0.35f, 0.15f, 2);
+                case SoundId.GolemSlam: return (0.5f, 0.2f, 2);
+                case SoundId.HookThrow: return (0.35f, 0.05f, 2);
+                case SoundId.HookAttach: return (0.4f, 0.05f, 2);
+                case SoundId.HookRelease: return (0.3f, 0.05f, 2);
+                case SoundId.WallJump: return (0.4f, 0.1f, 1);
+                case SoundId.Trick: return (0.3f, 0.4f, 1);
+                default: return (0.55f, 0.1f, 2);   // rare events: chests, level-up, tower cache, elite wave, run end
+            }
         }
 
         private static Dictionary<string, AudioClip> Load(string folder)

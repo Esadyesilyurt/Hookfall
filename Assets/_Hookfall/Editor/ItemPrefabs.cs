@@ -2,6 +2,7 @@
 // and the chest and tower cache prefabs.
 // AI disclosure: written with Claude (Anthropic) on 2026-11-07. Prompts and changes are recorded in Docs/PromptLog.md.
 using System.Collections.Generic;
+using UnityEditor;
 using Hookfall.Combat;
 using Hookfall.Combat.Items;
 using Hookfall.World;
@@ -108,7 +109,82 @@ namespace Hookfall.EditorTools
             }
             else lid = EnemyPrefabs.FindDeep(visual.transform, "Lid");
             SetRef(chest, "lid", lid);
+
+            // A spotlight from above and a visible cone of light, so a chest island is found at a glance.
+            var lightGo = new GameObject("Spotlight");
+            lightGo.transform.SetParent(root.transform, false);
+            lightGo.transform.localPosition = new Vector3(0f, BeamHeight, 0f);
+            lightGo.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+            var spot = lightGo.AddComponent<Light>();
+            spot.type = LightType.Spot;
+            spot.spotAngle = 26f;
+            spot.innerSpotAngle = 14f;
+            spot.range = BeamHeight + 8f;
+            spot.intensity = 9f;
+            spot.color = new Color(1f, 0.86f, 0.55f);
+            spot.shadows = LightShadows.None;
+            SetRef(chest, "spot", spot);
+
+            var beam = new GameObject("Light Beam") { layer = Hookfall.Core.Layers.NoOutline };
+            beam.transform.SetParent(root.transform, false);
+            beam.AddComponent<MeshFilter>().sharedMesh = BeamMesh();
+            var beamRenderer = beam.AddComponent<MeshRenderer>();
+            beamRenderer.sharedMaterial = BeamMaterial();
+            beamRenderer.shadowCastingMode = ShadowCastingMode.Off;
+            beamRenderer.receiveShadows = false;
             return SavePrefab(root, $"{Root}/Prefabs/World/PF_Chest.prefab").GetComponent<Chest>();
+        }
+
+        private const float BeamHeight = 14f;
+
+        /// <summary>An open cone, narrow at the top and wide at the chest, fading in towards the ground.</summary>
+        private static Mesh BeamMesh()
+        {
+            string path = Root + "/Art/Meshes/MESH_ChestBeam.asset";
+            var existing = AssetDatabase.LoadAssetAtPath<Mesh>(path);
+            if (existing != null) return existing;
+            EnsureFolder(Root + "/Art/Meshes");
+            const int segments = 24;
+            var vertices = new Vector3[segments * 2];
+            var colors = new Color[segments * 2];
+            var triangles = new int[segments * 6];
+            Color top = new Color(1f, 0.86f, 0.5f, 0f), bottom = new Color(1f, 0.86f, 0.5f, 0.32f);
+            for (int i = 0; i < segments; i++)
+            {
+                float a = i / (float)segments * Mathf.PI * 2f;
+                var dir = new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a));
+                vertices[i] = dir * 0.35f + Vector3.up * BeamHeight;
+                vertices[segments + i] = dir * 2.4f + Vector3.up * 0.05f;
+                colors[i] = top;
+                colors[segments + i] = bottom;
+                int n = (i + 1) % segments, t = i * 6;
+                triangles[t] = i; triangles[t + 1] = n; triangles[t + 2] = segments + i;
+                triangles[t + 3] = n; triangles[t + 4] = segments + n; triangles[t + 5] = segments + i;
+            }
+            var mesh = new Mesh { name = "MESH_ChestBeam", vertices = vertices, colors = colors, triangles = triangles };
+            mesh.RecalculateBounds();
+            AssetDatabase.CreateAsset(mesh, path);
+            return mesh;
+        }
+
+        /// <summary>Unlit, see-through both ways, coloured by the mesh's vertex colours.</summary>
+        private static Material BeamMaterial()
+        {
+            string path = MaterialsPath + "/M_LightBeam.mat";
+            var m = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (m != null) return m;
+            m = new Material(Shader.Find("Universal Render Pipeline/Particles/Unlit"));
+            m.SetFloat("_Surface", 1f);
+            m.SetFloat("_Blend", 0f);
+            m.SetOverrideTag("RenderType", "Transparent");
+            m.SetFloat("_SrcBlend", (float)BlendMode.SrcAlpha);
+            m.SetFloat("_DstBlend", (float)BlendMode.One);   // additive: light adds up, never darkens
+            m.SetFloat("_ZWrite", 0f);
+            m.SetFloat("_Cull", 0f);
+            m.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+            m.renderQueue = (int)RenderQueue.Transparent;
+            AssetDatabase.CreateAsset(m, path);
+            return m;
         }
 
         /// <summary>The cache box and its beam, as children of the TowerCache object in the scene.</summary>

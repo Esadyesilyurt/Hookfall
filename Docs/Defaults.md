@@ -82,6 +82,22 @@ Values the GDD does not give, picked by Claude on 2026-11-07 when building Weeks
 | Damage numbers | At most 8 per frame (2 when the frame rate is low), big hits from 40 damage | DamageNumbers |
 | Post-processing | Bloom threshold 1.05, intensity 0.9; vignette 0.2 (0.45 at low health); saturation +8, contrast +6; glowing materials ×2.2 HDR | PP_Hookfall, FeelSetup |
 
+### Swing and movement rework (2026-11-08, after Esad's playtest)
+| Value | Default | Where |
+| --- | --- | --- |
+| Rope | Taut rope: spring 60, damper 0.6, slack allowed, 10% reel-in on attach | GrappleHook |
+| Swing pump | +10 m/s² along the swing while it is going down | GrappleHook |
+| Letting go | Speed ×1.1, +3 m/s up when rising; the speed cap follows | GrappleHook |
+| Air gravity | ×1.8 while airborne (faster swings, harder climbs) | PlayerController |
+| Max air speed | 55 m/s (GDD 4.1: 35) | PlayerController |
+| Air strafe | 12 m/s² (GDD 4.1: 6) | PlayerController |
+| Zip (power swing) | Spring 120, pump 22 m/s², 20% reel-in; after 0.9 s held it reels in at 10 m/s with a 16 m/s² pull, down to 4 m; ends after 4 s or on release | GrappleHook |
+| Wall jump | Space within 0.2 s of touching an island side: 14 m/s up, 8 m/s off the wall, 9 m/s towards W/A/S/D; 0.3 s cooldown | PlayerController |
+| Air tricks | Above 24 m/s, airborne, no rope out, after 0.2 s: front flip, back flip or barrel roll at 620°/s, finishing the turn | WardenAnimator |
+| Chest light | Spotlight 14 m above the chest (26°, warm gold, breathing), plus an additive light cone | PF_Chest |
+| Speed FOV | Full at 55 m/s | CameraRig |
+| Sound mix | Effects 60%, music 45% by default; hits play at most every 0.09 s and two at once, deaths every 0.07 s, gems every 0.06 s; rare events louder | GameSettings, AudioWiring |
+
 ## Where the build differs from the GDD
 
 | GDD | What was built | Why |
@@ -91,7 +107,8 @@ Values the GDD does not give, picked by Claude on 2026-11-07 when building Weeks
 | Toon shader made in Shader Graph (8.1) | Shader Graph, generated from Unity's own Custom Lighting Toon sample and Unlit template by `Tools/ShaderGraph/make_graphs.js` | Keeps Shader Graph (Esad's choice) while the graph stays reproducible from a script |
 | Spawn zone beyond 150 m (7.1) | 60 m out of view, 90 m ahead | At 150 m bats need about 12 s to arrive, which empties the screen |
 | Own vector icons (8.3) | 3D symbols rendered in Blender as sprites, in diamond and card frames | Esad's choice on 2026-11-07 |
-| Licensed sound and music (8.3) | Placeholder sound effects and three music stems synthesised in code by Tools/Audio/make_sfx.js | Esad's choice on 2026-11-08 until licensed files are chosen (Docs/Credits.md); no AI audio model is used |
+| Licensed sound and music (8.3) | Kenney CC0 recordings for the effects; wind, heartbeat and music synthesised in code by Tools/Audio/make_sfx.js | Esad's choices on 2026-11-08 (Docs/Credits.md); no AI audio model is used |
+| Hook values 4.1: spring 4.5, damper 7, max air speed 35, strafe 6 | A taut rope with a downhill pump, 1.8x air gravity, 55 m/s, strafe 12, a power-swing Zip, wall jumps, air tricks | Esad found the swing slow and islands hard to climb (2026-11-08) |
 | Spawn rate 2/s, +15% per minute, flocks of 4–8 (4.8) | 5/s, +20% per minute, flocks of 8–14 | Esad found the first build too calm (2026-11-07) |
 | Six items, eleven stats (4.5, 4.6) | A seventh chest item (Tether Coil) and two Zip stats | Added with the right-click Zip on Esad's request (2026-11-07) |
 | Islands at any height, arena edge not described (4.9, 7.1) | Three height bands with a reachability check, and a storm wall at 195 m with far scenery beyond | Esad's feedback: islands could not be climbed and the edge felt empty |

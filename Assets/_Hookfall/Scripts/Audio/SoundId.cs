@@ -20,6 +20,8 @@ namespace Hookfall.Audio
         GolemSlam,
         BoulderBreak,
         EliteWave,
-        RunEnd
+        RunEnd,
+        WallJump,
+        Trick
     }
 }

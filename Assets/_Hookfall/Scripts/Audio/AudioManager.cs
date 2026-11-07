@@ -22,6 +22,10 @@ namespace Hookfall.Audio
             public SoundId id;
             public AudioClip clip;
             [Range(0f, 1f)] public float volume;
+            [Tooltip("The same sound waits at least this long before playing again (0 = no limit).")]
+            public float minInterval;
+            [Tooltip("At most this many copies at once (0 = the manager's default).")]
+            public int maxVoices;
         }
 
         [SerializeField] private List<SoundClip> clips = new List<SoundClip>();
@@ -30,7 +34,7 @@ namespace Hookfall.Audio
 
         [Header("Loops")]
         [SerializeField] private AudioClip windLoop;
-        [SerializeField] private float windFullSpeed = 35f;
+        [SerializeField] private float windFullSpeed = 55f;
         [SerializeField] private AudioClip heartbeatLoop;
         [SerializeField, Range(0f, 1f)] private float heartbeatBelowHealth = 0.3f;
 
@@ -55,6 +59,8 @@ namespace Hookfall.Audio
         private AudioSource wind, heartbeat;
         private PlayerStats stats;
         private float eliteMusicTimer;
+        private readonly Dictionary<SoundId, float> lastPlayed = new Dictionary<SoundId, float>();
+        private Player.WardenAnimator warden;
 
         private void Awake()
         {
@@ -62,7 +68,11 @@ namespace Hookfall.Audio
             wind = Loop(windLoop);
             heartbeat = Loop(heartbeatLoop);
             foreach (AudioClip layer in musicLayers) if (layer != null) music.Add(Loop(layer));
-            if (player != null) stats = player.GetComponent<PlayerStats>();
+            if (player != null)
+            {
+                stats = player.GetComponent<PlayerStats>();
+                warden = player.GetComponentInChildren<Player.WardenAnimator>();
+            }
         }
 
         private void Start()
@@ -90,6 +100,8 @@ namespace Hookfall.Audio
             if (towerCache != null) { towerCache.Opened += OnCache; towerCache.Appeared += OnCacheAppeared; }
             if (levelUp != null) levelUp.OfferReady += OnLevelUp;
             if (player != null && player.TryGetComponent(out PlayerStats s)) s.Damaged += OnDamaged;
+            if (player != null) player.WallJumped += OnWallJump;
+            if (warden != null) warden.TrickStarted += OnTrick;
         }
 
         private void OnDisable()
@@ -110,6 +122,8 @@ namespace Hookfall.Audio
             if (towerCache != null) { towerCache.Opened -= OnCache; towerCache.Appeared -= OnCacheAppeared; }
             if (levelUp != null) levelUp.OfferReady -= OnLevelUp;
             if (player != null && player.TryGetComponent(out PlayerStats s)) s.Damaged -= OnDamaged;
+            if (player != null) player.WallJumped -= OnWallJump;
+            if (warden != null) warden.TrickStarted -= OnTrick;
             if (GameManager.Instance != null) GameManager.Instance.RunEnded -= OnRunEnded;
         }
 
@@ -117,7 +131,7 @@ namespace Hookfall.Audio
         {
             float effects = GameSettings.EffectsVolume;
             bool playing = Time.timeScale > 0f;
-            if (wind != null) wind.volume = playing && player != null ? Mathf.Clamp01(player.Speed / windFullSpeed) * effects * 0.6f : 0f;
+            if (wind != null) wind.volume = playing && player != null ? Mathf.Clamp01(player.Speed / windFullSpeed) * effects * 0.4f : 0f;
             if (heartbeat != null)
                 heartbeat.volume = stats != null && !stats.IsDead && stats.CurrentHealth / stats.MaxHealth < heartbeatBelowHealth ? effects : 0f;
 
@@ -132,7 +146,10 @@ namespace Hookfall.Audio
         public void Play(SoundId id, Vector3? position = null)
         {
             if (!byId.TryGetValue(id, out SoundClip sound)) return;
-            AudioSource source = FreeVoice(id);
+            // Hits and pickups come in hundreds a second: space them out so they never become noise.
+            float now = Time.unscaledTime;
+            if (sound.minInterval > 0f && lastPlayed.TryGetValue(id, out float last) && now - last < sound.minInterval) return;
+            AudioSource source = FreeVoice(id, sound.maxVoices > 0 ? sound.maxVoices : maxVoicesPerSound);
             if (source == null) return;
             source.transform.position = position ?? (player != null ? player.transform.position : transform.position);
             source.spatialBlend = position.HasValue ? 0.7f : 0f;
@@ -140,13 +157,14 @@ namespace Hookfall.Audio
             source.volume = (sound.volume > 0f ? sound.volume : 1f) * GameSettings.EffectsVolume;
             source.pitch = UnityEngine.Random.Range(0.94f, 1.06f);
             source.Play();
+            lastPlayed[id] = now;
         }
 
-        private AudioSource FreeVoice(SoundId id)
+        private AudioSource FreeVoice(SoundId id, int maxVoices)
         {
             if (!voices.TryGetValue(id, out List<AudioSource> list)) voices[id] = list = new List<AudioSource>();
             foreach (AudioSource s in list) if (!s.isPlaying) return s;
-            if (list.Count >= maxVoicesPerSound) return null;
+            if (list.Count >= maxVoices) return null;
             var go = new GameObject($"SFX {id}");
             go.transform.SetParent(transform, false);
             var source = go.AddComponent<AudioSource>();
@@ -184,5 +202,7 @@ namespace Hookfall.Audio
         private void OnLevelUp() => Play(SoundId.LevelUp);
         private void OnDamaged(float amount) => Play(SoundId.PlayerHurt);
         private void OnRunEnded() => Play(SoundId.RunEnd);
+        private void OnWallJump() => Play(SoundId.WallJump);
+        private void OnTrick() => Play(SoundId.Trick);
     }
 }

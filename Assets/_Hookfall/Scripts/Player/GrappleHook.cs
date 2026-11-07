@@ -1,8 +1,9 @@
-// Hookfall - mouse-aimed grappling hook (GDD 4.1). Left click: a 120 m/s hook head, then a SpringJoint rope to swing on.
-// Right click: the Zip, a faster hook that hauls the Warden straight to the anchor at high speed, with its own
-// cooldown and charges (added 2026-11-07 to escape the horde and cross the arena quickly).
+// Hookfall - mouse-aimed grappling hook (GDD 4.1). Left click: a 120 m/s hook head, then a taut rope to swing on; the
+// swing gains speed on the way down and lets go with a boost, so momentum carries the Warden into flight.
+// Right click: the Zip, a power swing with its own cooldown and charges: a stiffer, faster swing that, held for about
+// one swing, starts reeling the Warden up towards the anchor to close the distance (reworked 2026-11-08).
 // AI disclosure: written with Claude (Anthropic) on 2026-11-04 as part of the midterm project skeleton,
-// extended on 2026-11-07 with the hook projectile and the Zip. Prompts and changes are recorded in Docs/PromptLog.md.
+// extended on 2026-11-07 with the hook projectile and the Zip, reworked on 2026-11-08 for faster swings. Prompts and changes are recorded in Docs/PromptLog.md.
 using System;
 using Hookfall.World;
 using UnityEngine;
@@ -18,22 +19,31 @@ namespace Hookfall.Player
         [SerializeField] private float rethrowCooldown = 0.2f;
 
         [Header("Rope (SpringJoint)")]
-        [Tooltip("Rope length right after attaching, as a share of the distance. 0.85 = 15% reel-in.")]
-        [SerializeField] private float maxDistanceFactor = 0.85f;
-        [SerializeField] private float minDistanceFactor = 0.25f;
-        [SerializeField] private float spring = 4.5f;
-        [SerializeField] private float damper = 7f;
-        [SerializeField] private float massScale = 4.5f;
+        [Tooltip("Rope length right after attaching, as a share of the distance. 0.9 = 10% reel-in.")]
+        [SerializeField] private float maxDistanceFactor = 0.9f;
+        [Tooltip("A stiff, barely damped spring behaves like a rope: a real pendulum instead of a soft bungee.")]
+        [SerializeField] private float spring = 60f;
+        [SerializeField] private float damper = 0.6f;
+        [Tooltip("Push along the swing while it is going down (m/s²): each swing gains speed.")]
+        [SerializeField] private float swingPump = 10f;
+        [Tooltip("Speed kept and multiplied when letting go of a swing.")]
+        [SerializeField] private float releaseBoost = 1.1f;
+        [Tooltip("Lift added when letting go on the way up, to turn a swing into flight.")]
+        [SerializeField] private float releaseLift = 3f;
 
-        [Header("Zip (right click)")]
+        [Header("Zip: power swing (right click, held)")]
         [SerializeField] private float zipTravelSpeed = 220f;
-        [Tooltip("Speed the Zip hauls the Warden towards the anchor.")]
-        [SerializeField] private float zipSpeed = 48f;
-        [Tooltip("The Zip ends this close to the anchor; the Warden keeps the momentum.")]
-        [SerializeField] private float zipArriveDistance = 3f;
-        [SerializeField] private float zipMaxTime = 1.6f;
-        [Tooltip("Lift added at the end so a Zip onto an island edge carries the Warden over it.")]
-        [SerializeField] private float zipEndLift = 6f;
+        [SerializeField] private float zipSpring = 120f;
+        [SerializeField] private float zipPump = 22f;
+        [SerializeField] private float zipMaxDistanceFactor = 0.8f;
+        [Tooltip("After about one swing of holding, the rope starts reeling in.")]
+        [SerializeField] private float zipReelDelay = 0.9f;
+        [SerializeField] private float zipReelSpeed = 10f;
+        [Tooltip("Pull towards the anchor while reeling (m/s²), to climb up onto islands.")]
+        [SerializeField] private float zipReelPull = 16f;
+        [SerializeField] private float zipMinRope = 4f;
+        [SerializeField] private float zipMaxTime = 4f;
+        [SerializeField] private float zipEndLift = 4f;
 
         [Header("References")]
         [Tooltip("Usually the main camera: the hook fires through the screen centre.")]
@@ -116,21 +126,29 @@ namespace Hookfall.Player
                 TryThrow(true);
             if (mouse.leftButton.wasReleasedThisFrame && !zipThrow && !IsZipping)
                 Release();
-
+            if (IsZipping && !mouse.rightButton.isPressed)
+                Release();   // without a mouse (tests, gamepad) the power swing runs until zipMaxTime
         }
 
         private void FixedUpdate()
         {
+            if (joint == null) return;
+            float dt = Time.fixedDeltaTime;
+            Rigidbody body = controller.Body;
+            Vector3 ropeDir = (anchorPoint - body.position).normalized;
+
+            // Pump the swing while it falls: speed builds on the way down, gravity takes it back on the way up.
+            Vector3 velocity = body.linearVelocity;
+            Vector3 along = Vector3.ProjectOnPlane(velocity, ropeDir);
+            if (velocity.y < 0f && along.sqrMagnitude > 0.25f)
+                body.AddForce(along.normalized * (IsZipping ? zipPump : swingPump), ForceMode.Acceleration);
+
             if (!IsZipping) return;
-            zipTimer += Time.fixedDeltaTime;
-            Vector3 toAnchor = anchorPoint - controller.Body.position;
-            float distance = toAnchor.magnitude;
-            if (distance <= zipArriveDistance || zipTimer >= zipMaxTime || (!controller.IsAirborne && zipTimer > 0.15f))
-            {
-                EndZip();
-                return;
-            }
-            controller.Body.linearVelocity = toAnchor / distance * zipSpeed;
+            zipTimer += dt;
+            if (zipTimer >= zipMaxTime) { EndZip(); return; }
+            if (zipTimer < zipReelDelay) return;
+            joint.maxDistance = Mathf.Max(zipMinRope, joint.maxDistance - zipReelSpeed * dt);
+            body.AddForce(ropeDir * zipReelPull, ForceMode.Acceleration);
         }
 
         private void LateUpdate()
@@ -226,36 +244,45 @@ namespace Hookfall.Player
         {
             travelling = false;
             Wobble(attachTwangTime);
-            if (zipThrow)
-            {
-                IsZipping = true;
-                zipTimer = 0f;
-                controller.Boost(zipSpeed);
-                Attached?.Invoke();
-                ZipStarted?.Invoke();
-                return;
-            }
 
             float distance = Vector3.Distance(transform.position, anchorPoint);
             joint = gameObject.AddComponent<SpringJoint>();
             joint.autoConfigureConnectedAnchor = false;
             joint.connectedAnchor = anchorPoint;
-            joint.maxDistance = distance * maxDistanceFactor;
-            joint.minDistance = distance * minDistanceFactor;
-            joint.spring = spring;
+            joint.maxDistance = distance * (zipThrow ? zipMaxDistanceFactor : maxDistanceFactor);
+            joint.minDistance = 0f;   // a rope: slack when closer, taut at full length
+            joint.spring = zipThrow ? zipSpring : spring;
             joint.damper = damper;
-            joint.massScale = massScale;
+            joint.massScale = 1f;
             Attached?.Invoke();
+
+            if (!zipThrow) return;
+            IsZipping = true;
+            zipTimer = 0f;
+            ZipStarted?.Invoke();
         }
 
         private void EndZip()
         {
             IsZipping = false;
-            zipThrow = false;
-            controller.Boost(zipSpeed);
-            controller.Body.linearVelocity += Vector3.up * zipEndLift;
+            DropJoint(zipEndLift);
             ZipEnded?.Invoke();
             Released?.Invoke();
+        }
+
+        /// <summary>Lets go of the rope, keeping (and boosting) the swing speed so the Warden flies on.</summary>
+        private void DropJoint(float lift)
+        {
+            travelling = false;
+            zipThrow = false;
+            if (joint == null) return;
+            Destroy(joint);
+            joint = null;
+            Rigidbody body = controller.Body;
+            Vector3 v = body.linearVelocity * releaseBoost;
+            if (v.y > 0f) v += Vector3.up * lift;
+            body.linearVelocity = v;
+            controller.Boost(v.magnitude);
         }
 
         public void Release()
@@ -266,13 +293,7 @@ namespace Hookfall.Player
                 EndZip();
                 return;
             }
-            travelling = false;
-            zipThrow = false;
-            if (joint != null)
-            {
-                Destroy(joint);
-                joint = null;
-            }
+            DropJoint(releaseLift);
             if (wasOut) Released?.Invoke();
         }
     }
