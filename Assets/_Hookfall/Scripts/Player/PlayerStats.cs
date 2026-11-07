@@ -32,6 +32,14 @@ namespace Hookfall.Player
         [SerializeField] private float xpPercentPerPick = 10f;
         [SerializeField] private float luckPercentPerPick = 10f;
 
+        [Header("Zip: right-click hook (added 2026-11-07)")]
+        [SerializeField] private float baseZipCooldown = 4f;
+        [SerializeField] private float baseZipRange = 50f;
+        [Tooltip("Each Zip cooldown pick multiplies the cooldown by (1 - this %).")]
+        [SerializeField] private float zipCooldownPercentPerPick = 10f;
+        [SerializeField] private float zipRangePerPick = 5f;
+        [SerializeField] private float minZipCooldown = 0.6f;
+
         [Header("Movement soft cap")]
         [Tooltip("Movement bonuses count fully up to +100%; above that only this share of each extra pick counts.")]
         [SerializeField] private float movementSoftCapRate = 0.25f;
@@ -43,6 +51,10 @@ namespace Hookfall.Player
         private float lastHitTime = -999f;
         private float damageBonus, attackSpeedBonus, walkSpeedBonus, flightSpeedBonus;
         private float hookRangeBonus, pickupRadiusBonus, xpBonus, luckBonus;
+        private int zipCooldownPicks;
+        private float zipRangeBonus;
+        private float itemZipCooldownMultiplier = 1f;
+        private int itemZipCharges;
 
         public float MaxHealth => maxHealth;
         public float CurrentHealth { get; private set; }
@@ -57,6 +69,17 @@ namespace Hookfall.Player
         public float HookRange => baseHookRange + hookRangeBonus;
         public float PickupRadius => basePickupRadius * (1f + pickupRadiusBonus);
         public bool IsDead => CurrentHealth <= 0f;
+        public float ZipCooldown => Mathf.Max(minZipCooldown,
+            baseZipCooldown * Mathf.Pow(1f - zipCooldownPercentPerPick / 100f, zipCooldownPicks) * itemZipCooldownMultiplier);
+        public float ZipRange => baseZipRange + zipRangeBonus;
+        public int ZipCharges => 1 + itemZipCharges;
+
+        /// <summary>Set by the Tether Coil item: a cooldown multiplier and extra Zip charges.</summary>
+        public void SetZipItemBonus(float cooldownMultiplier, int extraCharges)
+        {
+            itemZipCooldownMultiplier = cooldownMultiplier;
+            itemZipCharges = extraCharges;
+        }
 
         public event Action<float> Damaged;
 
@@ -101,6 +124,8 @@ namespace Hookfall.Player
                 case StatType.Regen: healthRegenPerSecond += regenPerPick; break;
                 case StatType.XPGain: xpBonus += xpPercentPerPick / 100f; break;
                 case StatType.Luck: luckBonus += luckPercentPerPick / 100f; break;
+                case StatType.ZipCooldown: zipCooldownPicks++; break;
+                case StatType.ZipRange: zipRangeBonus += zipRangePerPick; break;
             }
         }
 
@@ -118,6 +143,8 @@ namespace Hookfall.Player
                 case StatType.PickupRadius: return "Pickup radius";
                 case StatType.Regen: return "Health regen";
                 case StatType.XPGain: return "XP gain";
+                case StatType.ZipCooldown: return "Zip cooldown";
+                case StatType.ZipRange: return "Zip range";
                 default: return "Luck";
             }
         }
@@ -138,6 +165,9 @@ namespace Hookfall.Player
                     return $"{PickupRadius:0.0} m → {basePickupRadius * (1f + pickupRadiusBonus + pickupRadiusPercentPerPick / 100f):0.0} m";
                 case StatType.Regen: return $"{healthRegenPerSecond:0.0}/s → {healthRegenPerSecond + regenPerPick:0.0}/s";
                 case StatType.XPGain: return Percent(xpBonus, xpPercentPerPick);
+                case StatType.ZipCooldown:
+                    return $"{ZipCooldown:0.0} s → {Mathf.Max(minZipCooldown, ZipCooldown * (1f - zipCooldownPercentPerPick / 100f)):0.0} s";
+                case StatType.ZipRange: return $"{ZipRange:0} m → {ZipRange + zipRangePerPick:0} m";
                 default: return Percent(luckBonus, luckPercentPerPick);
             }
         }

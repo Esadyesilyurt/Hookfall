@@ -12,6 +12,14 @@ namespace Hookfall.Tests
 {
     public class SceneSmokeTests
     {
+        /// <summary>A test Warden hovers in place, which the horde punishes fast; keep it alive so the run goes on.</summary>
+        private static void KeepAlive(GameObject player)
+        {
+            Type statsType = Type.GetType("Hookfall.Player.PlayerStats, Assembly-CSharp");
+            Component stats = player.GetComponent(statsType);
+            statsType.GetProperty("CurrentHealth").SetValue(stats, statsType.GetProperty("MaxHealth").GetValue(stats));
+        }
+
         [UnityTest]
         public IEnumerator MainMenuLoadsClean()
         {
@@ -36,6 +44,7 @@ namespace Hookfall.Tests
             while (Time.realtimeSinceStartup < end)
             {
                 var body = player.GetComponent<Rigidbody>();
+                KeepAlive(player);
                 if (player.transform.position.y < 6f)
                 {
                     player.transform.position = new Vector3(0f, 12f, -10f);
@@ -78,6 +87,7 @@ namespace Hookfall.Tests
             float end = Time.realtimeSinceStartup + 15f;
             while (Time.realtimeSinceStartup < end)
             {
+                KeepAlive(player);
                 if (player.transform.position.y < 6f)
                 {
                     player.transform.position = new Vector3(0f, 12f, -10f);
@@ -99,6 +109,7 @@ namespace Hookfall.Tests
             {
                 opened = !(bool)ready.GetValue(cache);   // the cache stops being ready once it opens
                 if (Time.timeScale == 0f && levelUp != null) levelUpType.GetMethod("Pick").Invoke(levelUp, new object[] { 0 });
+                KeepAlive(player);
                 player.transform.position = cache.transform.position + new Vector3(1.2f, 1.02f, 0f);
                 player.GetComponent<Rigidbody>().linearVelocity = Vector3.zero;
                 yield return null;
@@ -111,6 +122,47 @@ namespace Hookfall.Tests
             gmType.GetMethod("CloseModal").Invoke(gm, null);
             yield return null;
             LogAssert.NoUnexpectedReceived();
+        }
+
+        /// <summary>Right-click Zip: aimed at the tower from 40 m away, it hauls the Warden most of the way there.</summary>
+        [UnityTest]
+        public IEnumerator ZipHaulsThePlayer()
+        {
+            SceneManager.LoadScene("Arena");
+            yield return null;
+            GameObject player = GameObject.Find("Player");
+            Type hookType = Type.GetType("Hookfall.Player.GrappleHook, Assembly-CSharp");
+            Component hook = player.GetComponent(hookType);
+            var flags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+
+            Vector3 target = new Vector3(0f, 10f, 0f);
+            player.transform.position = new Vector3(0f, 12f, -38f);
+            player.GetComponent<Rigidbody>().linearVelocity = Vector3.zero;
+            yield return new WaitForFixedUpdate();
+            var aim = new GameObject("Test Aim").transform;
+            aim.position = player.transform.position;
+            aim.LookAt(target);
+            hookType.GetField("aimSource", flags).SetValue(hook, aim);
+
+            float start = Vector3.Distance(player.transform.position, target);
+            hookType.GetMethod("TryThrow", flags).Invoke(hook, new object[] { true });
+            var zipping = hookType.GetProperty("IsZipping");
+            bool sawZip = false;
+            float closest = start;
+            float end = Time.realtimeSinceStartup + 4f;
+            while (Time.realtimeSinceStartup < end)
+            {
+                bool z = (bool)zipping.GetValue(hook);
+                sawZip |= z;
+                closest = Mathf.Min(closest, Vector3.Distance(player.transform.position, target));
+                if (sawZip && !z) break;
+                yield return null;
+            }
+            UnityEngine.Object.Destroy(aim.gameObject);
+            LogAssert.NoUnexpectedReceived();
+            Assert.IsTrue(sawZip, "The Zip never started");
+            Assert.Less(closest, start - 20f, "The Zip should haul the Warden most of the way to the anchor");
+            Assert.AreEqual(0, (int)hookType.GetProperty("ZipCharges").GetValue(hook), "The Zip should use its charge");
         }
 
         /// <summary>Jumps the run clock to 4:55 so wyverns, golems and the first elite wave all appear.</summary>
@@ -135,6 +187,7 @@ namespace Hookfall.Tests
             float end = Time.realtimeSinceStartup + 30f;
             while (Time.realtimeSinceStartup < end && !(sawWyvern && sawGolem && sawElite))
             {
+                KeepAlive(player);
                 if (player.transform.position.y < 6f)
                 {
                     player.transform.position = new Vector3(0f, 12f, -10f);

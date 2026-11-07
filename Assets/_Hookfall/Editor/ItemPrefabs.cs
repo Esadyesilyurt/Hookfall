@@ -27,7 +27,7 @@ namespace Hookfall.EditorTools
             Transparent(GetOrCreateMaterial("M_CacheBeam", new Color(1f, 0.85f, 0.4f, 0.35f), true));
         }
 
-        /// <summary>All six items; index 0 is Orbit Blades, the starting item.</summary>
+        /// <summary>All chest items (the six from GDD 4.5 and the Tether Coil); index 0 is Orbit Blades, the starting item.</summary>
         public static List<ItemBase> CreateItems()
         {
             Projectile shard = CreateProjectile("PF_Shard", PrimitiveType.Cube, new Vector3(0.12f, 0.12f, 0.7f), "M_Shard", 0.25f);
@@ -52,7 +52,10 @@ namespace Hookfall.EditorTools
                     i => SetRef(i, "projectilePrefab", spark)),
                 Item<StormAura>("StormAura", "Storm Aura", 4f, 0.25f,
                     "A storm sealed in a guardian's cloak; it crackles around the Warden while they fly.",
-                    i => SetRef(i, "auraMaterial", Mat("M_Aura")))
+                    i => SetRef(i, "auraMaterial", Mat("M_Aura"))),
+                Item<TetherCoil>("TetherCoil", "Tether Coil", 25f, 1f,
+                    "A coil of the Order's own tether rope, wound with Heartstone wire; it hauls the Warden through anything in the way.",
+                    i => { })
             };
             return items;
         }
