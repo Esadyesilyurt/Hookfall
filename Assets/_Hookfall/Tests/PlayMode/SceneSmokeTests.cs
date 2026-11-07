@@ -355,6 +355,48 @@ namespace Hookfall.Tests
             LogAssert.NoUnexpectedReceived();
         }
 
+        /// <summary>A chest offers 3 different choices, pauses the game, and gives only the one picked.</summary>
+        [UnityTest]
+        public IEnumerator ChestOffersThreeChoices()
+        {
+            SceneManager.LoadScene("Arena");
+            yield return null;
+            GameObject player = GameObject.Find("Player");
+            Type combatType = Type.GetType("Hookfall.Combat.CombatSystem, Assembly-CSharp");
+            Type statsType = Type.GetType("Hookfall.Player.PlayerStats, Assembly-CSharp");
+            Type rarityType = Type.GetType("Hookfall.Combat.Rarity, Assembly-CSharp");
+            Type uiType = Type.GetType("Hookfall.UI.ChestResultUI, Assembly-CSharp");
+            Component combat = player.GetComponent(combatType);
+            Component stats = player.GetComponent(statsType);
+            var items = (ICollection)combatType.GetProperty("Items").GetValue(combat);
+            int before = items.Count;
+
+            uiType.GetMethod("Offer").Invoke(null, new[] { combat, (object)stats, Enum.ToObject(rarityType, 1) });
+            object ui = uiType.GetProperty("Instance").GetValue(null);
+            var choices = (ICollection)uiType.GetField("choices", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(ui);
+            Assert.AreEqual(3, choices.Count, "A chest should offer 3 choices");
+            var names = new System.Collections.Generic.HashSet<string>();
+            foreach (object choice in choices)
+            {
+                var item = (Component)choice.GetType().GetField("Item").GetValue(choice);
+                names.Add(item != null ? item.name : "stat " + choice.GetType().GetField("FallbackStat").GetValue(choice));
+            }
+            Assert.AreEqual(3, names.Count, "The 3 choices should all be different");
+            Assert.AreEqual(0f, Time.timeScale, "The chest screen should pause the game");
+            Assert.AreEqual(before, items.Count, "Nothing should be given before a pick");
+
+            object picked = null;
+            int k = 0;
+            foreach (object choice in choices) if (k++ == 1) picked = choice;
+            bool pickedNew = (bool)picked.GetType().GetField("IsNewItem").GetValue(picked);
+            yield return new WaitForSecondsRealtime(0.4f);   // past the accidental-pick guard
+            uiType.GetMethod("Pick", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).Invoke(ui, new object[] { 1 });
+            yield return null;
+            Assert.AreEqual(1f, Time.timeScale, "Picking should resume the game");
+            Assert.AreEqual(before + (pickedNew ? 1 : 0), items.Count, "Only the picked choice should be given");
+            LogAssert.NoUnexpectedReceived();
+        }
+
         /// <summary>Jumps the run clock to 4:55 so wyverns, golems and the first elite wave all appear.</summary>
         [UnityTest]
         public IEnumerator LateRunSpawnsEveryEnemy()

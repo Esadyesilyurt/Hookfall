@@ -1,6 +1,6 @@
 // Hookfall - the core rule: items attack only while the player is airborne (GDD 4.4); also gives chest items (GDD 4.5, 4.7).
 // AI disclosure: written with Claude (Anthropic) on 2026-11-04 as part of the midterm project skeleton,
-// extended on 2026-11-07 with chest rewards. Prompts and changes are recorded in Docs/PromptLog.md.
+// extended on 2026-11-07 with chest rewards and on 2026-11-08 with the 3-choice chest. Prompts and changes are recorded in Docs/PromptLog.md.
 using System;
 using System.Collections.Generic;
 using Hookfall.Player;
@@ -25,6 +25,8 @@ namespace Hookfall.Combat
         [SerializeField] private List<ItemBase> itemPrefabs = new List<ItemBase>();
         [Tooltip("Starting level of a new item per rarity, and levels added to an owned one: Common, Rare, Epic.")]
         [SerializeField] private int[] levelsPerRarity = { 1, 2, 3 };
+        [Tooltip("How many different choices a chest offers.")]
+        [SerializeField] private int chestChoices = 3;
 
         private readonly List<ItemBase> items = new List<ItemBase>();
         private float airborneTime;
@@ -71,35 +73,56 @@ namespace Hookfall.Combat
 
         public bool Owns(ItemBase prefab) => Find(prefab) != null;
 
-        /// <summary>Opens a chest: a new item, or levels for an owned item when it rolls one you have or the slots are full.</summary>
-        public ChestReward Grant(Rarity rarity, PlayerStats stats)
+        /// <summary>Opens a chest with no choice: the first of its rolled choices.</summary>
+        public ChestReward Grant(Rarity rarity, PlayerStats stats) => Claim(RollChest(rarity)[0], stats);
+
+        /// <summary>
+        /// A chest's different choices, nothing given yet: new items while a slot is free, levels for owned items that are
+        /// not maxed, and stats only when no item can be offered. Never empty.
+        /// </summary>
+        public List<ChestReward> RollChest(Rarity rarity)
         {
             int levels = levelsPerRarity[Mathf.Clamp((int)rarity, 0, levelsPerRarity.Length - 1)];
-            ItemBase rolled = itemPrefabs.Count > 0 ? itemPrefabs[UnityEngine.Random.Range(0, itemPrefabs.Count)] : null;
-
-            if (rolled != null && !Owns(rolled) && items.Count < MaxItems)
+            var pool = new List<ChestReward>();
+            foreach (ItemBase prefab in itemPrefabs)
             {
-                ItemBase item = Instantiate(rolled, itemsRoot);
-                item.name = rolled.name;
-                item.SetLevel(levels);
+                ItemBase owned = Find(prefab);
+                if (owned == null) { if (items.Count < MaxItems) pool.Add(new ChestReward(rarity, prefab, true, levels)); }
+                else if (!owned.IsMaxed) pool.Add(new ChestReward(rarity, owned, false, levels));
+            }
+            if (pool.Count == 0)
+                foreach (StatType stat in Enum.GetValues(typeof(StatType))) pool.Add(new ChestReward(rarity, null, false, levels, stat));
+
+            var offer = new List<ChestReward>();
+            while (offer.Count < chestChoices && pool.Count > 0)
+            {
+                int i = UnityEngine.Random.Range(0, pool.Count);
+                offer.Add(pool[i]);
+                pool.RemoveAt(i);
+            }
+            return offer;
+        }
+
+        /// <summary>Gives one choice from RollChest and returns what it became (the new item's instance, the levels really gained).</summary>
+        public ChestReward Claim(ChestReward choice, PlayerStats stats)
+        {
+            if (choice.IsNewItem)
+            {
+                ItemBase item = Instantiate(choice.Item, itemsRoot);
+                item.name = choice.Item.name;
+                item.SetLevel(choice.LevelsGained);
                 items.Add(item);
                 item.SetActiveVisuals(AttacksActive);
-                return new ChestReward(rarity, item, true, levels);
+                return new ChestReward(choice.Rarity, item, true, choice.LevelsGained);
             }
-
-            ItemBase owned = rolled != null ? Find(rolled) : null;
-            if (owned == null || owned.IsMaxed) owned = RandomUnmaxedItem();
-            if (owned != null)
+            if (choice.Item != null)
             {
-                int before = owned.Level;
-                owned.SetLevel(before + levels);
-                return new ChestReward(rarity, owned, false, owned.Level - before);
+                int before = choice.Item.Level;
+                choice.Item.SetLevel(before + choice.LevelsGained);
+                return new ChestReward(choice.Rarity, choice.Item, false, choice.Item.Level - before);
             }
-
-            // Every owned item is maxed and the slots are full: give a stat instead.
-            var stat = (StatType)UnityEngine.Random.Range(0, Enum.GetValues(typeof(StatType)).Length);
-            for (int i = 0; i < levels; i++) stats.Apply(stat);
-            return new ChestReward(rarity, null, false, levels, stat);
+            for (int i = 0; i < choice.LevelsGained; i++) stats.Apply(choice.FallbackStat);
+            return choice;
         }
 
         private ItemBase Find(ItemBase prefab)
@@ -107,12 +130,6 @@ namespace Hookfall.Combat
             foreach (ItemBase item in items)
                 if (item.GetType() == prefab.GetType()) return item;
             return null;
-        }
-
-        private ItemBase RandomUnmaxedItem()
-        {
-            var open = items.FindAll(i => !i.IsMaxed);
-            return open.Count > 0 ? open[UnityEngine.Random.Range(0, open.Count)] : null;
         }
 
         private void SetAttacksActive(bool active)

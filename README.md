@@ -22,7 +22,7 @@ Solo project by Esad Yesilyurt for *Game Studio: AI in Game Development* (Istanb
 | Space | Jump on islands; wall jump when touching an island side in the air (W/A/S/D steers it); otherwise one double jump per flight |
 | Left Shift | Dash in the air, once per flight, towards W/A/S/D or where the camera looks; refilled on landing |
 | E | Open a chest |
-| 1 / 2 / 3 or click | Pick a level-up card |
+| 1 / 2 / 3 or click | Pick a level-up card or a chest item |
 | Esc | Pause |
 | R | Retry after the run ends |
 

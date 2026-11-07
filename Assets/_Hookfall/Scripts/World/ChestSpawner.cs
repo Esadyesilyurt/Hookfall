@@ -82,11 +82,10 @@ namespace Hookfall.World
             if (!gold.TrySpend(CurrentCost)) return;
             Opened++;
             Rarity rarity = Roll(rarityWeights, stats.LuckMultiplier);
-            ChestReward reward = combat.Grant(rarity, stats);
             chests.Remove(chest);
             ChestOpened?.Invoke(chest.transform.position, rarity);
             Destroy(chest.gameObject);
-            if (ChestResultUI.Instance != null) ChestResultUI.Instance.Show(reward);
+            ChestResultUI.Offer(combat, stats, rarity);
         }
 
         /// <summary>Weighted roll; luck multiplies the Rare and Epic weights.</summary>

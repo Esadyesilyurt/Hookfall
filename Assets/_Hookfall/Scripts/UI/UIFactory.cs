@@ -257,6 +257,42 @@ namespace Hookfall.UI
         }
 
         /// <summary>A key cap with a key name, e.g. [E] or [1].</summary>
+        /// <summary>A pick-one card (level-up, chest): key cap, icon diamond, name, tag and value; a click calls onPick.</summary>
+        public static RectTransform ChoiceCard(RectTransform row, int index, Color accent, Sprite icon, string name, string tag,
+            string value, Action onPick)
+        {
+            var cardGo = new GameObject($"Card {index + 1}", typeof(RectTransform));
+            cardGo.transform.SetParent(row, false);
+            var rect = (RectTransform)cardGo.transform;
+            Image frame = Image(rect, Color.Lerp(accent, UITheme.Panel, 0.55f), UISkin.Card);
+            frame.raycastTarget = true;
+            var button = cardGo.AddComponent<Button>();
+            button.targetGraphic = frame;
+            ColorBlock colors = button.colors;
+            colors.highlightedColor = new Color(1.25f, 1.25f, 1.25f);
+            colors.pressedColor = new Color(1.5f, 1.5f, 1.5f);
+            colors.colorMultiplier = 1.5f;
+            button.colors = colors;
+            button.onClick.AddListener(() => onPick());
+            Sized(rect, 400f, 470f);
+            Column(rect, 12f, 30, TextAnchor.UpperCenter);
+            UIPop.Add(rect, 0.08f + index * 0.09f, 0.6f);
+            var hover = cardGo.AddComponent<UIHover>();
+            hover.hoverScale = 1.05f;
+
+            RectTransform keyRow = Rect(rect, "Key", Vector2.zero, Vector2.zero, Vector2.zero, Vector2.zero);
+            Sized(keyRow, -1f, 40f);
+            Row(keyRow, 0f, 0, TextAnchor.MiddleCenter);
+            KeyCap(keyRow, (index + 1).ToString(), 38f);
+            Diamond(rect, icon, name.Substring(0, 1), 150f, accent);
+            Sized(Text(rect, "Name", name, 36f, UITheme.Text, TextAlignmentOptions.Center, true), -1f, 50f).fontStyle = FontStyles.Bold;
+            TextMeshProUGUI tagText = Sized(Text(rect, "Tag", tag, 18f, accent), -1f, 26f);
+            tagText.characterSpacing = 4f;
+            tagText.fontStyle = FontStyles.Bold;
+            Sized(Text(rect, "Value", value, 30f, UITheme.Text, TextAlignmentOptions.Center, true), -1f, 90f);
+            return rect;
+        }
+
         public static RectTransform KeyCap(Transform parent, string key, float size = 44f)
         {
             RectTransform cap = Centre(parent, "Key " + key, Vector2.zero, new Vector2(Mathf.Max(size, key.Length * size * 0.42f + 20f), size));

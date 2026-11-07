@@ -28,7 +28,8 @@ Values the GDD does not give, picked by Claude on 2026-11-07 when building Weeks
 | Chest islands | Any non-tower island at least 5 m wide | ChestSpawner |
 | Luck | Multiplies the Rare and Epic weights | ChestSpawner.Roll |
 | Rarity effect | New item starts at level 1 / 2 / 3 (Common / Rare / Epic); an owned item gains +1 / +2 / +3 levels | CombatSystem |
-| Everything maxed | The chest gives a random stat, once per level it would have given | CombatSystem |
+| Chest choice | 3 different choices of the rolled rarity (single random item until 2026-11-08): new items while a slot is free, levels for owned items that are not maxed; the game pauses until one is picked | CombatSystem.RollChest, ChestResultUI |
+| Everything maxed | The 3 choices become stats, each given once per level the chest would have given | CombatSystem |
 | Tower cache | Open within 3 m; progress drains at half speed while you are away | TowerCache |
 | Low gravity | A vertical cylinder of radius 40 m around the tower | GravityZone |
 
