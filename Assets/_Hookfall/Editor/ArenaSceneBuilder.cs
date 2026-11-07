@@ -13,6 +13,7 @@ using Hookfall.UI;
 using Hookfall.World;
 using Hookfall.Audio;
 using Hookfall.VFX;
+using Hookfall.Feel;
 using Unity.Cinemachine;
 using Unity.Cinemachine.TargetTracking;
 using UnityEditor;
@@ -71,11 +72,13 @@ namespace Hookfall.EditorTools
             cam.backgroundColor = SkyColor;
             cam.farClipPlane = 600f;
             camGo.AddComponent<AudioListener>();
+            FeelSetup.EnablePostProcessing(cam);
             camGo.transform.SetPositionAndRotation(new Vector3(0f, 14f, -46f), Quaternion.Euler(8f, 0f, 0f));
 
             var generator = new GameObject("IslandGenerator").AddComponent<IslandGenerator>();
             WireIslandGenerator(generator, null);
             AddArenaEdge(null);
+            FeelSetup.AddVolume();
 
             new GameObject("Main Menu").AddComponent<MainMenuUI>();
             EditorSceneManager.SaveScene(scene, MenuPath);
@@ -151,6 +154,7 @@ namespace Hookfall.EditorTools
             cam.backgroundColor = SkyColor;
             cam.farClipPlane = 600f;
             camGo.AddComponent<AudioListener>();
+            FeelSetup.EnablePostProcessing(cam);
             camGo.AddComponent<CinemachineBrain>();
             camGo.transform.position = player.transform.position + new Vector3(0f, 3f, -8f);
 
@@ -173,6 +177,11 @@ namespace Hookfall.EditorTools
             composer.TargetOffset = new Vector3(0f, 1.6f, 0f);
             composer.Damping = Vector2.zero;
             var rig = vcamGo.AddComponent<CameraRig>();
+            vcamGo.AddComponent<CinemachineImpulseListener>();
+            var impulse = vcamGo.AddComponent<CinemachineImpulseSource>();
+            impulse.ImpulseDefinition.ImpulseType = CinemachineImpulseDefinition.ImpulseTypes.Uniform;
+            impulse.ImpulseDefinition.ImpulseShape = CinemachineImpulseDefinition.ImpulseShapes.Bump;
+            impulse.ImpulseDefinition.ImpulseDuration = 0.18f;
             SetRef(rig, "targetBody", body);
 
             SetRef(controller, "cameraTransform", camGo.transform);
@@ -234,6 +243,20 @@ namespace Hookfall.EditorTools
             SetRef(audio, "levelUp", levelUp);
             AudioWiring.AssignClips(audio);
 
+            // Game feel
+            Volume postFx = FeelSetup.AddVolume();
+            var feel = new GameObject("Game Feel").AddComponent<FeelDirector>();
+            SetRef(feel, "player", controller);
+            SetRef(feel, "hook", hook);
+            SetRef(feel, "combat", combat);
+            SetRef(feel, "levelUp", levelUp);
+            SetRef(feel, "cameraRig", rig);
+            SetRef(feel, "impulse", impulse);
+            SetRef(feel, "volume", postFx);
+            SetRef(feel, "vfx", vfx);
+            var numbers = new GameObject("Damage Numbers").AddComponent<DamageNumbers>();
+            SetRef(numbers, "fontMaterial", AssetDatabase.LoadAssetAtPath<Material>("Assets/TextMesh Pro/Resources/Fonts & Materials/LiberationSans SDF - Outline.mat"));
+
             // UI
             var hud = new GameObject("HUD").AddComponent<HUD>();
             SetRef(hud, "stats", stats);
@@ -280,6 +303,7 @@ namespace Hookfall.EditorTools
             EnemyPrefabs.CreateMaterials();
             ModelSetup.Run();
             ToonSetup.Run();
+            FeelSetup.BoostGlow();
         }
 
         private static void AddLightAndSky()

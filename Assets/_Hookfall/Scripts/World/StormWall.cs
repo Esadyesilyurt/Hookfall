@@ -15,8 +15,9 @@ namespace Hookfall.World
         [Header("Shape")]
         [SerializeField] private float radius = 195f;
         [SerializeField] private int cloudsPerLayer = 24;
-        [SerializeField] private float[] layerHeights = { -110f, -70f, -30f, 10f, 50f, 90f };
-        [SerializeField] private Vector2 cloudScale = new Vector2(7f, 12f);
+        [Tooltip("Cloud layers stop below the horizon line seen from the islands, so the sky and far scenery stay visible above.")]
+        [SerializeField] private float[] layerHeights = { -120f, -80f, -40f, 0f, 30f };
+        [SerializeField] private Vector2 cloudScale = new Vector2(6f, 10f);
         [SerializeField] private float turnSpeed = 1.5f;
 
         [Header("Wind")]

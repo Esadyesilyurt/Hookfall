@@ -122,7 +122,7 @@ namespace Hookfall.VFX
 
         // ---------- Emitting ----------
 
-        private void Burst(Vector3 position, int count, Color color, float speed, float size, float life)
+        public void Burst(Vector3 position, int count, Color color, float speed, float size, float life)
         {
             var p = new ParticleSystem.EmitParams { position = position, startColor = color, startLifetime = life, applyShapeToPosition = false };
             for (int i = 0; i < count; i++)
@@ -133,7 +133,7 @@ namespace Hookfall.VFX
             }
         }
 
-        private void Ring(Vector3 position, int count, Color color, float speed)
+        public void Ring(Vector3 position, int count, Color color, float speed)
         {
             var p = new ParticleSystem.EmitParams { position = position, startColor = color, startLifetime = 0.5f, startSize = 0.35f };
             for (int i = 0; i < count; i++)

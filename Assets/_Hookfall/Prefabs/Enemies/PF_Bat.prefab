@@ -193,6 +193,8 @@ MonoBehaviour:
   wingRight: {fileID: 8813479534944803230}
   flapSpeed: 16
   flapAngle: 40
+  knockback: 7
+  hitPunch: 0.3
   biteRange: 1.5
   biteRecovery: 0.25
   pursuitLookAhead: 0.5

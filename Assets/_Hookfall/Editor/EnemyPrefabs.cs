@@ -37,6 +37,7 @@ namespace Hookfall.EditorTools
                 Part(r, "Membrane", PrimitiveType.Cube, new Vector3(0.45f, 0f, 0f), new Vector3(0.9f, 0.04f, 0.5f), Mat("M_Bat"));
             }
             Stats(bat, "Bat", 10f, 12f, 5f, 1f, 1, 0.6f);
+            SetFloat(bat, "knockback", 7f);
             Wings(bat, visual.transform, 16f, 40f);
             return SavePrefab(root, Folder + "/PF_Bat.prefab").GetComponent<Bat>();
         }
@@ -60,6 +61,8 @@ namespace Hookfall.EditorTools
                 Part(r, "Membrane", PrimitiveType.Cube, new Vector3(1.6f, 0f, 0f), new Vector3(3.2f, 0.06f, 1.4f), Mat("M_Wyvern"));
             }
             Stats(wyvern, "Wyvern", 60f, 14f, 15f, 3f, 2, 1.3f);
+            SetFloat(wyvern, "knockback", 2.5f);
+            SetFloat(wyvern, "hitPunch", 0.15f);
             Wings(wyvern, visual.transform, 7f, 35f);
             return SavePrefab(root, Folder + "/PF_Wyvern.prefab").GetComponent<Wyvern>();
         }
@@ -83,6 +86,8 @@ namespace Hookfall.EditorTools
                 Part(r, "Arm", PrimitiveType.Cube, new Vector3(0f, -0.8f, 0f), new Vector3(0.6f, 1.8f, 0.6f), Mat("M_Golem"));
             }
             Stats(golem, "Golem", 150f, 0f, 0f, 5f, 5, 1.4f);
+            SetFloat(golem, "knockback", 0f);   // golems stand on their island
+            SetFloat(golem, "hitPunch", 0.08f);
             SetRef(golem, "warningMaterial", Mat("M_Warning"));
             SetRef(golem, "armLeft", FindDeep(visual.transform, "Arm_L"));
             SetRef(golem, "armRight", FindDeep(visual.transform, "Arm_R"));

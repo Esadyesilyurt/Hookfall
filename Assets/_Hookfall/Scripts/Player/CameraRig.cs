@@ -1,5 +1,5 @@
 // Hookfall - drives the Cinemachine orbit camera from the mouse and widens the field of view with speed (GDD 4.1).
-// AI disclosure: written with Claude (Anthropic) on 2026-11-07. Prompts and changes are recorded in Docs/PromptLog.md.
+// AI disclosure: written with Claude (Anthropic) on 2026-11-07 (FOV kick added the same day for game feel). Prompts and changes are recorded in Docs/PromptLog.md.
 using Hookfall.Core;
 using Unity.Cinemachine;
 using UnityEngine;
@@ -22,7 +22,14 @@ namespace Hookfall.Player
         [SerializeField] private float speedForMaxFov = 35f;
         [SerializeField] private float fovLerpSpeed = 5f;
 
+        [Tooltip("How fast a FOV kick (Zip, landing) settles back, in degrees per second.")]
+        [SerializeField] private float kickRecovery = 40f;
+
         private CinemachineCamera vcam;
+        private float kick;
+
+        /// <summary>A short field-of-view punch for game feel: positive widens (speed), negative narrows (impact).</summary>
+        public void Kick(float degrees) => kick = Mathf.Clamp(kick + degrees, -15f, 25f);
         private CinemachineOrbitalFollow orbit;
 
         private void Awake()
@@ -44,8 +51,10 @@ namespace Hookfall.Player
 
             if (targetBody == null) return;
             float t = GameSettings.SpeedEffects ? Mathf.Clamp01(targetBody.linearVelocity.magnitude / speedForMaxFov) : 0f;
+            kick = Mathf.MoveTowards(kick, 0f, kickRecovery * Time.unscaledDeltaTime);
             LensSettings lens = vcam.Lens;
-            lens.FieldOfView = Mathf.Lerp(lens.FieldOfView, Mathf.Lerp(baseFov, maxFov, t), Time.unscaledDeltaTime * fovLerpSpeed);
+            float target = Mathf.Lerp(baseFov, maxFov, t) + (GameSettings.SpeedEffects ? kick : 0f);
+            lens.FieldOfView = Mathf.Lerp(lens.FieldOfView, target, Time.unscaledDeltaTime * fovLerpSpeed * 2f);
             vcam.Lens = lens;
         }
     }
