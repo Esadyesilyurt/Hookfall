@@ -23,11 +23,12 @@ namespace Hookfall.Enemies
         [SerializeField] private Boulder boulderPrefab;
 
         [Header("Spawning (GDD 4.8)")]
-        [Tooltip("GDD 4.8 started at 2 per second; raised to 5 on 2026-11-07 for more chaos (Docs/Defaults.md).")]
-        [SerializeField] private float baseSpawnPerSecond = 5f;
+        [Tooltip("GDD 4.8: 2 per second. Raised to 5 on 2026-11-07, back to 2 on 2026-11-08 (too many enemies).")]
+        [SerializeField] private float baseSpawnPerSecond = 2f;
         [Tooltip("+20% spawn rate per minute survived.")]
         [SerializeField] private float spawnGrowthPerMinute = 0.2f;
-        [SerializeField] private int maxAlive = 300;
+        [Tooltip("300 until 2026-11-08; the performance test still checks 300.")]
+        [SerializeField] private int maxAlive = 120;
         [Tooltip("Distance for spawns around the player, placed out of camera view.")]
         [SerializeField] private float spawnDistance = 60f;
         [Tooltip("Distance for spawns ahead of the flight path; they come out of the haze.")]
@@ -35,7 +36,7 @@ namespace Hookfall.Enemies
         [Tooltip("Share of spawns placed ahead of the player's flight path.")]
         [SerializeField, Range(0f, 1f)] private float aheadSpawnShare = 0.6f;
         [Tooltip("Bats spawn in flocks of this many (min, max).")]
-        [SerializeField] private Vector2Int flockSize = new Vector2Int(8, 14);
+        [SerializeField] private Vector2Int flockSize = new Vector2Int(4, 8);
         [SerializeField] private float flockSpread = 4f;
 
         [Header("Wyverns")]

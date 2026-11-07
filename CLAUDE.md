@@ -9,7 +9,7 @@ Read this first in every session. The full design is in the GDD (Claude Docs art
 ## Design rules that must not be broken
 
 - `PlayerController.IsAirborne` is the core flag: it turns combat on (airborne) and puts enemies into Frenzy (grounded).
-- Enemy AI is **controlled chaos**: no limits on how many enemies attack at once, no waiting for turns, enemies never back off. Up to 300 alive. The player wins by hit-and-run. Only very short attack warnings (0.3–0.4 s) for Wyvern and Golem.
+- Enemy AI is **controlled chaos**: no limits on how many enemies attack at once, no waiting for turns, enemies never back off. Up to 120 alive (300 until 2026-11-08; the performance test still checks 300). The player wins by hit-and-run. Only very short attack warnings (0.3–0.4 s) for Wyvern and Golem.
 - Items come **only from chests**, which offer 3 choices to pick from. Level-ups give either a level for an owned item or a stat upgrade. Stats have no cap (movement stats soft-capped at +100%).
 - No AI API, LLM or online model runs inside the game. In-game AI is our own C#.
 - No AI-generated audio.

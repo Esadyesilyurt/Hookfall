@@ -30,6 +30,7 @@ namespace Hookfall.Tests
             Type directorType = Type.GetType("Hookfall.Enemies.EnemyDirector, Assembly-CSharp");
             var director = (Component)UnityEngine.Object.FindAnyObjectByType(directorType);
             directorType.GetField("baseSpawnPerSecond", flags).SetValue(director, 400f);
+            directorType.GetField("maxAlive", flags).SetValue(director, 300);   // the game caps lower; the plan's target is 300
             var alive = directorType.GetProperty("AliveCount");
             Type levelUpType = Type.GetType("Hookfall.Progression.LevelUpSystem, Assembly-CSharp");
             Component levelUp = player.GetComponent(levelUpType);
