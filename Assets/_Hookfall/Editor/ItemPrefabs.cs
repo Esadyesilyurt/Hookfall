@@ -77,6 +77,7 @@ namespace Hookfall.EditorTools
             SetFloat(projectile, "hitRadius", hitRadius);
             GameObject visual = Part(root.transform, "Visual", shape, Vector3.zero, scale, Mat(material));
             visual.GetComponent<Renderer>().shadowCastingMode = ShadowCastingMode.Off;
+            Hookfall.Core.Layers.SetRecursive(root, Hookfall.Core.Layers.NoOutline);
             var trail = root.AddComponent<TrailRenderer>();
             trail.sharedMaterial = Mat(material);
             trail.time = 0.15f;

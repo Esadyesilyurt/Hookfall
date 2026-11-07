@@ -31,6 +31,7 @@ namespace Hookfall.Combat.Items
             player = GetComponentInParent<PlayerController>();
             aura = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             aura.name = "Ram Aura";
+            aura.layer = Hookfall.Core.Layers.NoOutline;
             Destroy(aura.GetComponent<Collider>());
             aura.transform.SetParent(transform, false);
             aura.transform.localScale = new Vector3(1.6f, 1.6f, 2.6f);

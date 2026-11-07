@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 5768075801783368898}
   - component: {fileID: 8481211734425419368}
   - component: {fileID: 2729455951996331304}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: PF_Shard
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -177,7 +177,7 @@ GameObject:
   - component: {fileID: 1390373159850083873}
   - component: {fileID: 6296478306098052497}
   - component: {fileID: 946133573514060787}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Visual
   m_TagString: Untagged
   m_Icon: {fileID: 0}

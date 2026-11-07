@@ -143,6 +143,7 @@ namespace Hookfall.Enemies
         private LineRenderer CreateLine(string name, float width, bool loop)
         {
             var go = new GameObject(name);
+            go.layer = Hookfall.Core.Layers.NoOutline;
             go.transform.SetParent(transform, false);
             var line = go.AddComponent<LineRenderer>();
             line.useWorldSpace = true;

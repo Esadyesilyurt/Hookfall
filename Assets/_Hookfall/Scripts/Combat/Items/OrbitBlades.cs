@@ -63,6 +63,7 @@ namespace Hookfall.Combat.Items
             {
                 GameObject blade = GameObject.CreatePrimitive(PrimitiveType.Cube);
                 blade.name = $"Blade {i + 1}";
+                blade.layer = Hookfall.Core.Layers.NoOutline;
                 Destroy(blade.GetComponent<Collider>());   // hits come from OverlapSphere, not physics
                 if (bladeMaterial != null) blade.GetComponent<Renderer>().sharedMaterial = bladeMaterial;
 

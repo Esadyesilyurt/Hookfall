@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 1281189022366069710}
   - component: {fileID: 8122756590838500600}
   - component: {fileID: 7321346486257415848}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Visual
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -101,7 +101,7 @@ GameObject:
   - component: {fileID: 1351795519795039372}
   - component: {fileID: 8185890813964748861}
   - component: {fileID: 2166923679837005753}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: PF_Spark
   m_TagString: Untagged
   m_Icon: {fileID: 0}
