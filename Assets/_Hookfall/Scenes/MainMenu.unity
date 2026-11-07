@@ -37,7 +37,7 @@ RenderSettings:
   m_ReflectionBounces: 1
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
-  m_Sun: {fileID: 14058016}
+  m_Sun: {fileID: 1851897636}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -119,7 +119,7 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!1 &14058015
+--- !u!1 &128786120
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -127,8 +127,471 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 14058017}
-  - component: {fileID: 14058016}
+  - component: {fileID: 128786122}
+  - component: {fileID: 128786121}
+  m_Layer: 0
+  m_Name: Post FX
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &128786121
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 128786120}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 172515602e62fb746b5d573b38a5fe58, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Core.Runtime::UnityEngine.Rendering.Volume
+  m_IsGlobal: 1
+  priority: 0
+  blendDistance: 0
+  weight: 1
+  sharedProfile: {fileID: 11400000, guid: 295330f3d0d408a4cb7dd0208d0b1fd1, type: 2}
+--- !u!4 &128786122
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 128786120}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &233705107
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 233705111}
+  - component: {fileID: 233705110}
+  - component: {fileID: 233705109}
+  - component: {fileID: 233705108}
+  m_Layer: 0
+  m_Name: Main Camera
+  m_TagString: MainCamera
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &233705108
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 233705107}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a79441f348de89743a2939f4d699eac1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalCameraData
+  m_RenderShadows: 1
+  m_RequiresDepthTextureOption: 2
+  m_RequiresOpaqueTextureOption: 2
+  m_CameraType: 0
+  m_Cameras: []
+  m_RendererIndex: -1
+  m_VolumeLayerMask:
+    serializedVersion: 2
+    m_Bits: 1
+  m_VolumeTrigger: {fileID: 0}
+  m_VolumeFrameworkUpdateModeOption: 2
+  m_RenderPostProcessing: 1
+  m_Antialiasing: 1
+  m_AntialiasingQuality: 2
+  m_StopNaN: 0
+  m_Dithering: 0
+  m_ClearDepth: 1
+  m_AllowXRRendering: 1
+  m_AllowHDROutput: 1
+  m_UseScreenCoordOverride: 0
+  m_ScreenSizeOverride: {x: 0, y: 0, z: 0, w: 0}
+  m_ScreenCoordScaleBias: {x: 0, y: 0, z: 0, w: 0}
+  m_RequiresDepthTexture: 0
+  m_RequiresColorTexture: 0
+  m_TaaSettings:
+    m_Quality: 3
+    m_FrameInfluence: 0.1
+    m_JitterScale: 1
+    m_MipBias: 0
+    m_VarianceClampScale: 0.9
+    m_ContrastAdaptiveSharpening: 0
+  m_Version: 2
+--- !u!81 &233705109
+AudioListener:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 233705107}
+  m_Enabled: 1
+--- !u!20 &233705110
+Camera:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 233705107}
+  m_Enabled: 1
+  serializedVersion: 2
+  m_ClearFlags: 2
+  m_BackGroundColor: {r: 0.55, g: 0.76, b: 0.93, a: 1}
+  m_projectionMatrixMode: 1
+  m_GateFitMode: 2
+  m_FOVAxisMode: 0
+  m_Iso: 200
+  m_ShutterSpeed: 0.005
+  m_Aperture: 16
+  m_FocusDistance: 10
+  m_FocalLength: 50
+  m_BladeCount: 5
+  m_Curvature: {x: 2, y: 11}
+  m_BarrelClipping: 0.25
+  m_Anamorphism: 0
+  m_SensorSize: {x: 36, y: 24}
+  m_LensShift: {x: 0, y: 0}
+  m_NormalizedViewPortRect:
+    serializedVersion: 2
+    x: 0
+    y: 0
+    width: 1
+    height: 1
+  near clip plane: 0.3
+  far clip plane: 600
+  field of view: 60
+  orthographic: 0
+  orthographic size: 5
+  m_Depth: 0
+  m_CullingMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_RenderingPath: -1
+  m_TargetTexture: {fileID: 0}
+  m_TargetDisplay: 0
+  m_TargetEye: 3
+  m_HDR: 1
+  m_AllowMSAA: 1
+  m_AllowDynamicResolution: 0
+  m_ForceIntoRT: 0
+  m_OcclusionCulling: 1
+  m_StereoConvergence: 10
+  m_StereoSeparation: 0.022
+--- !u!4 &233705111
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 233705107}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.06975647, y: 0, z: 0, w: 0.9975641}
+  m_LocalPosition: {x: 0, y: 14, z: -46}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &708470582
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 708470584}
+  - component: {fileID: 708470583}
+  m_Layer: 0
+  m_Name: StormWall
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &708470583
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 708470582}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e814e7640024a2e49995c4fa8cb95be1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Hookfall.World.StormWall
+  player: {fileID: 0}
+  cloudPrefabs:
+  - {fileID: 5320549921518833302, guid: 13197912f5d82d14ba343b6ddd2274ba, type: 3}
+  - {fileID: 5031650893143533455, guid: c5c5ddc395c3f904f85507b45bc3c59d, type: 3}
+  lightningMaterial: {fileID: 2100000, guid: 3ddc4e6b9a3fb344ab7b577797cb7690, type: 2}
+  radius: 195
+  cloudsPerLayer: 24
+  layerHeights:
+  - -120
+  - -80
+  - -40
+  - 0
+  - 30
+  cloudScale: {x: 6, y: 10}
+  turnSpeed: 1.5
+  pushFrom: 170
+  pushStrength: 80
+  lightningInterval: {x: 2.5, y: 7}
+  lightningTime: 0.18
+--- !u!4 &708470584
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 708470582}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &864689369
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 864689371}
+  - component: {fileID: 864689370}
+  m_Layer: 0
+  m_Name: Backdrop
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &864689370
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 864689369}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6bbb08b9cd355c147892242a55cd44dd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Hookfall.World.Backdrop
+  prefabs:
+  - {fileID: 3069733332553969773, guid: c98a6ff7e53c67a42a89adf828cebe64, type: 3}
+  - {fileID: 8133995250472509845, guid: 7c5ff724adc883c40bb7afbb45912662, type: 3}
+  - {fileID: 5064297018782253929, guid: 46eef60b989c1ad44acf5b224037e9f0, type: 3}
+  count: 14
+  radius: {x: 430, y: 600}
+  height: {x: -120, y: 90}
+  scale: {x: 1.6, y: 3.2}
+  driftSpeed: 0.4
+--- !u!4 &864689371
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 864689369}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1455676786
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1455676788}
+  - component: {fileID: 1455676787}
+  m_Layer: 0
+  m_Name: Main Menu
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1455676787
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1455676786}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 70a9713096ddefb449f55b044d6759cb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Hookfall.UI.MainMenuUI
+  introLines:
+  - Long ago, a kingdom raised a fortress around the Heartstone, a relic strong enough
+    to bend gravity.
+  - When the fortress fell, the land broke apart, but the pieces never fell. The
+    Heartstone holds them above an endless abyss.
+  - You are a Warden of the Order of the Tether. Guard the Heartstone for as long
+    as you can.
+  credits: 'Hookfall
+
+    A solo project by Esad Yesilyurt
+
+    Game Studio: AI in
+    Game Development, Istanbul Kent University
+
+
+    Made with Unity 6 (URP, Shader
+    Graph, Cinemachine) and Blender.
+
+    Code, models and writing assisted by Claude
+    (Anthropic); see Docs/PromptLog.md.
+
+
+    Sound and music: licensed files listed
+    in Docs/Credits.md.'
+--- !u!4 &1455676788
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1455676786}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1650071374
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1650071376}
+  - component: {fileID: 1650071375}
+  m_Layer: 0
+  m_Name: IslandGenerator
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1650071375
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1650071374}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8f01b9dc4a6034c4496a189c53a4a1c8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Hookfall.World.IslandGenerator
+  seed: 0
+  towerIslandWidth: 20
+  towerHeight: 18
+  innerCount: {x: 8, y: 12}
+  innerRadius: {x: 40, y: 100}
+  innerWidth: {x: 10, y: 20}
+  outerCount: {x: 15, y: 25}
+  outerRadius: {x: 100, y: 150}
+  outerWidth: {x: 4, y: 8}
+  minSpacing: 15
+  attemptsPerIsland: 30
+  heightTiers:
+  - {x: -32, y: -14}
+  - {x: -6, y: 10}
+  - {x: 18, y: 38}
+  perchCount: {x: 4, y: 6}
+  perchRadius: {x: 24, y: 60}
+  perchHeight: {x: 28, y: 46}
+  maxLinkDistance: 32
+  largeIslandModels:
+  - {fileID: 6149704995558008811, guid: 7ba5a1e00ecb9d84e87e3bd457b0b6ac, type: 3}
+  - {fileID: 3936727308447472784, guid: d887ac36f237c674f9015c9eebad0cda, type: 3}
+  - {fileID: 8018122912829929776, guid: 099d3106fc98358499933fff5b1ae669, type: 3}
+  largeModelWidth: 14
+  smallIslandModels:
+  - {fileID: 6347597108359075560, guid: 70fa50ba7e81cb5408f8236a0d42aad6, type: 3}
+  - {fileID: 952493109196503481, guid: a1bdb6a686566cc4bb79b1d2dfb52cc0, type: 3}
+  - {fileID: 7825102679065094349, guid: 5c0e7ee91d892fa4b858e8a00cf22a60, type: 3}
+  smallModelWidth: 6
+  towerModel: {fileID: 230822598084837947, guid: 28099a9a69f6c52458711f24e3a52da2, type: 3}
+  propModels:
+  - {fileID: 4651197116691798375, guid: a332d6cade40c1c469c0e817c15936f3, type: 3}
+  - {fileID: 4421946193624545976, guid: 3ce46f6c4102c594f935d08ff080a491, type: 3}
+  - {fileID: 1856677691564855099, guid: 5b4a596aba21a9d40b2cb92404a8006f, type: 3}
+  - {fileID: 4212409844672909330, guid: de187ee94edcd3243a5b0636b56c84b5, type: 3}
+  - {fileID: 4194943436639710865, guid: f951b4a072775e94fbc783d2b5c65078, type: 3}
+  - {fileID: 5215621197753300748, guid: cf3b2749799a40b4585b6c6ce9036023, type: 3}
+  - {fileID: 214526411238555003, guid: 1e3322fcb065e9143870013358bc37c1, type: 3}
+  propsPerLargeIsland: {x: 1, y: 3}
+  cloudModels:
+  - {fileID: 5043020950241381218, guid: 9fefb7377572529409622ed41ad04156, type: 3}
+  - {fileID: 8907735845062367028, guid: 4ea4a60dff5a5e24d9f91dde0507de14, type: 3}
+  - {fileID: 7430191522560836344, guid: 1f3951575748d024dbfdbf0dd4c09566, type: 3}
+  cloudCount: 26
+  grassMaterial: {fileID: 2100000, guid: 3f46b46e3e9fc3f498f37c2834aac135, type: 2}
+  stoneMaterial: {fileID: 2100000, guid: ef06d41ec4586fd4ca51ec502986854e, type: 2}
+  towerMaterial: {fileID: 2100000, guid: d9e65702089046b42bb6883e9ab99a0e, type: 2}
+  player: {fileID: 0}
+  abyssDepth: 60
+--- !u!4 &1650071376
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1650071374}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1851897635
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1851897637}
+  - component: {fileID: 1851897636}
   m_Layer: 0
   m_Name: Sun
   m_TagString: Untagged
@@ -136,13 +599,13 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!108 &14058016
+--- !u!108 &1851897636
 Light:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 14058015}
+  m_GameObject: {fileID: 1851897635}
   m_Enabled: 1
   serializedVersion: 13
   m_Type: 1
@@ -201,478 +664,15 @@ Light:
   m_LightUnit: 1
   m_LuxAtDistance: 1
   m_EnableSpotReflector: 1
---- !u!4 &14058017
+--- !u!4 &1851897637
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 14058015}
+  m_GameObject: {fileID: 1851897635}
   serializedVersion: 2
   m_LocalRotation: {x: 0.40821794, y: -0.23456973, z: 0.10938166, w: 0.8754261}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &275550819
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 275550821}
-  - component: {fileID: 275550820}
-  m_Layer: 0
-  m_Name: IslandGenerator
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &275550820
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 275550819}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8f01b9dc4a6034c4496a189c53a4a1c8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Hookfall.World.IslandGenerator
-  seed: 0
-  towerIslandWidth: 20
-  towerHeight: 18
-  innerCount: {x: 8, y: 12}
-  innerRadius: {x: 40, y: 100}
-  innerWidth: {x: 10, y: 20}
-  outerCount: {x: 15, y: 25}
-  outerRadius: {x: 100, y: 150}
-  outerWidth: {x: 4, y: 8}
-  minSpacing: 15
-  attemptsPerIsland: 30
-  heightTiers:
-  - {x: -32, y: -14}
-  - {x: -6, y: 10}
-  - {x: 18, y: 38}
-  perchCount: {x: 4, y: 6}
-  perchRadius: {x: 24, y: 60}
-  perchHeight: {x: 28, y: 46}
-  maxLinkDistance: 32
-  largeIslandModels:
-  - {fileID: 6149704995558008811, guid: 7ba5a1e00ecb9d84e87e3bd457b0b6ac, type: 3}
-  - {fileID: 3936727308447472784, guid: d887ac36f237c674f9015c9eebad0cda, type: 3}
-  - {fileID: 8018122912829929776, guid: 099d3106fc98358499933fff5b1ae669, type: 3}
-  largeModelWidth: 14
-  smallIslandModels:
-  - {fileID: 6347597108359075560, guid: 70fa50ba7e81cb5408f8236a0d42aad6, type: 3}
-  - {fileID: 952493109196503481, guid: a1bdb6a686566cc4bb79b1d2dfb52cc0, type: 3}
-  - {fileID: 7825102679065094349, guid: 5c0e7ee91d892fa4b858e8a00cf22a60, type: 3}
-  smallModelWidth: 6
-  towerModel: {fileID: 230822598084837947, guid: 28099a9a69f6c52458711f24e3a52da2, type: 3}
-  propModels:
-  - {fileID: 4651197116691798375, guid: a332d6cade40c1c469c0e817c15936f3, type: 3}
-  - {fileID: 4421946193624545976, guid: 3ce46f6c4102c594f935d08ff080a491, type: 3}
-  - {fileID: 1856677691564855099, guid: 5b4a596aba21a9d40b2cb92404a8006f, type: 3}
-  - {fileID: 4212409844672909330, guid: de187ee94edcd3243a5b0636b56c84b5, type: 3}
-  - {fileID: 4194943436639710865, guid: f951b4a072775e94fbc783d2b5c65078, type: 3}
-  - {fileID: 5215621197753300748, guid: cf3b2749799a40b4585b6c6ce9036023, type: 3}
-  - {fileID: 214526411238555003, guid: 1e3322fcb065e9143870013358bc37c1, type: 3}
-  propsPerLargeIsland: {x: 1, y: 3}
-  cloudModels:
-  - {fileID: 5043020950241381218, guid: 9fefb7377572529409622ed41ad04156, type: 3}
-  - {fileID: 8907735845062367028, guid: 4ea4a60dff5a5e24d9f91dde0507de14, type: 3}
-  - {fileID: 7430191522560836344, guid: 1f3951575748d024dbfdbf0dd4c09566, type: 3}
-  cloudCount: 26
-  grassMaterial: {fileID: 2100000, guid: 3f46b46e3e9fc3f498f37c2834aac135, type: 2}
-  stoneMaterial: {fileID: 2100000, guid: ef06d41ec4586fd4ca51ec502986854e, type: 2}
-  towerMaterial: {fileID: 2100000, guid: d9e65702089046b42bb6883e9ab99a0e, type: 2}
-  player: {fileID: 0}
-  abyssDepth: 60
---- !u!4 &275550821
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 275550819}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &739162391
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 739162393}
-  - component: {fileID: 739162392}
-  m_Layer: 0
-  m_Name: Backdrop
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &739162392
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 739162391}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6bbb08b9cd355c147892242a55cd44dd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Hookfall.World.Backdrop
-  prefabs:
-  - {fileID: 3069733332553969773, guid: c98a6ff7e53c67a42a89adf828cebe64, type: 3}
-  - {fileID: 8133995250472509845, guid: 7c5ff724adc883c40bb7afbb45912662, type: 3}
-  - {fileID: 5064297018782253929, guid: 46eef60b989c1ad44acf5b224037e9f0, type: 3}
-  count: 14
-  radius: {x: 430, y: 600}
-  height: {x: -120, y: 90}
-  scale: {x: 1.6, y: 3.2}
-  driftSpeed: 0.4
---- !u!4 &739162393
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 739162391}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &872366700
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 872366702}
-  - component: {fileID: 872366701}
-  m_Layer: 0
-  m_Name: Post FX
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &872366701
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 872366700}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 172515602e62fb746b5d573b38a5fe58, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.RenderPipelines.Core.Runtime::UnityEngine.Rendering.Volume
-  m_IsGlobal: 1
-  priority: 0
-  blendDistance: 0
-  weight: 1
-  sharedProfile: {fileID: 11400000, guid: 295330f3d0d408a4cb7dd0208d0b1fd1, type: 2}
---- !u!4 &872366702
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 872366700}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1497980448
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1497980452}
-  - component: {fileID: 1497980451}
-  - component: {fileID: 1497980450}
-  - component: {fileID: 1497980449}
-  m_Layer: 0
-  m_Name: Main Camera
-  m_TagString: MainCamera
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &1497980449
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1497980448}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a79441f348de89743a2939f4d699eac1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalCameraData
-  m_RenderShadows: 1
-  m_RequiresDepthTextureOption: 2
-  m_RequiresOpaqueTextureOption: 2
-  m_CameraType: 0
-  m_Cameras: []
-  m_RendererIndex: -1
-  m_VolumeLayerMask:
-    serializedVersion: 2
-    m_Bits: 1
-  m_VolumeTrigger: {fileID: 0}
-  m_VolumeFrameworkUpdateModeOption: 2
-  m_RenderPostProcessing: 1
-  m_Antialiasing: 1
-  m_AntialiasingQuality: 2
-  m_StopNaN: 0
-  m_Dithering: 0
-  m_ClearDepth: 1
-  m_AllowXRRendering: 1
-  m_AllowHDROutput: 1
-  m_UseScreenCoordOverride: 0
-  m_ScreenSizeOverride: {x: 0, y: 0, z: 0, w: 0}
-  m_ScreenCoordScaleBias: {x: 0, y: 0, z: 0, w: 0}
-  m_RequiresDepthTexture: 0
-  m_RequiresColorTexture: 0
-  m_TaaSettings:
-    m_Quality: 3
-    m_FrameInfluence: 0.1
-    m_JitterScale: 1
-    m_MipBias: 0
-    m_VarianceClampScale: 0.9
-    m_ContrastAdaptiveSharpening: 0
-  m_Version: 2
---- !u!81 &1497980450
-AudioListener:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1497980448}
-  m_Enabled: 1
---- !u!20 &1497980451
-Camera:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1497980448}
-  m_Enabled: 1
-  serializedVersion: 2
-  m_ClearFlags: 2
-  m_BackGroundColor: {r: 0.55, g: 0.76, b: 0.93, a: 1}
-  m_projectionMatrixMode: 1
-  m_GateFitMode: 2
-  m_FOVAxisMode: 0
-  m_Iso: 200
-  m_ShutterSpeed: 0.005
-  m_Aperture: 16
-  m_FocusDistance: 10
-  m_FocalLength: 50
-  m_BladeCount: 5
-  m_Curvature: {x: 2, y: 11}
-  m_BarrelClipping: 0.25
-  m_Anamorphism: 0
-  m_SensorSize: {x: 36, y: 24}
-  m_LensShift: {x: 0, y: 0}
-  m_NormalizedViewPortRect:
-    serializedVersion: 2
-    x: 0
-    y: 0
-    width: 1
-    height: 1
-  near clip plane: 0.3
-  far clip plane: 600
-  field of view: 60
-  orthographic: 0
-  orthographic size: 5
-  m_Depth: 0
-  m_CullingMask:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_RenderingPath: -1
-  m_TargetTexture: {fileID: 0}
-  m_TargetDisplay: 0
-  m_TargetEye: 3
-  m_HDR: 1
-  m_AllowMSAA: 1
-  m_AllowDynamicResolution: 0
-  m_ForceIntoRT: 0
-  m_OcclusionCulling: 1
-  m_StereoConvergence: 10
-  m_StereoSeparation: 0.022
---- !u!4 &1497980452
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1497980448}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0.06975647, y: 0, z: 0, w: 0.9975641}
-  m_LocalPosition: {x: 0, y: 14, z: -46}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1598352109
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1598352111}
-  - component: {fileID: 1598352110}
-  m_Layer: 0
-  m_Name: StormWall
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &1598352110
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1598352109}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e814e7640024a2e49995c4fa8cb95be1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Hookfall.World.StormWall
-  player: {fileID: 0}
-  cloudPrefabs:
-  - {fileID: 5320549921518833302, guid: 13197912f5d82d14ba343b6ddd2274ba, type: 3}
-  - {fileID: 5031650893143533455, guid: c5c5ddc395c3f904f85507b45bc3c59d, type: 3}
-  lightningMaterial: {fileID: 2100000, guid: 3ddc4e6b9a3fb344ab7b577797cb7690, type: 2}
-  radius: 195
-  cloudsPerLayer: 24
-  layerHeights:
-  - -120
-  - -80
-  - -40
-  - 0
-  - 30
-  cloudScale: {x: 6, y: 10}
-  turnSpeed: 1.5
-  pushFrom: 170
-  pushStrength: 80
-  lightningInterval: {x: 2.5, y: 7}
-  lightningTime: 0.18
---- !u!4 &1598352111
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1598352109}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1799652466
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1799652468}
-  - component: {fileID: 1799652467}
-  m_Layer: 0
-  m_Name: Main Menu
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &1799652467
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1799652466}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 70a9713096ddefb449f55b044d6759cb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Hookfall.UI.MainMenuUI
-  introLines:
-  - Long ago, a kingdom raised a fortress around the Heartstone, a relic strong enough
-    to bend gravity.
-  - When the fortress fell, the land broke apart, but the pieces never fell. The
-    Heartstone holds them above an endless abyss.
-  - You are a Warden of the Order of the Tether. Guard the Heartstone for as long
-    as you can.
-  credits: 'Hookfall
-
-    A solo project by Esad Yesilyurt
-
-    Game Studio: AI in
-    Game Development, Istanbul Kent University
-
-
-    Made with Unity 6 (URP, Shader
-    Graph, Cinemachine) and Blender.
-
-    Code, models and writing assisted by Claude
-    (Anthropic); see Docs/PromptLog.md.
-
-
-    Sound and music: licensed files listed
-    in Docs/Credits.md.'
---- !u!4 &1799652468
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1799652466}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -683,10 +683,10 @@ Transform:
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
-  - {fileID: 14058017}
-  - {fileID: 1497980452}
-  - {fileID: 275550821}
-  - {fileID: 1598352111}
-  - {fileID: 739162393}
-  - {fileID: 872366702}
-  - {fileID: 1799652468}
+  - {fileID: 1851897637}
+  - {fileID: 233705111}
+  - {fileID: 1650071376}
+  - {fileID: 708470584}
+  - {fileID: 864689371}
+  - {fileID: 128786122}
+  - {fileID: 1455676788}

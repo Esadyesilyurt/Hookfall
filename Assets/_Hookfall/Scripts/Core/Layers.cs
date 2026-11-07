@@ -8,6 +8,8 @@ namespace Hookfall.Core
     {
         /// <summary>Lines, trails, beams and glows: the toon outline pass skips this layer.</summary>
         public const int NoOutline = 8;
+        /// <summary>Solid scenery (islands, tower, props): the camera never goes inside it. Enemies stay on Default.</summary>
+        public const int World = 9;
 
         public static void SetRecursive(GameObject go, int layer)
         {

@@ -1,7 +1,7 @@
 // Hookfall - shared enemy logic: health, rewards, steering (pursuit, separation, island avoidance), think rate,
 // pooling, hit flash, elites and the fallbacks in GDD 5.7.
 // AI disclosure: written with Claude (Anthropic) on 2026-11-04 as part of the midterm project skeleton,
-// rewritten on 2026-11-07 for steering, think LOD, pooling and elites. Prompts and changes are recorded in Docs/PromptLog.md.
+// rewritten on 2026-11-07 for steering, think LOD, pooling and elites, and given catch-up speed on 2026-11-08. Prompts and changes are recorded in Docs/PromptLog.md.
 using System.Collections.Generic;
 using Hookfall.Core;
 using Hookfall.Player;
@@ -26,11 +26,18 @@ namespace Hookfall.Enemies
         [SerializeField] private float hitRadius = 0.6f;
 
         [Header("Steering (GDD 5.1)")]
-        [SerializeField] private float acceleration = 40f;
+        [SerializeField] private float acceleration = 60f;
         [SerializeField] private float separationRadius = 1.6f;
         [SerializeField] private float separationWeight = 1.2f;
         [SerializeField] private float avoidLookAhead = 0.5f;
         [SerializeField] private float avoidWeight = 2.5f;
+
+        [Header("Catch-up (2026-11-08: a flying Warden left every bat behind)")]
+        [Tooltip("When chasing, the enemy flies at least this share of the player's speed.")]
+        [SerializeField] private float playerSpeedMatch = 0.8f;
+        [Tooltip("Extra speed for every metre beyond catchUpDistance, so stragglers close in.")]
+        [SerializeField] private float catchUpPerMetre = 0.4f;
+        [SerializeField] private float catchUpDistance = 15f;
 
         [Header("Thinking (GDD 5.2)")]
         [SerializeField] private float nearDistance = 60f;
@@ -247,6 +254,10 @@ namespace Hookfall.Enemies
             Vector3 steer = seek + Separation() * separationWeight + Avoidance(seek, speed) * avoidWeight;
             desiredVelocity = steer.sqrMagnitude > 0.0001f ? steer.normalized * speed : Vector3.zero;
         }
+
+        /// <summary>Chase speed: the given speed, at least a share of the player's speed, and faster the further behind.</summary>
+        public float ChaseSpeed(float speed) =>
+            Mathf.Max(speed, Player.Speed * playerSpeedMatch) + Mathf.Max(0f, DistanceToPlayer - catchUpDistance) * catchUpPerMetre;
 
         public void Stop() => desiredVelocity = Vector3.zero;
 

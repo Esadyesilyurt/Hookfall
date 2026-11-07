@@ -10,7 +10,8 @@ Values the GDD does not give, picked by Claude on 2026-11-07 when building Weeks
 | Rope length after attach | 85% of distance (GDD: 15% reel-in; the skeleton used 80%) | GrappleHook |
 | Rope minimum length | 25% of distance | GrappleHook |
 | Movement soft cap | Bonuses count fully up to +100%; above that each pick counts 25% | PlayerStats |
-| Camera | Orbit radius 8 m, target offset 1.6 m, pitch −40° to 75°, damping 0.1 | Player Camera (Cinemachine) |
+| Camera | Orbit radius 8 m, target offset 1.6 m, pitch −80° to 80° (−40° to 75° until 2026-11-08), damping 0.1 | Player Camera (Cinemachine) |
+| Camera collision | Cinemachine Deoccluder against the World layer (islands, tower, props): pulls the camera towards the Warden, camera radius 0.45 m, at least 0.6 m from the target, 0.35 s return | Player Camera |
 
 ### Pickups and level-up
 | Value | Default | Where |
@@ -37,12 +38,13 @@ Values the GDD does not give, picked by Claude on 2026-11-07 when building Weeks
 | Bat flocks | 4–8 bats, 4 m spread | EnemyDirector |
 | Bat bite | 0.25 s recovery, pursuit looks 0.5 s ahead | PF_Bat |
 | Wyverns | From minute 1; 5% of spawns, +3% per minute, max 20% | EnemyDirector |
-| Wyvern | Chase 14 m/s, dash 24 m (0.8 s at 30 m/s), hits within 2 m, recovers at 30% speed, dives from 10 m above an island-bound player | PF_Wyvern |
+| Wyvern | Chase 20 m/s (14 until 2026-11-08), dash 24 m (0.8 s at 30 m/s), hits within 2 m, recovers at 30% speed, dives from 10 m above an island-bound player | PF_Wyvern |
 | Golems | From minute 2 (GDD), one every 15 s up to 2 + 1 per minute, on free inner islands within 110 m | EnemyDirector |
 | Golem | Throws from 3 m up; boulder hits within 1.3 m, breaks on islands, lives 3 s | PF_Golem, PF_Boulder |
 | Elite wave | Every 5 min (GDD): 15 bats, 3 wyverns, 1 golem; ×3 health, ×1.5 damage, ×1.4 size, ×3 XP and gold, magenta glow | EnemyDirector |
 | Spawn distance | 60 m around the player, out of camera view; 90 m ahead of the flight path | EnemyDirector |
-| Steering | Acceleration 40 m/s², separation 1.6 m, island raycast 0.5 s ahead; stuck twice in a row → respawn | EnemyBase |
+| Steering | Acceleration 60 m/s² (40 until 2026-11-08), separation 1.6 m, island raycast 0.5 s ahead; stuck twice in a row → respawn | EnemyBase |
+| Catch-up | Chasing bats and wyverns fly at least 80% of the Warden's speed, plus 0.4 m/s for every metre beyond 15 m; bats 18 m/s base (12 until 2026-11-08) | EnemyBase, PF_Bat |
 | Low FPS | Spawning pauses below 50 FPS (smoothed); hit sparks drop to a quarter | EnemyDirector, VfxManager |
 
 ### Items
@@ -96,6 +98,9 @@ Values the GDD does not give, picked by Claude on 2026-11-07 when building Weeks
 | Air tricks | Above 24 m/s, airborne, no rope out, after 0.2 s: front flip, back flip or barrel roll at 620°/s, finishing the turn | WardenAnimator |
 | Chest light | Spotlight 14 m above the chest (26°, warm gold, breathing), plus an additive light cone | PF_Chest |
 | Speed FOV | Full at 55 m/s | CameraRig |
+| Double jump | Space in the air when no wall is near: +11 m/s up (a fall counts as 0), once per flight, refilled on landing | PlayerController |
+| Dash | Left Shift in the air: 32 m/s (or the current speed if faster) for 0.18 s towards W/A/S/D relative to the camera, or where the camera looks; once per flight, refilled on landing | PlayerController |
+| Props | Rocks, ruins, crystals, bushes, lanterns and statues have mesh colliders (none before 2026-11-08) | ModelSetup |
 | Sound mix | Effects 60%, music 45% by default; hits play at most every 0.09 s and two at once, deaths every 0.07 s, gems every 0.06 s; rare events louder | GameSettings, AudioWiring |
 
 ## Where the build differs from the GDD

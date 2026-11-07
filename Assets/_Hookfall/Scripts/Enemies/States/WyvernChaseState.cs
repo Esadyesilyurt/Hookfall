@@ -25,7 +25,7 @@ namespace Hookfall.Enemies.States
                 wyvern.ChangeState(wyvern.Charge);
                 return;
             }
-            wyvern.Steer(target, wyvern.MoveSpeed);
+            wyvern.Steer(target, wyvern.ChaseSpeed(wyvern.MoveSpeed));
         }
     }
 }

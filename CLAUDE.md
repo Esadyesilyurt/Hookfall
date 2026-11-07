@@ -30,9 +30,9 @@ Read this first in every session. The full design is in the GDD (Claude Docs art
 | System | Scripts |
 | --- | --- |
 | Core | `GameManager` (run state, modal screens, death, record, scene changes), `RunState`, `GameSettings`, `RunRecord`, `Layers` |
-| Player | `PlayerController` (`IsAirborne`, `CurrentIsland`, 1.8x air gravity, wall jump), `GrappleHook` (120 m/s hook head, taut-rope swing with downhill pump, right-click power swing that reels in), `PlayerStats` + `StatType` (11 stats), `CameraRig` (drives the Cinemachine orbit camera), `WardenAnimator` (procedural animation of the Warden model, air tricks) |
+| Player | `PlayerController` (`IsAirborne`, `CurrentIsland`, 1.8x air gravity, wall jump, double jump and dash once per flight), `GrappleHook` (120 m/s hook head, taut-rope swing with downhill pump, right-click power swing that reels in), `PlayerStats` + `StatType` (11 stats), `CameraRig` (drives the Cinemachine orbit camera; a Deoccluder keeps it out of the `World` layer), `WardenAnimator` (procedural animation of the Warden model, air tricks) |
 | Combat | `CombatSystem` (airborne rule, chest rewards), `ItemBase`, `ProjectileItem`, `Projectile`, `EnemyQuery`, `Rarity`, `ChestReward`, `Items/` (the 6 attack items and `TetherCoil`, the Zip item) |
-| Enemies | `StateMachine`, `IEnemyState`, `EnemyBase` (steering, think rate, pooling, glow, fallbacks), `Bat`, `Wyvern`, `Golem`, `Boulder`, `States/`, `EnemyDirector` (spawns, mix, golems, elite waves, pools) |
+| Enemies | `StateMachine`, `IEnemyState`, `EnemyBase` (steering, catch-up speed, think rate, pooling, glow, fallbacks), `Bat`, `Wyvern`, `Golem`, `Boulder`, `States/`, `EnemyDirector` (spawns, mix, golems, elite waves, pools) |
 | World | `Island`, `IslandKind`, `IslandGenerator` (height bands, reachability, models, props, clouds), `Chest`, `ChestSpawner`, `TowerCache`, `GravityZone`, `StormWall` (arena edge, wind push-back), `Backdrop` (far scenery) |
 | Progression | `XPSystem`, `GoldWallet`, `LevelUpSystem` (3 cards), `LevelUpOption`, `Pickup`, `PickupKind`, `PickupSpawner` |
 | UI | uGUI + TextMeshPro built from code by `UIFactory` with the generated skin (`UISkin`, `UIPop`, `UIHover`): `HUD`, `LevelUpUI`, `ChestResultUI`, `PauseMenuUI`, `RunEndUI`, `SettingsPanel`, `MainMenuUI`, `UITheme` |
@@ -55,7 +55,7 @@ Scenes and prefabs are generated: change the builder code, not the scene, then r
 | --- | --- | --- |
 | 9 | Hook, swing and air strafe feel good; hook projectile; Cinemachine camera | Built; feel needs playtesting |
 | 10 | Core loop playable with placeholders: XP gems and gold pickups, 3-card level-up screen, run-end screen | Built |
-| 11 | Wyvern and Golem state machines, steering separation and island avoidance, object pooling, 300-enemy test at 60 FPS; island model pipeline | Built; 300 enemies: 118 FPS average at 1080p on an RTX 2060 (PerformanceTests) |
+| 11 | Wyvern and Golem state machines, steering separation and island avoidance, object pooling, 300-enemy test at 60 FPS; island model pipeline | Built; 300 enemies: 87 FPS average at 1080p on an RTX 2060 (PerformanceTests, 2026-11-08; 118 before bats could keep up) |
 | 12 | All 6 items, all stats, chests and gold costs, tower cache, gravity zone, elite waves; first playtest | Built; playtest to do |
 | 13 | Toon shader and outline, VFX, licensed audio, final uGUI HUD; second playtest | Built; Kenney CC0 effects, synthesised music |
 | 14 | Bug fixes, optimisation, final build | To do |

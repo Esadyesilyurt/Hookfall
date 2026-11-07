@@ -243,6 +243,118 @@ namespace Hookfall.Tests
             Assert.IsTrue(started, "Flying at 30 m/s with no rope should start a trick");
         }
 
+        /// <summary>Double jump and dash: one of each per flight, both refilled on landing.</summary>
+        [UnityTest]
+        public IEnumerator DoubleJumpAndDashOncePerFlight()
+        {
+            SceneManager.LoadScene("Arena");
+            yield return null;
+            GameObject player = GameObject.Find("Player");
+            var body = player.GetComponent<Rigidbody>();
+            Type pcType = Type.GetType("Hookfall.Player.PlayerController, Assembly-CSharp");
+            Component controller = player.GetComponent(pcType);
+            var flags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+            Func<string, int> left = name => (int)pcType.GetProperty(name).GetValue(controller);
+
+            // Start on an island so both moves are filled, then fly high and clear of everything.
+            float end = Time.realtimeSinceStartup + 4f;
+            while (Time.realtimeSinceStartup < end && (bool)pcType.GetProperty("IsAirborne").GetValue(controller))
+            {
+                KeepAlive(player);
+                yield return new WaitForFixedUpdate();
+            }
+            Assert.AreEqual(1, left("AirJumpsLeft"), "Standing on an island should fill the double jump");
+            Assert.AreEqual(1, left("DashesLeft"), "Standing on an island should fill the dash");
+            player.transform.position = new Vector3(0f, 70f, -60f);
+            body.linearVelocity = new Vector3(0f, -5f, 0f);
+            yield return new WaitForFixedUpdate();
+            yield return new WaitForFixedUpdate();
+
+            pcType.GetField("airJumpQueued", flags).SetValue(controller, true);   // Space, without a keyboard
+            yield return new WaitForFixedUpdate();
+            Assert.Greater(body.linearVelocity.y, 7f, "A double jump should turn a fall into a climb");
+            Assert.AreEqual(0, left("AirJumpsLeft"), "The double jump should be spent");
+
+            body.linearVelocity = new Vector3(0f, -5f, 0f);
+            pcType.GetField("airJumpQueued", flags).SetValue(controller, true);
+            yield return new WaitForFixedUpdate();
+            Assert.Less(body.linearVelocity.y, 0f, "A second double jump in the same flight should do nothing");
+
+            pcType.GetField("dashQueued", flags).SetValue(controller, true);   // Left Shift
+            yield return new WaitForFixedUpdate();
+            Assert.Greater(body.linearVelocity.magnitude, 25f, "A dash should launch the Warden");
+            Assert.AreEqual(0, left("DashesLeft"), "The dash should be spent");
+            LogAssert.NoUnexpectedReceived();
+        }
+
+        /// <summary>Looking straight up from an island: the camera dips under the Warden but stays out of the island.</summary>
+        [UnityTest]
+        public IEnumerator CameraLooksUpWithoutEnteringIslands()
+        {
+            SceneManager.LoadScene("Arena");
+            yield return null;
+            GameObject player = GameObject.Find("Player");
+            Type pcType = Type.GetType("Hookfall.Player.PlayerController, Assembly-CSharp");
+            Component controller = player.GetComponent(pcType);
+            float end = Time.realtimeSinceStartup + 4f;
+            while (Time.realtimeSinceStartup < end && (bool)pcType.GetProperty("IsAirborne").GetValue(controller))
+            {
+                KeepAlive(player);
+                yield return null;
+            }
+            Assert.IsFalse((bool)pcType.GetProperty("IsAirborne").GetValue(controller), "The Warden should start on an island");
+
+            // Tilt the orbit to the bottom of its range, as a mouse pushed all the way would.
+            Type orbitType = Type.GetType("Unity.Cinemachine.CinemachineOrbitalFollow, Unity.Cinemachine");
+            Component orbit = GameObject.Find("Player Camera").GetComponent(orbitType);
+            var axisField = orbitType.GetField("VerticalAxis");
+            object axis = axisField.GetValue(orbit);
+            float bottom = ((Vector2)axis.GetType().GetField("Range").GetValue(axis)).x;
+            Assert.LessOrEqual(bottom, -75f, "The camera should be able to go far enough under the Warden to look up");
+            axis.GetType().GetField("Value").SetValue(axis, bottom);
+            axisField.SetValue(orbit, axis);
+
+            for (float t = 0f; t < 1f; t += Time.unscaledDeltaTime)
+            {
+                KeepAlive(player);
+                yield return null;
+            }
+            Vector3 cam = Camera.main.transform.position;
+            Vector3 head = player.transform.position + Vector3.up * 1.6f;
+            Assert.Less(cam.y, head.y, "Looking up, the camera should sit below the Warden's head");
+            Assert.IsFalse(Physics.Linecast(head, cam, 1 << 9, QueryTriggerInteraction.Ignore),
+                "No island, tower or prop should stand between the camera and the Warden");
+            LogAssert.NoUnexpectedReceived();
+        }
+
+        /// <summary>A fast Warden: bats chase at most of its speed, and faster when far behind.</summary>
+        [UnityTest]
+        public IEnumerator BatsKeepUpWithAFastWarden()
+        {
+            SceneManager.LoadScene("Arena");
+            yield return null;
+            GameObject player = GameObject.Find("Player");
+            Type enemyType = Type.GetType("Hookfall.Enemies.EnemyBase, Assembly-CSharp");
+            var active = (IList)enemyType.GetField("Active").GetValue(null);
+            Component bat = null;
+            float end = Time.realtimeSinceStartup + 8f;
+            while (Time.realtimeSinceStartup < end && bat == null)
+            {
+                KeepAlive(player);
+                foreach (Component e in active) if (e.GetType().Name == "Bat") { bat = e; break; }
+                yield return null;
+            }
+            Assert.IsNotNull(bat, "Bats should spawn");
+
+            player.transform.position = new Vector3(0f, 70f, -60f);
+            player.GetComponent<Rigidbody>().linearVelocity = new Vector3(50f, 0f, 0f);
+            yield return new WaitForFixedUpdate();
+            float speed = (float)enemyType.GetMethod("ChaseSpeed").Invoke(bat, new object[] { 18f });
+            Assert.GreaterOrEqual(speed, 0.75f * player.GetComponent<Rigidbody>().linearVelocity.magnitude,
+                "A bat should chase at most of a fast Warden's speed");
+            LogAssert.NoUnexpectedReceived();
+        }
+
         /// <summary>Jumps the run clock to 4:55 so wyverns, golems and the first elite wave all appear.</summary>
         [UnityTest]
         public IEnumerator LateRunSpawnsEveryEnemy()

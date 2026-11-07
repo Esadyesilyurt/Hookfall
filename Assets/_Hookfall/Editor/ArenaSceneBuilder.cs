@@ -170,12 +170,24 @@ namespace Hookfall.EditorTools
             orbit.TargetOffset = new Vector3(0f, 1.6f, 0f);
             orbit.TrackerSettings.BindingMode = BindingMode.WorldSpace;
             orbit.TrackerSettings.PositionDamping = new Vector3(0.1f, 0.1f, 0.1f);
-            orbit.VerticalAxis.Range = new Vector2(-40f, 75f);
+            orbit.VerticalAxis.Range = new Vector2(-80f, 80f);   // -80: the camera dips under the Warden to look straight up
             orbit.VerticalAxis.Value = 15f;
             orbit.VerticalAxis.Center = 15f;
             var composer = vcamGo.AddComponent<CinemachineRotationComposer>();
             composer.TargetOffset = new Vector3(0f, 1.6f, 0f);
             composer.Damping = Vector2.zero;
+            // Islands, the tower and props block the camera: it slides in towards the Warden instead of going inside them.
+            var deoccluder = vcamGo.AddComponent<CinemachineDeoccluder>();
+            deoccluder.CollideAgainst = 1 << Layers.World;
+            deoccluder.IgnoreTag = "Player";
+            deoccluder.MinimumDistanceFromTarget = 0.6f;
+            deoccluder.AvoidObstacles.Enabled = true;
+            deoccluder.AvoidObstacles.DistanceLimit = 0f;
+            deoccluder.AvoidObstacles.CameraRadius = 0.45f;
+            deoccluder.AvoidObstacles.Strategy = CinemachineDeoccluder.ObstacleAvoidance.ResolutionStrategy.PullCameraForward;
+            deoccluder.AvoidObstacles.SmoothingTime = 0.1f;
+            deoccluder.AvoidObstacles.Damping = 0.35f;
+            deoccluder.AvoidObstacles.DampingWhenOccluded = 0f;
             var rig = vcamGo.AddComponent<CameraRig>();
             vcamGo.AddComponent<CinemachineImpulseListener>();
             var impulse = vcamGo.AddComponent<CinemachineImpulseSource>();

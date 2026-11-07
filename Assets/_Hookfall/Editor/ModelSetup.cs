@@ -81,9 +81,10 @@ namespace Hookfall.EditorTools
         // ---------------------------------------------------------------- world prefabs
 
         public static GameObject[] IslandPrefabs(string size) => ModelPrefabs($"Island_{size}_", true, false);
-        public static GameObject[] PropPrefabs() => Combine(ModelPrefabs("Rock_", false, false), ModelPrefabs("Ruin", false, false),
-            ModelPrefabs("Crystals", false, false), ModelPrefabs("Bush", false, false), ModelPrefabs("Lantern", false, false),
-            ModelPrefabs("Statue", false, false));
+        // Props are solid (2026-11-08): the player stands on them and the camera does not pass through them.
+        public static GameObject[] PropPrefabs() => Combine(ModelPrefabs("Rock_", true, false), ModelPrefabs("Ruin", true, false),
+            ModelPrefabs("Crystals", true, false), ModelPrefabs("Bush", true, false), ModelPrefabs("Lantern", true, false),
+            ModelPrefabs("Statue", true, false));
         public static GameObject[] CloudPrefabs() => ModelPrefabs("Cloud_", false, true);
         public static GameObject[] StormCloudPrefabs() => ModelPrefabs("StormCloud_", false, true);
         public static GameObject[] BackdropPrefabs() => ModelPrefabs("Backdrop_", false, true, BackdropFor);

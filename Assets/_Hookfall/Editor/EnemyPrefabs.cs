@@ -36,7 +36,7 @@ namespace Hookfall.EditorTools
                 Transform r = Pivot(visual.transform, "Wing_R", new Vector3(0.25f, 0.05f, 0f));
                 Part(r, "Membrane", PrimitiveType.Cube, new Vector3(0.45f, 0f, 0f), new Vector3(0.9f, 0.04f, 0.5f), Mat("M_Bat"));
             }
-            Stats(bat, "Bat", 10f, 12f, 5f, 1f, 1, 0.6f);
+            Stats(bat, "Bat", 10f, 18f, 5f, 1f, 1, 0.6f);   // 12 m/s until 2026-11-08: bats never caught up
             SetFloat(bat, "knockback", 7f);
             Wings(bat, visual.transform, 16f, 40f);
             return SavePrefab(root, Folder + "/PF_Bat.prefab").GetComponent<Bat>();
@@ -60,7 +60,7 @@ namespace Hookfall.EditorTools
                 Transform r = Pivot(visual.transform, "Wing_R", new Vector3(0.4f, 0.25f, 0.2f));
                 Part(r, "Membrane", PrimitiveType.Cube, new Vector3(1.6f, 0f, 0f), new Vector3(3.2f, 0.06f, 1.4f), Mat("M_Wyvern"));
             }
-            Stats(wyvern, "Wyvern", 60f, 14f, 15f, 3f, 2, 1.3f);
+            Stats(wyvern, "Wyvern", 60f, 20f, 15f, 3f, 2, 1.3f);
             SetFloat(wyvern, "knockback", 2.5f);
             SetFloat(wyvern, "hitPunch", 0.15f);
             Wings(wyvern, visual.transform, 7f, 35f);

@@ -326,11 +326,14 @@ MonoBehaviour:
   xpReward: 5
   goldReward: 5
   hitRadius: 1.4
-  acceleration: 40
+  acceleration: 60
   separationRadius: 1.6
   separationWeight: 1.2
   avoidLookAhead: 0.5
   avoidWeight: 2.5
+  playerSpeedMatch: 0.8
+  catchUpPerMetre: 0.4
+  catchUpDistance: 15
   nearDistance: 60
   nearThinkInterval: 0.1
   farThinkInterval: 0.5
