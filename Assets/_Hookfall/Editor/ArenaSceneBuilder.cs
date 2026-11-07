@@ -89,6 +89,8 @@ namespace Hookfall.EditorTools
             Wyvern wyvernPrefab = EnemyPrefabs.Wyvern();
             Golem golemPrefab = EnemyPrefabs.Golem();
             Boulder boulderPrefab = EnemyPrefabs.Boulder();
+            List<ItemBase> itemPrefabs = ItemPrefabs.CreateItems();
+            Chest chestPrefab = ItemPrefabs.CreateChest();
 
             // Player
             GameObject player = GameObject.CreatePrimitive(PrimitiveType.Capsule);
@@ -122,12 +124,12 @@ namespace Hookfall.EditorTools
 
             var itemsRoot = new GameObject("Items");
             itemsRoot.transform.SetParent(player.transform, false);
-            var blades = itemsRoot.AddComponent<OrbitBlades>();
-            SetRef(blades, "bladeMaterial", Mat("M_PlayerGlow"));
-            SetString(blades, "displayName", "Orbit Blades");
-            SetString(blades, "lore", "Twin vault blades bound to the Warden by a Tether rune; they circle and cut whatever comes close.");
+            // The run starts with Orbit Blades (GDD 4.5); the other items come from chests.
+            var blades = (GameObject)PrefabUtility.InstantiatePrefab(itemPrefabs[0].gameObject, itemsRoot.transform);
+            blades.name = itemPrefabs[0].name;
             SetRef(combat, "itemsRoot", itemsRoot.transform);
             SetRef(combat, "player", controller);
+            foreach (ItemBase item in itemPrefabs) AddToList(combat, "itemPrefabs", item);
 
             // Camera: Cinemachine orbit camera driven by CameraRig.
             var camGo = new GameObject("Main Camera") { tag = "MainCamera" };
@@ -179,6 +181,17 @@ namespace Hookfall.EditorTools
             SetRef(pickups, "largeGem", GetOrCreatePickup("PF_XPGem_Large", PickupKind.XP, 0.7f));
             SetRef(pickups, "coin", GetOrCreatePickup("PF_GoldCoin", PickupKind.Gold, 0.5f));
 
+            // Chests, tower cache and the low-gravity zone (GDD 4.7, 7.1, 7.2)
+            var chests = new GameObject("ChestSpawner").AddComponent<ChestSpawner>();
+            SetRef(chests, "player", controller);
+            SetRef(chests, "chestPrefab", chestPrefab);
+            var cache = new GameObject("TowerCache").AddComponent<TowerCache>();
+            SetRef(cache, "player", controller);
+            SetRef(cache, "islands", generator);
+            ItemPrefabs.BuildCacheVisuals(cache);
+            var gravity = new GameObject("GravityZone").AddComponent<GravityZone>();
+            SetRef(gravity, "target", body);
+
             // Enemies
             var director = new GameObject("EnemyDirector").AddComponent<EnemyDirector>();
             SetRef(director, "player", controller);
@@ -218,6 +231,8 @@ namespace Hookfall.EditorTools
             EnsureFolder(MaterialsPath);
             EnsureFolder(Root + "/Prefabs/Enemies");
             EnsureFolder(Root + "/Prefabs/Items");
+            EnsureFolder(Root + "/Prefabs/World");
+            ItemPrefabs.CreateMaterials();
             EnsureFolder(Root + "/Scenes");
             ImportTmpEssentials();
 
