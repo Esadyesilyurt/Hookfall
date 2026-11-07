@@ -304,6 +304,7 @@ namespace Hookfall.EditorTools
             ModelSetup.Run();
             ToonSetup.Run();
             FeelSetup.BoostGlow();
+            UISetup.Run();
         }
 
         private static void AddLightAndSky()

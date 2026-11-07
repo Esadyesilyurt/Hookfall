@@ -1,5 +1,7 @@
 // Hookfall - builds uGUI + TextMeshPro elements from code, so every screen is plain C# with no hand-wired prefabs.
-// AI disclosure: written with Claude (Anthropic) on 2026-11-07. Prompts and changes are recorded in Docs/PromptLog.md.
+// Uses the generated UI skin (UISkin): sliced rounded panels, buttons, pills, diamonds, key caps and icons.
+// AI disclosure: written with Claude (Anthropic) on 2026-11-07, reworked the same day for the UI skin.
+// Prompts and changes are recorded in Docs/PromptLog.md.
 using System;
 using TMPro;
 using UnityEngine;
@@ -47,43 +49,45 @@ namespace Hookfall.UI
             return rt;
         }
 
-        /// <summary>A rect that fills its parent.</summary>
-        public static RectTransform Fill(Transform parent, string name)
-        {
-            RectTransform rt = Rect(parent, name, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
-            return rt;
-        }
+        /// <summary>A rect at the centre of its parent.</summary>
+        public static RectTransform Centre(Transform parent, string name, Vector2 position, Vector2 size) =>
+            Rect(parent, name, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), position, size);
 
-        public static Image Image(RectTransform rt, Color color)
+        public static RectTransform Fill(Transform parent, string name) =>
+            Rect(parent, name, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
+
+        public static Image Image(RectTransform rt, Color color, Sprite sprite = null)
         {
             var image = rt.gameObject.AddComponent<Image>();
             image.color = color;
+            if (sprite != null)
+            {
+                image.sprite = sprite;
+                image.type = sprite.border != Vector4.zero ? UnityEngine.UI.Image.Type.Sliced : UnityEngine.UI.Image.Type.Simple;
+            }
+            image.raycastTarget = false;
             return image;
         }
 
+        /// <summary>A rounded skin panel, centred.</summary>
         public static Image Panel(Transform parent, string name, Vector2 size, Color color)
         {
-            RectTransform rt = Rect(parent, name, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, size);
-            return Image(rt, color);
+            RectTransform rt = Centre(parent, name, Vector2.zero, size);
+            Image image = Image(rt, color, UISkin.Panel);
+            image.raycastTarget = true;   // panels swallow clicks meant for what is behind them
+            return image;
         }
 
         public static TextMeshProUGUI Text(Transform parent, string name, string text, float size, Color color,
-            TextAlignmentOptions alignment = TextAlignmentOptions.Center)
+            TextAlignmentOptions alignment = TextAlignmentOptions.Center, bool outline = false)
         {
             var go = new GameObject(name, typeof(RectTransform));
             go.transform.SetParent(parent, false);
-            var tmp = go.AddComponent<TextMeshProUGUI>();
-            tmp.text = text;
-            tmp.fontSize = size;
-            tmp.color = color;
-            tmp.alignment = alignment;
-            tmp.textWrappingMode = TextWrappingModes.Normal;
-            tmp.raycastTarget = false;
-            return tmp;
+            return Text((RectTransform)go.transform, text, size, color, alignment, outline);
         }
 
         public static TextMeshProUGUI Text(RectTransform rt, string text, float size, Color color,
-            TextAlignmentOptions alignment = TextAlignmentOptions.Center)
+            TextAlignmentOptions alignment = TextAlignmentOptions.Center, bool outline = false)
         {
             var tmp = rt.gameObject.AddComponent<TextMeshProUGUI>();
             tmp.text = text;
@@ -92,6 +96,7 @@ namespace Hookfall.UI
             tmp.alignment = alignment;
             tmp.textWrappingMode = TextWrappingModes.Normal;
             tmp.raycastTarget = false;
+            if (outline && UISkin.OutlineFont != null) tmp.fontSharedMaterial = UISkin.OutlineFont;
             return tmp;
         }
 
@@ -131,24 +136,31 @@ namespace Hookfall.UI
             return component;
         }
 
-        public static Button Button(Transform parent, string label, Action onClick, float width = 360f, float height = 64f)
+        /// <summary>A skin button with a hover grow and a cyan press flash.</summary>
+        public static Button Button(Transform parent, string label, Action onClick, float width = 360f, float height = 64f,
+            Color? tint = null)
         {
             var go = new GameObject(label, typeof(RectTransform));
             go.transform.SetParent(parent, false);
-            var image = go.AddComponent<Image>();
-            image.color = Color.white;
+            Image image = Image((RectTransform)go.transform, Color.white, UISkin.Button);
+            image.raycastTarget = true;
             var button = go.AddComponent<Button>();
             ColorBlock colors = button.colors;
-            colors.normalColor = UITheme.Button;
-            colors.highlightedColor = UITheme.ButtonHover;
-            colors.selectedColor = UITheme.Button;
+            Color baseColor = tint ?? UITheme.Button;
+            colors.normalColor = baseColor;
+            colors.highlightedColor = Color.Lerp(baseColor, UITheme.Player, 0.45f);
+            colors.selectedColor = baseColor;
             colors.pressedColor = UITheme.Player;
             colors.colorMultiplier = 1f;
+            colors.fadeDuration = 0.08f;
             button.colors = colors;
             button.targetGraphic = image;
             if (onClick != null) button.onClick.AddListener(() => onClick());
+            go.AddComponent<UIHover>();
 
             TextMeshProUGUI text = Text(go.transform, "Label", label, 28f, UITheme.Text);
+            text.fontStyle = FontStyles.Bold;
+            text.characterSpacing = 2f;
             Stretch((RectTransform)text.transform);
             Sized(button, width, height);
             return button;
@@ -167,14 +179,16 @@ namespace Hookfall.UI
             sliderGo.transform.SetParent(row.transform, false);
             Sized(sliderGo.GetComponent<RectTransform>(), 380f, 48f);
 
-            RectTransform track = Rect(sliderGo.transform, "Track", new Vector2(0f, 0.4f), new Vector2(1f, 0.6f), Vector2.zero, Vector2.zero);
-            Image(track, UITheme.Button);
-            RectTransform fillArea = Rect(sliderGo.transform, "Fill Area", new Vector2(0f, 0.4f), new Vector2(1f, 0.6f), Vector2.zero, new Vector2(-20f, 0f));
-            RectTransform fill = Rect(fillArea, "Fill", Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
-            Image(fill, UITheme.Player);
-            RectTransform handleArea = Rect(sliderGo.transform, "Handle Area", Vector2.zero, Vector2.one, Vector2.zero, new Vector2(-20f, 0f));
-            RectTransform handle = Rect(handleArea, "Handle", Vector2.zero, new Vector2(0f, 1f), Vector2.zero, new Vector2(20f, 0f));
-            Image handleImage = Image(handle, UITheme.Text);
+            RectTransform track = Rect(sliderGo.transform, "Track", new Vector2(0f, 0.3f), new Vector2(1f, 0.7f), Vector2.zero, Vector2.zero);
+            Image(track, UITheme.Track, UISkin.Pill);
+            RectTransform fillArea = Rect(sliderGo.transform, "Fill Area", new Vector2(0f, 0.3f), new Vector2(1f, 0.7f), Vector2.zero, new Vector2(-24f, 0f));
+            RectTransform fill = Rect(fillArea, "Fill", Vector2.zero, Vector2.one, Vector2.zero, new Vector2(24f, 0f));
+            Image(fill, UITheme.Player, UISkin.Pill);
+            RectTransform handleArea = Rect(sliderGo.transform, "Handle Area", Vector2.zero, Vector2.one, Vector2.zero, new Vector2(-24f, 0f));
+            RectTransform handle = Rect(handleArea, "Handle", Vector2.zero, new Vector2(0f, 1f), Vector2.zero, new Vector2(30f, 0f));
+            Image handleImage = Image(handle, UITheme.Text, UISkin.Dot);
+            handleImage.raycastTarget = true;
+            handleImage.preserveAspect = true;
 
             var slider = sliderGo.AddComponent<Slider>();
             slider.fillRect = fill;
@@ -187,14 +201,16 @@ namespace Hookfall.UI
             return slider;
         }
 
-        /// <summary>A bar whose fill is scaled by width; set Fill(bar, 0..1).</summary>
+        /// <summary>A rounded pill bar; returns the fill rect, set with SetFill(fill, 0..1).</summary>
         public static RectTransform Bar(Transform parent, string name, Vector2 anchorMin, Vector2 anchorMax,
             Vector2 position, Vector2 size, Color back, Color fill, Vector2? pivot = null)
         {
             RectTransform rt = Rect(parent, name, anchorMin, anchorMax, position, size, pivot);
-            Image(rt, back);
+            Image(rt, back, UISkin.Pill);
             RectTransform fillRect = Rect(rt, "Fill", Vector2.zero, new Vector2(1f, 1f), Vector2.zero, Vector2.zero, new Vector2(0f, 0.5f));
-            Image(fillRect, fill);
+            Image(fillRect, fill, UISkin.Pill);
+            RectTransform frame = Rect(rt, "Frame", Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
+            Image(frame, new Color(1f, 1f, 1f, 0.35f), UISkin.PillFrame);
             return fillRect;
         }
 
@@ -209,19 +225,60 @@ namespace Hookfall.UI
             rt.offsetMax = Vector2.zero;
         }
 
-        /// <summary>A diamond-shaped icon frame (mood board reference 9) with a short glyph inside.</summary>
-        public static RectTransform Diamond(Transform parent, string glyph, float size, Color color)
+        public static Image Icon(Transform parent, Sprite sprite, float size, Color? tint = null)
         {
-            RectTransform holder = Rect(parent, "Icon", new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(size, size));
+            RectTransform rt = Centre(parent, "Icon", Vector2.zero, new Vector2(size, size));
+            Sized(rt, size, size);
+            Image image = Image(rt, tint ?? Color.white, sprite);
+            image.preserveAspect = true;
+            return image;
+        }
+
+        /// <summary>A diamond frame (mood board reference 9) holding an icon, or a glyph when there is no icon.</summary>
+        public static RectTransform Diamond(Transform parent, Sprite icon, string glyph, float size, Color color)
+        {
+            RectTransform holder = Centre(parent, "Diamond", Vector2.zero, new Vector2(size, size));
             Sized(holder, size, size);
-            RectTransform diamond = Rect(holder, "Diamond", new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(size * 0.68f, size * 0.68f));
-            diamond.localRotation = Quaternion.Euler(0f, 0f, 45f);
-            Image(diamond, color);
-            RectTransform inner = Rect(diamond, "Inner", Vector2.zero, Vector2.one, Vector2.zero, new Vector2(-8f, -8f));
-            Image(inner, UITheme.PanelLight);
-            TextMeshProUGUI text = Text(holder, "Glyph", glyph, size * 0.32f, color);
-            Stretch((RectTransform)text.transform);
+            RectTransform glow = Centre(holder, "Glow", Vector2.zero, new Vector2(size * 1.5f, size * 1.5f));
+            Image(glow, new Color(color.r, color.g, color.b, 0.35f), UISkin.Glow);
+            RectTransform frame = Fill(holder, "Frame");
+            Image(frame, color, UISkin.Diamond);
+            if (icon != null)
+            {
+                RectTransform rt = Centre(holder, "Icon", Vector2.zero, new Vector2(size * 0.62f, size * 0.62f));
+                Image(rt, Color.white, icon).preserveAspect = true;
+            }
+            else
+            {
+                TextMeshProUGUI text = Text(holder, "Glyph", glyph, size * 0.32f, UITheme.Text);
+                Stretch((RectTransform)text.transform);
+            }
             return holder;
+        }
+
+        /// <summary>A key cap with a key name, e.g. [E] or [1].</summary>
+        public static RectTransform KeyCap(Transform parent, string key, float size = 44f)
+        {
+            RectTransform cap = Centre(parent, "Key " + key, Vector2.zero, new Vector2(Mathf.Max(size, key.Length * size * 0.42f + 20f), size));
+            Sized(cap, cap.sizeDelta.x, size);
+            Image(cap, UITheme.Text, UISkin.KeyCap);
+            TextMeshProUGUI text = Text(cap, "Label", key, size * 0.5f, UITheme.Text);
+            text.fontStyle = FontStyles.Bold;
+            Stretch((RectTransform)text.transform);
+            return cap;
+        }
+
+        /// <summary>Small level pips under an item icon: filled up to level, out of max.</summary>
+        public static RectTransform Pips(Transform parent, int level, int max, float size, Color on, Color off)
+        {
+            RectTransform row = Rect(parent, "Pips", new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 6f), new Vector2(max * (size + 3f), size), new Vector2(0.5f, 0f));
+            for (int i = 0; i < max; i++)
+            {
+                RectTransform pip = Rect(row, "Pip", new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(i * (size + 3f) + size / 2f, 0f), new Vector2(size, size));
+                pip.localRotation = Quaternion.Euler(0f, 0f, 45f);
+                Image(pip, i < level ? on : off, UISkin.Pill);
+            }
+            return row;
         }
     }
 }

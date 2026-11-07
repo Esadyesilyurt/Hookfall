@@ -752,7 +752,7 @@ def main():
         "Bush": lambda: bush(out_dir, prev_dir),
         "Lantern": lambda: lantern(out_dir, prev_dir),
         "Statue": lambda: statue(out_dir, prev_dir),
-        "Icons": lambda: icons(os.path.join(out_dir, "..", "UI", "Icons"), prev_dir),
+        "Icons": lambda: icons(os.path.join(out_dir, "..", "UI", "Resources", "Icons"), prev_dir),
     }
     for name, job in jobs.items():
         if not wanted or name in wanted:

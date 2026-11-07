@@ -13,6 +13,11 @@ namespace Hookfall.Tests
 {
     public class ScreenshotCapture
     {
+        private readonly RecordGuard record = new RecordGuard();
+
+        [SetUp] public void SaveRecord() => record.Save();
+        [TearDown] public void RestoreRecord() => record.Restore();
+
         private static string Folder => Environment.GetEnvironmentVariable("HOOKFALL_SHOT_DIR");
 
         [UnityTest]
@@ -49,6 +54,22 @@ namespace Hookfall.Tests
             }
             yield return Grab("arena_play");
 
+            // The screens: level-up, pause, run end.
+            Type xpType = Type.GetType("Hookfall.Progression.XPSystem, Assembly-CSharp");
+            xpType.GetMethod("AddXP").Invoke(player.GetComponent(xpType), new object[] { 60f });
+            yield return new WaitForSecondsRealtime(0.6f);
+            yield return Grab("ui_levelup");
+            while (Time.timeScale == 0f && levelUp != null)
+            {
+                levelUpType.GetMethod("Pick").Invoke(levelUp, new object[] { 0 });
+                yield return null;
+            }
+            object gm = gmType.GetProperty("Instance").GetValue(null);
+            gmType.GetMethod("SetPaused").Invoke(gm, new object[] { true });
+            yield return new WaitForSecondsRealtime(0.6f);
+            yield return Grab("ui_pause");
+            gmType.GetMethod("SetPaused").Invoke(gm, new object[] { false });
+
             // Overview from outside the arena, without the HUD.
             Camera cam = Camera.main;
             var overview = new GameObject("Overview").AddComponent<Camera>();
@@ -59,13 +80,17 @@ namespace Hookfall.Tests
             overview.transform.SetPositionAndRotation(new Vector3(14f, 10f, -22f), Quaternion.LookRotation(new Vector3(-14f, 2f, 22f)));
             Render(overview, "tower_close");
             UnityEngine.Object.Destroy(overview.gameObject);
+
+            gmType.GetMethod("EndRun").Invoke(gm, new object[] { "Fell into the abyss" });
+            yield return new WaitForSecondsRealtime(0.8f);
+            yield return Grab("ui_runend");
         }
 
         /// <summary>WaitForEndOfFrame never fires in batch mode, so the UI is moved onto the camera and rendered with it.</summary>
         private static IEnumerator Grab(string name)
         {
             Camera cam = Camera.main;
-            foreach (Canvas canvas in UnityEngine.Object.FindObjectsByType<Canvas>(FindObjectsSortMode.None))
+            foreach (Canvas canvas in UnityEngine.Object.FindObjectsByType<Canvas>(FindObjectsInactive.Include, FindObjectsSortMode.None))
             {
                 if (canvas.renderMode != RenderMode.ScreenSpaceOverlay || !canvas.isRootCanvas) continue;
                 canvas.renderMode = RenderMode.ScreenSpaceCamera;

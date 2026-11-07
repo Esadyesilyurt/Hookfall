@@ -12,6 +12,11 @@ namespace Hookfall.Tests
 {
     public class SceneSmokeTests
     {
+        private readonly RecordGuard record = new RecordGuard();
+
+        [SetUp] public void SaveRecord() => record.Save();
+        [TearDown] public void RestoreRecord() => record.Restore();
+
         /// <summary>A test Warden hovers in place, which the horde punishes fast; keep it alive so the run goes on.</summary>
         private static void KeepAlive(GameObject player)
         {
