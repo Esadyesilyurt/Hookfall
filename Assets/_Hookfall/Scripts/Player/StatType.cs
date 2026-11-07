@@ -1,4 +1,4 @@
-// Hookfall - the eleven stat upgrades offered on level-up (GDD 4.6).
+// Hookfall - the stat upgrades offered on level-up: the eleven from GDD 4.6, plus the two Zip stats added on 2026-11-07.
 // AI disclosure: written with Claude (Anthropic) on 2026-11-07. Prompts and changes are recorded in Docs/PromptLog.md.
 namespace Hookfall.Player
 {
@@ -14,6 +14,8 @@ namespace Hookfall.Player
         PickupRadius,
         Regen,
         XPGain,
-        Luck
+        Luck,
+        ZipCooldown,
+        ZipRange
     }
 }

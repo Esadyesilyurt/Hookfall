@@ -1,6 +1,6 @@
 // Hookfall - island movement, air strafe and the IsAirborne flag the whole game reads (GDD 4.1, 4.2).
 // AI disclosure: written with Claude (Anthropic) on 2026-11-04 as part of the midterm project skeleton,
-// extended on 2026-11-07 (stat multipliers, current island). Prompts and changes are recorded in Docs/PromptLog.md.
+// extended on 2026-11-07 (stat multipliers, current island, Zip overspeed, landing event). Prompts and changes are recorded in Docs/PromptLog.md.
 using Hookfall.World;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -19,6 +19,8 @@ namespace Hookfall.Player
         [Tooltip("Light sideways push with A/D; it cannot reverse momentum.")]
         [SerializeField] private float airStrafeAcceleration = 6f;
         [SerializeField] private float maxAirSpeed = 35f;
+        [Tooltip("After a Zip the speed cap drops back to the normal max air speed at this rate (m/s per second).")]
+        [SerializeField] private float overspeedDecay = 18f;
 
         [SerializeField] private Transform cameraTransform;
 
@@ -26,6 +28,7 @@ namespace Hookfall.Player
         private PlayerStats stats;
         private Vector2 moveInput;
         private bool jumpQueued;
+        private float overspeedCap;
 
         /// <summary>True when the player is not standing on an island. Turns combat on and enemy Frenzy off.</summary>
         public bool IsAirborne { get; private set; } = true;
@@ -34,6 +37,11 @@ namespace Hookfall.Player
         public Rigidbody Body { get; private set; }
         public float Speed => Body.linearVelocity.magnitude;
         public float MaxAirSpeed => maxAirSpeed * (stats != null ? stats.FlightSpeedMultiplier : 1f);
+        /// <summary>Vertical speed of the last landing (positive), for landing effects.</summary>
+        public event System.Action<float> Landed;
+
+        /// <summary>Lets the player fly faster than the air speed cap for a moment (Zip); the cap decays back.</summary>
+        public void Boost(float speed) => overspeedCap = Mathf.Max(overspeedCap, speed);
 
         private void Awake()
         {
@@ -60,8 +68,12 @@ namespace Hookfall.Player
 
         private void FixedUpdate()
         {
+            bool wasAirborne = IsAirborne;
+            float fallSpeed = -Body.linearVelocity.y;
             CurrentIsland = FindIslandBelow();
             IsAirborne = CurrentIsland == null;
+            if (wasAirborne && !IsAirborne) Landed?.Invoke(fallSpeed);
+            overspeedCap = Mathf.MoveTowards(overspeedCap, 0f, overspeedDecay * Time.fixedDeltaTime);
 
             Vector3 forward = cameraTransform != null ? cameraTransform.forward : transform.forward;
             Vector3 right = cameraTransform != null ? cameraTransform.right : transform.right;
@@ -84,7 +96,7 @@ namespace Hookfall.Player
                 if (!Mathf.Approximately(moveInput.x, 0f))
                     Body.AddForce(right * (moveInput.x * airStrafeAcceleration), ForceMode.Acceleration);
 
-                float cap = MaxAirSpeed;
+                float cap = Mathf.Max(MaxAirSpeed, overspeedCap);
                 if (Body.linearVelocity.sqrMagnitude > cap * cap)
                     Body.linearVelocity = Body.linearVelocity.normalized * cap;
             }

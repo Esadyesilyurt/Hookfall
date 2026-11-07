@@ -36,6 +36,9 @@ namespace Hookfall.Tests
             float end = Time.realtimeSinceStartup + 8f;
             while (Time.realtimeSinceStartup < end)
             {
+                Type statsType = Type.GetType("Hookfall.Player.PlayerStats, Assembly-CSharp");
+                Component stats = player.GetComponent(statsType);
+                statsType.GetProperty("CurrentHealth").SetValue(stats, statsType.GetProperty("MaxHealth").GetValue(stats));
                 if (player.transform.position.y < 6f)
                 {
                     player.transform.position = new Vector3(-6f, 14f, -18f);
