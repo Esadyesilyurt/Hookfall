@@ -77,7 +77,7 @@ namespace Hookfall.Feel
                 hook.ZipEnded += OnZipEnded;
             }
             if (player != null) player.Landed += OnLanded;
-            if (player != null) { player.WallJumped += OnWallJump; player.AirJumped += OnWallJump; player.Dashed += OnDash; }
+            if (player != null) { player.WallJumped += OnWallJump; player.AirJumped += OnWallJump; player.LedgeClimbed += OnWallJump; player.Dashed += OnDash; }
             if (stats != null) stats.Damaged += OnHurt;
             if (combat != null) combat.AttacksChanged += OnAttacksChanged;
             if (levelUp != null) levelUp.OfferReady += OnLevelUp;
@@ -95,7 +95,7 @@ namespace Hookfall.Feel
                 hook.ZipEnded -= OnZipEnded;
             }
             if (player != null) player.Landed -= OnLanded;
-            if (player != null) { player.WallJumped -= OnWallJump; player.AirJumped -= OnWallJump; player.Dashed -= OnDash; }
+            if (player != null) { player.WallJumped -= OnWallJump; player.AirJumped -= OnWallJump; player.LedgeClimbed -= OnWallJump; player.Dashed -= OnDash; }
             if (stats != null) stats.Damaged -= OnHurt;
             if (combat != null) combat.AttacksChanged -= OnAttacksChanged;
             if (levelUp != null) levelUp.OfferReady -= OnLevelUp;

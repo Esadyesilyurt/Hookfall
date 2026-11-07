@@ -19,7 +19,7 @@ namespace Hookfall.Player
         [Header("Speed feel")]
         [SerializeField] private float baseFov = 70f;
         [SerializeField] private float maxFov = 90f;
-        [SerializeField] private float speedForMaxFov = 55f;
+        [SerializeField] private float speedForMaxFov = 40f;
         [SerializeField] private float fovLerpSpeed = 5f;
 
         [Tooltip("How fast a FOV kick (Zip, landing) settles back, in degrees per second.")]

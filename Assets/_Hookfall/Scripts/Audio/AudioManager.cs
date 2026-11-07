@@ -100,7 +100,7 @@ namespace Hookfall.Audio
             if (towerCache != null) { towerCache.Opened += OnCache; towerCache.Appeared += OnCacheAppeared; }
             if (levelUp != null) levelUp.OfferReady += OnLevelUp;
             if (player != null && player.TryGetComponent(out PlayerStats s)) s.Damaged += OnDamaged;
-            if (player != null) { player.WallJumped += OnWallJump; player.AirJumped += OnWallJump; player.Dashed += OnTrick; }
+            if (player != null) { player.WallJumped += OnWallJump; player.AirJumped += OnWallJump; player.LedgeClimbed += OnWallJump; player.Dashed += OnTrick; }
             if (warden != null) warden.TrickStarted += OnTrick;
         }
 
@@ -122,7 +122,7 @@ namespace Hookfall.Audio
             if (towerCache != null) { towerCache.Opened -= OnCache; towerCache.Appeared -= OnCacheAppeared; }
             if (levelUp != null) levelUp.OfferReady -= OnLevelUp;
             if (player != null && player.TryGetComponent(out PlayerStats s)) s.Damaged -= OnDamaged;
-            if (player != null) { player.WallJumped -= OnWallJump; player.AirJumped -= OnWallJump; player.Dashed -= OnTrick; }
+            if (player != null) { player.WallJumped -= OnWallJump; player.AirJumped -= OnWallJump; player.LedgeClimbed -= OnWallJump; player.Dashed -= OnTrick; }
             if (warden != null) warden.TrickStarted -= OnTrick;
             if (GameManager.Instance != null) GameManager.Instance.RunEnded -= OnRunEnded;
         }

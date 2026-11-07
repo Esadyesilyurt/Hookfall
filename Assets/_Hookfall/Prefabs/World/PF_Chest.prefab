@@ -138,7 +138,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2aa607ac798fc5345a319c10d021c7c6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Hookfall.World.Chest
-  openDistance: 3
+  openDistance: 7
   bobHeight: 0.15
   bobSpeed: 2
   lid: {fileID: 1293823985868232645}
