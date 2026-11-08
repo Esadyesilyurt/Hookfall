@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8941698469298650553}
-  - component: {fileID: 8634765463819042266}
+  - component: {fileID: 5608721591413469927}
   m_Layer: 0
   m_Name: PF_Item_VampireFang
   m_TagString: Untagged
@@ -32,7 +32,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &8634765463819042266
+--- !u!114 &5608721591413469927
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -41,14 +41,14 @@ MonoBehaviour:
   m_GameObject: {fileID: 8398805604376775178}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f05312ce0f98b0b42a987fdf037df6d5, type: 3}
+  m_Script: {fileID: 11500000, guid: c84939f0dbc400046a94ff7b5189e8a8, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Hookfall.Combat.Items.VampireFang
-  displayName: Vampire Fang
-  lore: A wyvern's fang on a cord; what it cuts, the Warden drinks.
+  m_EditorClassIdentifier: Assembly-CSharp::Hookfall.Combat.Items.StatCharm
+  displayName: Vampire Lord's Fang
+  lore: The fang of a vampire lord on a silver chain; what you cut, you drink.
   summary: Heal a share of all the damage you deal.
   baseDamage: 0
   cooldown: 1
   level: 1
   rarity: 1
-  lifestealPerLevel: 0.02
+  picksPerLevel: 0d0000000d000000

@@ -44,8 +44,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c84939f0dbc400046a94ff7b5189e8a8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Hookfall.Combat.Items.StatCharm
-  displayName: Lodestone
-  lore: A stone that drags every loose shard and coin towards its keeper.
+  displayName: Greedy Imp in a Jar
+  lore: A little imp who cannot stand to see treasure lying about; it fetches.
   summary: Pick up gems and gold from farther away.
   baseDamage: 0
   cooldown: 1

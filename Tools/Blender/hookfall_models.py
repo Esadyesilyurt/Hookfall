@@ -714,6 +714,9 @@ def main():
     # The playable characters besides the Warden (2026-11-08).
     import hookfall_characters
     hookfall_characters.install(globals())
+    # Icons for the long-range items, the passives and Lifesteal (2026-11-08).
+    import hookfall_item_icons
+    hookfall_item_icons.install(globals())
 
     argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
     out_dir = os.path.abspath(argv[0]) if argv else os.path.abspath("Assets/_Hookfall/Art/Models")
@@ -759,6 +762,7 @@ def main():
         "Bulwark": lambda: hookfall_characters.bulwark(out_dir, prev_dir),
         "Lumen": lambda: hookfall_characters.lumen(out_dir, prev_dir),
         "WardenPortrait": lambda: hookfall_characters.warden_portrait(out_dir, prev_dir),
+        "ItemIcons": lambda: hookfall_item_icons.item_icons(os.path.join(out_dir, "..", "UI", "Resources", "Icons"), prev_dir),
         "Icons": lambda: icons(os.path.join(out_dir, "..", "UI", "Resources", "Icons"), prev_dir),
     }
     for name, job in jobs.items():

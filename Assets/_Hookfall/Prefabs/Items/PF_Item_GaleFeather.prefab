@@ -44,8 +44,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c84939f0dbc400046a94ff7b5189e8a8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Hookfall.Combat.Items.StatCharm
-  displayName: Gale Feather
-  lore: A feather from the storm's edge that never stops pulling forward.
+  displayName: Griffin Plume
+  lore: A plume from a griffin's crest; the wind makes way for its wearer.
   summary: Fly and walk faster.
   baseDamage: 0
   cooldown: 1

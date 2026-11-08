@@ -44,7 +44,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 93ab2642738388b4a8475429d93872a2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Hookfall.Combat.Items.ChainLightning
-  displayName: Chain Lightning
+  displayName: Stormcaller's Jar
   lore: A storm caught in a jar; uncork it and it runs from one wing to the next.
   summary: Lightning strikes a distant enemy and jumps on to the ones near it.
   baseDamage: 22

@@ -455,7 +455,7 @@ namespace Hookfall.EditorTools
                 Make("Bulwark", "Bulwark", "A knight of the vault gates: heavy plate, a ward shell, and the most health.", 1.5f,
                     new[] { StatType.Armor, StatType.Armor }, new[] { Item("OrbitBlades"), Item("WardShell") },
                     1, 1, UnlockKind.TotalKills, 1500f, "Defeat 1,500 enemies over all runs",
-                    "+2 Armor", "Starts with a Ward Shell"),
+                    "+2 Armor", "Starts with a Turtle Spirit Shell"),
                 Make("Lumen", "Lumen", "A mystic of the Heartstone: hits harder and faster, and jumps twice in the air.", 0.9f,
                     new[] { StatType.Damage, StatType.AttackSpeed }, new[] { Item("HomingSparks"), Item("MendingMoss") },
                     2, 1, UnlockKind.ReachLevel, 15f, "Reach level 15 in one run",

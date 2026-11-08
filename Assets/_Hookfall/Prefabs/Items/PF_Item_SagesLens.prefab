@@ -44,8 +44,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c84939f0dbc400046a94ff7b5189e8a8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Hookfall.Combat.Items.StatCharm
-  displayName: Sage's Lens
-  lore: An archivist's lens that shows what every fight has to teach.
+  displayName: Owl Sage's Monocle
+  lore: An old owl's monocle; through it every fight is a lesson.
   summary: Earn more experience.
   baseDamage: 0
   cooldown: 1

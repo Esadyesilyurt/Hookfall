@@ -44,8 +44,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c84939f0dbc400046a94ff7b5189e8a8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Hookfall.Combat.Items.StatCharm
-  displayName: Whetstone
-  lore: Every edge the Warden carries comes away sharper.
+  displayName: Dwarven Whetstone
+  lore: Every edge you carry comes away dwarf-sharp.
   summary: All your attacks deal more damage.
   baseDamage: 0
   cooldown: 1

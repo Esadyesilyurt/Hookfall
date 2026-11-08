@@ -44,8 +44,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c84939f0dbc400046a94ff7b5189e8a8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Hookfall.Combat.Items.StatCharm
-  displayName: Iron Hide
-  lore: Plates hammered from the vault doors, light enough to fly in.
+  displayName: Troll Hide Cloak
+  lore: Cured troll hide that still shrugs off blows out of habit.
   summary: 'Armor: every hit hurts less.'
   baseDamage: 0
   cooldown: 1
