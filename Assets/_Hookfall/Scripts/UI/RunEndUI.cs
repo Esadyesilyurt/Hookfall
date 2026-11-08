@@ -4,6 +4,7 @@
 // Prompts and changes are recorded in Docs/PromptLog.md.
 using Hookfall.Combat;
 using Hookfall.Core;
+using Hookfall.Online;
 using Hookfall.Progression;
 using TMPro;
 using UnityEngine;
@@ -20,7 +21,7 @@ namespace Hookfall.UI
 
         private GameObject root;
         private RectTransform panel, stats, items;
-        private TextMeshProUGUI time, reason, best;
+        private TextMeshProUGUI time, reason, best, rank;
         private GameObject record;
 
         private void Awake()
@@ -55,6 +56,7 @@ namespace Hookfall.UI
             UIFactory.Sized(items, -1f, 76f);
             UIFactory.Row(items, 12f, 0);
             best = UIFactory.Sized(UIFactory.Text(panel, "Best", "", 22f, UITheme.TextMuted), -1f, 34f);
+            rank = UIFactory.Sized(UIFactory.Text(panel, "Rank", "", 22f, UITheme.Gold), -1f, 30f);
 
             RectTransform buttons = UIFactory.Rect(panel, "Buttons", Vector2.zero, Vector2.zero, Vector2.zero, Vector2.zero);
             UIFactory.Sized(buttons, -1f, 70f);
@@ -108,7 +110,21 @@ namespace Hookfall.UI
             best.text = !gm.NewRecord && RunRecord.HasRecord
                 ? $"Best watch {RunRecord.FormatTime(RunRecord.BestTime)}  ·  level {RunRecord.BestLevel}  ·  {RunRecord.BestKills} kills"
                 : "";
+            ShowRank();
             root.SetActive(true);
+        }
+
+        /// <summary>Waits for the run to reach the global leaderboard, then shows the player's rank.</summary>
+        private async void ShowRank()
+        {
+            rank.text = Leaderboard.LastSubmit != null ? "Sending to the global leaderboard..." : "";
+            if (Leaderboard.LastSubmit == null) return;
+            await Leaderboard.LastSubmit;
+            LeaderboardRow? me = await Leaderboard.Current.MineAsync();
+            if (this == null) return;
+            rank.text = me.HasValue
+                ? $"Global rank #{me.Value.Rank}  ·  your best {RunRecord.FormatTime(me.Value.Seconds)}"
+                : Leaderboard.Current.Status;
         }
 
         private void Stat(string icon, string label, string value)

@@ -166,6 +166,36 @@ namespace Hookfall.UI
             return button;
         }
 
+        /// <summary>A one-line text box (the leaderboard name).</summary>
+        public static TMP_InputField InputField(Transform parent, string placeholder, float width, float height, int characterLimit = 20)
+        {
+            var go = new GameObject("Input", typeof(RectTransform));
+            go.SetActive(false);   // wire everything before the field's OnEnable runs
+            go.transform.SetParent(parent, false);
+            Image back = Image((RectTransform)go.transform, UITheme.PanelLight, UISkin.Card);
+            back.raycastTarget = true;
+            var area = new GameObject("Text Area", typeof(RectTransform), typeof(RectMask2D));
+            area.transform.SetParent(go.transform, false);
+            var areaRect = (RectTransform)area.transform;
+            Stretch(areaRect);
+            areaRect.offsetMin = new Vector2(18f, 6f);
+            areaRect.offsetMax = new Vector2(-18f, -6f);
+            TextMeshProUGUI text = Text(area.transform, "Text", "", height * 0.45f, UITheme.Text, TextAlignmentOptions.Left);
+            Stretch((RectTransform)text.transform);
+            TextMeshProUGUI hint = Text(area.transform, "Placeholder", placeholder, height * 0.45f, UITheme.TextMuted, TextAlignmentOptions.Left);
+            hint.fontStyle = FontStyles.Italic;
+            Stretch((RectTransform)hint.transform);
+            var field = go.AddComponent<TMP_InputField>();
+            field.targetGraphic = back;
+            field.textViewport = areaRect;
+            field.textComponent = text;
+            field.placeholder = hint;
+            field.characterLimit = characterLimit;
+            Sized(field, width, height);
+            go.SetActive(true);
+            return field;
+        }
+
         public static Slider Slider(Transform parent, string label, float min, float max, float value, Action<float> onChange)
         {
             var row = new GameObject(label + " Row", typeof(RectTransform));
