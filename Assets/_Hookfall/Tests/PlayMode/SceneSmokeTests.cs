@@ -639,6 +639,36 @@ namespace Hookfall.Tests
             }
         }
 
+        /// <summary>Characters: an unlocked pick gets its model, health and starting items; a locked pick falls back to the Warden.</summary>
+        [UnityTest]
+        public IEnumerator CharacterLoadoutAppliesTheChosenCharacter()
+        {
+            PlayerPrefs.SetInt("hf_total_kills", 100000);   // Bulwark's quest done (RecordGuard restores it)
+            PlayerPrefs.SetString("hf_character", "Bulwark");
+            SceneManager.LoadScene("Arena");
+            yield return null;
+            yield return null;
+            GameObject player = GameObject.Find("Player");
+            Assert.IsTrue(player.transform.Find("Bulwark").gameObject.activeSelf, "The Bulwark model should be shown");
+            Assert.IsFalse(player.transform.Find("Warden").gameObject.activeSelf, "The Warden model should be hidden");
+            Type statsType = Type.GetType("Hookfall.Player.PlayerStats, Assembly-CSharp");
+            Assert.AreEqual(150f, (float)statsType.GetProperty("MaxHealth").GetValue(player.GetComponent(statsType)), 0.01f, "Bulwark has 1.5x health");
+            Type combatType = Type.GetType("Hookfall.Combat.CombatSystem, Assembly-CSharp");
+            var names = new System.Collections.Generic.List<string>();
+            foreach (Component item in (ICollection)combatType.GetProperty("Items").GetValue(player.GetComponent(combatType))) names.Add(item.name);
+            CollectionAssert.Contains(names, "PF_Item_WardShell", "Bulwark starts with the Ward Shell");
+
+            PlayerPrefs.SetInt("hf_max_level", 0);   // Lumen's quest not done
+            PlayerPrefs.SetString("hf_character", "Lumen");
+            SceneManager.LoadScene("Arena");
+            yield return null;
+            yield return null;
+            player = GameObject.Find("Player");
+            Assert.IsTrue(player.transform.Find("Warden").gameObject.activeSelf, "A locked character should fall back to the Warden");
+            Assert.IsFalse(player.transform.Find("Lumen").gameObject.activeSelf, "A locked character's model stays hidden");
+            LogAssert.NoUnexpectedReceived();
+        }
+
         /// <summary>Jumps the run clock to 4:55 so wyverns, golems and the first elite wave all appear.</summary>
         [UnityTest]
         public IEnumerator LateRunSpawnsEveryEnemy()

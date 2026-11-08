@@ -102,6 +102,15 @@ namespace Hookfall.Combat
             return offer;
         }
 
+        /// <summary>Replaces the items the run starts with by a character's own (CharacterLoadout, at run start).</summary>
+        public void SetStartingItems(ItemBase[] prefabs)
+        {
+            foreach (ItemBase item in items) Destroy(item.gameObject);
+            items.Clear();
+            foreach (ItemBase prefab in prefabs)
+                if (prefab != null) Claim(new ChestReward(prefab.Rarity, prefab, true, 1), null);
+        }
+
         public bool HasFreeSlot(bool passive)
         {
             int used = 0;

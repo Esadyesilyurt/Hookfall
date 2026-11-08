@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4a762caf975b3d34396293d095ea84ff, type: 3}
+  m_Name: SO_Character_Warden
+  m_EditorClassIdentifier: Assembly-CSharp::Hookfall.Player.CharacterDefinition
+  id: Warden
+  displayName: Warden
+  description: 'A Warden of the Order of the Tether: steady in every way.'
+  maxHealthMultiplier: 1
+  statPicks: 
+  startingItems:
+  - {fileID: 3341990886318005423, guid: 3f5041f64ebb0f347b1f0874e95aabf5, type: 3}
+  airJumps: 1
+  airDashes: 1
+  unlock: 0
+  unlockTarget: 0
+  unlockText: 

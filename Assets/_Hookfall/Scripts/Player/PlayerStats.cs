@@ -96,6 +96,13 @@ namespace Hookfall.Player
         }
 
         public event Action<float> Damaged;
+        /// <summary>The character's health at the start of a run (CharacterLoadout); also fills health.</summary>
+        public void ScaleMaxHealth(float multiplier)
+        {
+            maxHealth *= multiplier;
+            CurrentHealth = maxHealth;
+        }
+
         /// <summary>The small damage gain every level-up gives (LevelUpSystem), on top of any Damage cards.</summary>
         public void AddLevelDamage(float bonus) => damageBonus += bonus;
 

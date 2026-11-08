@@ -1,6 +1,7 @@
-// Hookfall - main menu (Play, Leaderboard, Settings, Credits, Quit, best run) and the intro shown on the first Play of a session (GDD 6, 9.1).
+// Hookfall - main menu (Play with character select, Leaderboard, Settings, Credits, Quit, best run) and the intro shown on the first Play of a session (GDD 6, 9.1).
 // AI disclosure: written with Claude (Anthropic) on 2026-11-07. Prompts and changes are recorded in Docs/PromptLog.md.
 using Hookfall.Core;
+using Hookfall.Player;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -22,7 +23,11 @@ namespace Hookfall.UI
             "Code, models and writing assisted by Claude (Anthropic); see Docs/PromptLog.md.\n\n" +
             "Sound and music: licensed files listed in Docs/Credits.md.";
 
+        [Tooltip("The playable characters, set by the scene builder.")]
+        [SerializeField] private CharacterDefinition[] characters = new CharacterDefinition[0];
+
         private static bool introShown;
+        private GameObject select;
         private GameObject main, settings, creditsPanel, intro, leaderboard;
 
         private void Awake()
@@ -69,6 +74,7 @@ namespace Hookfall.UI
 
             settings = SettingsPanel.Build(c, () => Show(main));
             leaderboard = LeaderboardPanel.Build(c, () => Show(main));
+            select = BuildSelect(c);
 
             Image creditsImage = UIFactory.Panel(c, "Credits", new Vector2(940f, 600f), UITheme.Panel);
             UIFactory.Column(creditsImage, 20f, 44, TextAnchor.UpperCenter);
@@ -103,12 +109,49 @@ namespace Hookfall.UI
             main.SetActive(panel == main);
             settings.SetActive(panel == settings);
             leaderboard.SetActive(panel == leaderboard);
+            select.SetActive(panel == select);
             creditsPanel.SetActive(panel == creditsPanel);
             intro.SetActive(panel == intro);
         }
 
-        private void OnPlay()
+        private void OnPlay() => Show(characters.Length > 0 ? select : intro);
+
+        /// <summary>One card per character: portrait, what it does, or its unlock quest and progress while locked.</summary>
+        private GameObject BuildSelect(Transform canvas)
         {
+            Image image = UIFactory.Panel(canvas, "Characters", new Vector2(1780f, 780f), UITheme.Panel);
+            UIFactory.Column(image, 18f, 40, TextAnchor.UpperCenter);
+            TextMeshProUGUI title = UIFactory.Sized(UIFactory.Text(image.transform, "Title", "CHOOSE YOUR WARDEN", 46f, UITheme.Player, TextAlignmentOptions.Center, true), -1f, 60f);
+            title.characterSpacing = 10f;
+            RectTransform row = UIFactory.Rect(image.transform, "Cards", Vector2.zero, Vector2.zero, Vector2.zero, Vector2.zero);
+            UIFactory.Sized(row, -1f, 480f);
+            UIFactory.Row(row, 26f, 0);
+            for (int i = 0; i < characters.Length; i++)
+            {
+                CharacterDefinition character = characters[i];
+                bool open = CharacterRoster.IsUnlocked(character);
+                string tag = !open ? $"LOCKED  ·  {CharacterRoster.ProgressText(character)}"
+                    : character.id == CharacterRoster.SelectedId ? "LAST PLAYED" : "UNLOCKED";
+                string text = $"<size=62%>{(open ? character.description : character.unlockText)}</size>";
+                RectTransform card = UIFactory.ChoiceCard(row, i, open ? UITheme.Player : UITheme.TextMuted,
+                    UISkin.Icon(character.id), character.displayName, tag, text, () => Choose(character));
+                if (!open)
+                {
+                    // A dark veil over a locked card (UIPop owns the card's CanvasGroup alpha, so it cannot be used).
+                    RectTransform veil = UIFactory.Fill(card, "Locked");
+                    veil.gameObject.AddComponent<LayoutElement>().ignoreLayout = true;
+                    UIFactory.Image(veil, new Color(0.02f, 0.04f, 0.08f, 0.45f), UISkin.Card);
+                }
+            }
+            UIFactory.Button(image.transform, "Back", () => Show(main));
+            UIPop.Add(image, 0f, 0.85f);
+            return image.gameObject;
+        }
+
+        private void Choose(CharacterDefinition character)
+        {
+            if (!CharacterRoster.IsUnlocked(character)) return;
+            CharacterRoster.SelectedId = character.id;
             if (introShown) StartRun();
             else Show(intro);
         }

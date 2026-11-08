@@ -29,6 +29,10 @@ namespace Hookfall.Tests
             SceneManager.LoadScene("MainMenu");
             yield return new WaitForSecondsRealtime(1f);
             yield return Grab("menu");
+            var menu = UnityEngine.Object.FindAnyObjectByType(Type.GetType("Hookfall.UI.MainMenuUI, Assembly-CSharp"));
+            menu.GetType().GetMethod("OnPlay", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).Invoke(menu, null);
+            yield return new WaitForSecondsRealtime(1f);
+            yield return Grab("menu_characters");
 
             SceneManager.LoadScene("Arena");
             yield return null;

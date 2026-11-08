@@ -80,7 +80,8 @@ namespace Hookfall.Core
             if (State == RunState.Dead) return;
             EndReason = reason;
             NewRecord = RunRecord.Submit(RunTime, playerXP != null ? playerXP.Level : 1, Kills);
-            Hookfall.Online.Leaderboard.SubmitRun(RunTime, "Warden");
+            Hookfall.Player.CharacterRoster.RecordRun(playerXP != null ? playerXP.Level : 1, Kills);
+            Hookfall.Online.Leaderboard.SubmitRun(RunTime, Hookfall.Player.CharacterRoster.ActiveId);
             SetState(RunState.Dead);
             Debug.Log($"[Hookfall] Run over ({reason}). Time {RunTime:F1} s, kills {Kills}.");
             RunEnded?.Invoke();
