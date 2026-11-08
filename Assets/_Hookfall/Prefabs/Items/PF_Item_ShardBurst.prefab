@@ -50,6 +50,7 @@ MonoBehaviour:
   baseDamage: 12
   cooldown: 1.5
   level: 1
+  rarity: 0
   projectilePrefab: {fileID: 8481211734425419368, guid: 509bff0c6b3890742a6fd570bd16d743, type: 3}
   baseShards: 8
   shardsPerLevel: 2

@@ -1,10 +1,11 @@
-// Hookfall - builds the six item prefabs with their GDD 4.5 values and lore, the projectile prefabs,
-// and the chest and tower cache prefabs.
+// Hookfall - builds the item prefabs (the six GDD 4.5 attack items, the Tether Coil and the passive items added on
+// 2026-11-08, each with a rarity), the projectile prefabs, and the chest and tower cache prefabs.
 // AI disclosure: written with Claude (Anthropic) on 2026-11-07. Prompts and changes are recorded in Docs/PromptLog.md.
 using System.Collections.Generic;
 using UnityEditor;
 using Hookfall.Combat;
 using Hookfall.Combat.Items;
+using Hookfall.Player;
 using Hookfall.World;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -28,7 +29,7 @@ namespace Hookfall.EditorTools
             Transparent(GetOrCreateMaterial("M_CacheBeam", new Color(1f, 0.85f, 0.4f, 0.35f), true));
         }
 
-        /// <summary>All chest items (the six from GDD 4.5 and the Tether Coil); index 0 is Orbit Blades, the starting item.</summary>
+        /// <summary>All chest items: attack items, then passives; index 0 is Orbit Blades, the starting item.</summary>
         public static List<ItemBase> CreateItems()
         {
             Projectile shard = CreateProjectile("PF_Shard", PrimitiveType.Cube, new Vector3(0.12f, 0.12f, 0.7f), "M_Shard", 0.25f);
@@ -38,35 +39,77 @@ namespace Hookfall.EditorTools
             {
                 Item<OrbitBlades>("OrbitBlades", "Orbit Blades", 10f, 0.5f,
                     "Twin vault blades bound to the Warden by a Tether rune; they circle and cut whatever comes close.",
-                    i => SetRef(i, "bladeMaterial", Mat("M_Shard"))),
+                    i => SetRef(i, "bladeMaterial", Mat("M_Shard")), Rarity.Common),
                 Item<ShardBurst>("ShardBurst", "Shard Burst", 12f, 1.5f,
                     "Splinters of a cracked Heartstone ward that burst outwards whenever the Warden takes flight.",
-                    i => SetRef(i, "projectilePrefab", shard)),
+                    i => SetRef(i, "projectilePrefab", shard), Rarity.Common),
                 Item<ArcLaser>("ArcLaser", "Arc Laser", 20f, 2f,
                     "A lens from the fallen archer tower; it bends the Heartstone's light into a sweeping blade.",
-                    i => SetRef(i, "beamMaterial", Mat("M_Beam"))),
+                    i => SetRef(i, "beamMaterial", Mat("M_Beam")), Rarity.Epic),
                 Item<RamStrike>("RamStrike", "Ram Strike", 0f, 0.5f,
                     "The Order's oldest lesson: a Warden at full speed is the weapon.",
-                    i => SetRef(i, "auraMaterial", Mat("M_Aura"))),
+                    i => SetRef(i, "auraMaterial", Mat("M_Aura")), Rarity.Rare),
                 Item<HomingSparks>("HomingSparks", "Homing Sparks", 15f, 1.2f,
                     "Sparks from the vault forge that still remember who their enemies are.",
-                    i => SetRef(i, "projectilePrefab", spark)),
+                    i => SetRef(i, "projectilePrefab", spark), Rarity.Rare),
                 Item<StormAura>("StormAura", "Storm Aura", 4f, 0.25f,
                     "A storm sealed in a guardian's cloak; it crackles around the Warden while they fly.",
-                    i => SetRef(i, "auraMaterial", Mat("M_Aura"))),
+                    i => SetRef(i, "auraMaterial", Mat("M_Aura")), Rarity.Epic),
                 Item<TetherCoil>("TetherCoil", "Tether Coil", 25f, 1f,
                     "A coil of the Order's own tether rope, wound with Heartstone wire; it hauls the Warden through anything in the way.",
-                    i => { })
+                    i => { }, Rarity.Legendary),
+
+                // Passive items (2026-11-08): rarer means more useful.
+                Charm("HeartLocket", "Heart Locket", Rarity.Common, "A locket with a pressed Heartstone petal; the heart beats stronger for it.", StatType.MaxHealth),
+                Charm("IronHide", "Iron Hide", Rarity.Common, "Plates hammered from the vault doors, light enough to fly in.", StatType.Armor),
+                Charm("GaleFeather", "Gale Feather", Rarity.Common, "A feather from the storm's edge that never stops pulling forward.", StatType.FlightSpeed, StatType.WalkSpeed),
+                Charm("Lodestone", "Lodestone", Rarity.Common, "A stone that drags every loose shard and coin towards its keeper.", StatType.PickupRadius),
+                Charm("MendingMoss", "Mending Moss", Rarity.Common, "Moss from the tower's shaded side; it closes wounds while nobody watches.", StatType.Regen),
+                Charm("SagesLens", "Sage's Lens", Rarity.Common, "An archivist's lens that shows what every fight has to teach.", StatType.XPGain),
+                Charm("Whetstone", "Whetstone", Rarity.Rare, "Every edge the Warden carries comes away sharper.", StatType.Damage),
+                Charm("QuickDraw", "Quick Draw", Rarity.Rare, "An archer's glove from the fallen tower; every item fires sooner.", StatType.AttackSpeed, StatType.AttackSpeed),
+                Charm("LuckyCoin", "Lucky Coin", Rarity.Rare, "A coin that always lands on the side of rarer chests.", StatType.Luck, StatType.Luck),
+                Item<VampireFang>("VampireFang", "Vampire Fang", 0f, 1f,
+                    "A wyvern's fang on a cord; what it cuts, the Warden drinks.", i => { }, Rarity.Rare),
+                Item<SoulHarvest>("SoulHarvest", "Soul Harvest", 0f, 1f,
+                    "A lantern that keeps a spark of everything the Warden brings down.", i => { }, Rarity.Rare),
+                Item<HuntersEye>("HuntersEye", "Hunter's Eye", 0f, 1f,
+                    "A bat-hunter's monocle that finds the weak spot in every wing.", i => { }, Rarity.Rare),
+                Item<ThornMail>("ThornMail", "Thorn Mail", 15f, 1f,
+                    "Mail grown from storm thorns; whatever bites the Warden bleeds for it.", i => { }, Rarity.Rare),
+                Item<WardShell>("WardShell", "Ward Shell", 0f, 1f,
+                    "A ward of the old Order folded into a bubble that turns one blow aside.",
+                    i => SetRef(i, "bubbleMaterial", Mat("M_Aura")), Rarity.Epic),
+                Item<WindSigil>("WindSigil", "Wind Sigil", 0f, 1f,
+                    "A sigil cut into a storm stone; it gives the Warden a second breath in the air.", i => { }, Rarity.Epic),
+                Item<BerserkerBlood>("BerserkerBlood", "Berserker Blood", 0f, 1f,
+                    "A vial of golem blood; the closer to falling, the harder the Warden hits.", i => { }, Rarity.Epic),
+                Item<PhoenixFeather>("PhoenixFeather", "Phoenix Feather", 0f, 1f,
+                    "The last feather of the tower's firebird; once in a long while it refuses to let its keeper die.", i => { }, Rarity.Legendary),
+                Item<HeartstoneCore>("HeartstoneCore", "Heartstone Core", 40f, 7f,
+                    "A shard of the Heartstone itself; while the Warden flies it pulses with light that burns and heals.", i => { }, Rarity.Legendary),
             };
             return items;
         }
 
-        private static T Item<T>(string id, string displayName, float damage, float cooldown, string lore, System.Action<T> extra)
+        /// <summary>A passive stat charm: the given stat cards, once per item level.</summary>
+        private static StatCharm Charm(string id, string displayName, Rarity rarity, string lore, params StatType[] picks) =>
+            Item<StatCharm>(id, displayName, 0f, 1f, lore, charm =>
+            {
+                var serialized = new SerializedObject(charm);
+                SerializedProperty list = serialized.FindProperty("picksPerLevel");
+                list.arraySize = picks.Length;
+                for (int i = 0; i < picks.Length; i++) list.GetArrayElementAtIndex(i).enumValueIndex = (int)picks[i];
+                serialized.ApplyModifiedPropertiesWithoutUndo();
+            }, rarity);
+
+        private static T Item<T>(string id, string displayName, float damage, float cooldown, string lore, System.Action<T> extra, Rarity rarity)
             where T : ItemBase
         {
             var root = new GameObject("PF_Item_" + id);
             var item = root.AddComponent<T>();
             SetString(item, "displayName", displayName);
+            SetEnum(item, "rarity", (int)rarity);
             SetString(item, "lore", lore);
             SetFloat(item, "baseDamage", damage);
             SetFloat(item, "cooldown", cooldown);

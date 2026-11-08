@@ -29,8 +29,8 @@ namespace Hookfall.World
         [SerializeField] private int baseCost = 15;
         [SerializeField] private int costIncrease = 10;
 
-        [Header("Rarity weights (Common, Rare, Epic); Luck multiplies Rare and Epic")]
-        [SerializeField] private Vector3 rarityWeights = new Vector3(70f, 25f, 5f);
+        [Header("Rarity weights (Common, Rare, Epic, Legendary); Luck multiplies all but Common")]
+        [SerializeField] private Vector4 rarityWeights = new Vector4(60f, 28f, 10f, 2f);
 
         private readonly List<Chest> chests = new List<Chest>();
         private PlayerStats stats;
@@ -88,13 +88,14 @@ namespace Hookfall.World
             ChestResultUI.Offer(combat, stats, rarity);
         }
 
-        /// <summary>Weighted roll; luck multiplies the Rare and Epic weights.</summary>
-        public static Rarity Roll(Vector3 weights, float luck)
+        /// <summary>Weighted roll; luck multiplies the Rare, Epic and Legendary weights.</summary>
+        public static Rarity Roll(Vector4 weights, float luck)
         {
-            float common = weights.x, rare = weights.y * luck, epic = weights.z * luck;
-            float roll = Random.value * (common + rare + epic);
-            if (roll < epic) return Rarity.Epic;
-            if (roll < epic + rare) return Rarity.Rare;
+            float common = weights.x, rare = weights.y * luck, epic = weights.z * luck, legendary = weights.w * luck;
+            float roll = Random.value * (common + rare + epic + legendary);
+            if (roll < legendary) return Rarity.Legendary;
+            if (roll < legendary + epic) return Rarity.Epic;
+            if (roll < legendary + epic + rare) return Rarity.Rare;
             return Rarity.Common;
         }
     }

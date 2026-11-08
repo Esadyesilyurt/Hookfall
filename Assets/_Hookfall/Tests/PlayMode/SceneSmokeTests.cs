@@ -91,7 +91,10 @@ namespace Hookfall.Tests
             var grant = combatType.GetMethod("Grant");
             for (int i = 0; i < 40; i++) grant.Invoke(combat, new[] { Enum.ToObject(rarityType, 2), (object)stats });
             var items = (ICollection)combatType.GetProperty("Items").GetValue(combat);
-            Assert.AreEqual(6, items.Count, "Chests should fill all six item slots");
+            int passives = 0;
+            foreach (Component item in items) if ((bool)item.GetType().GetProperty("IsPassive").GetValue(item)) passives++;
+            Assert.AreEqual(6, items.Count - passives, "Chests should fill all six attack slots");
+            Assert.AreEqual(6, passives, "Chests should fill all six passive slots");
 
             Type gmType = Type.GetType("Hookfall.Core.GameManager, Assembly-CSharp");
             object gm = gmType.GetProperty("Instance").GetValue(null);
@@ -549,6 +552,91 @@ namespace Hookfall.Tests
             Assert.IsNotNull(rock, "A hook anchor needs a collider");
             Assert.IsTrue((bool)hookType.GetMethod("IsHookable").Invoke(null, new object[] { rock }), "The hook should catch a hook anchor");
             LogAssert.NoUnexpectedReceived();
+        }
+
+        /// <summary>Every item and passive at once: all run clean; the Ward Shell blocks a hit and the Phoenix Feather revives.</summary>
+        [UnityTest]
+        public IEnumerator EveryItemAndPassiveRunsClean()
+        {
+            SceneManager.LoadScene("Arena");
+            yield return null;
+            GameObject player = GameObject.Find("Player");
+            var flags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+            Type combatType = Type.GetType("Hookfall.Combat.CombatSystem, Assembly-CSharp");
+            Type statsType = Type.GetType("Hookfall.Player.PlayerStats, Assembly-CSharp");
+            Type rewardType = Type.GetType("Hookfall.Combat.ChestReward, Assembly-CSharp");
+            Type statType = Type.GetType("Hookfall.Player.StatType, Assembly-CSharp");
+            Component combat = player.GetComponent(combatType);
+            Component stats = player.GetComponent(statsType);
+            var prefabs = (IList)combatType.GetField("itemPrefabs", flags).GetValue(combat);
+            var items = (ICollection)combatType.GetProperty("Items").GetValue(combat);
+
+            // Claim every item directly (past the slot limits) so each one runs at least once.
+            var owned = new System.Collections.Generic.HashSet<string>();
+            foreach (Component item in items) owned.Add(item.name);
+            foreach (Component prefab in prefabs)
+            {
+                if (owned.Contains(prefab.name)) continue;
+                object reward = Activator.CreateInstance(rewardType, prefab.GetType().GetProperty("Rarity").GetValue(prefab), prefab, true, 1, Enum.ToObject(statType, 0));
+                combatType.GetMethod("Claim").Invoke(combat, new[] { reward, stats });
+            }
+            Assert.AreEqual(prefabs.Count, items.Count, "Every item should be owned");
+            yield return null;
+
+            // Ward Shell: the first hit is blocked.
+            var health = statsType.GetProperty("CurrentHealth");
+            var takeDamage = statsType.GetMethod("TakeDamage");
+            var lastHit = statsType.GetField("lastHitTime", flags);
+            lastHit.SetValue(stats, -999f);
+            float before = (float)health.GetValue(stats);
+            takeDamage.Invoke(stats, new object[] { 30f });
+            Assert.AreEqual(before, (float)health.GetValue(stats), 0.01f, "The Ward Shell should block the first hit");
+            Assert.AreEqual(0, (int)statsType.GetProperty("ShieldCharges").GetValue(stats), "The Ward Shell's charge should be spent");
+
+            // Phoenix Feather: a killing blow revives instead.
+            lastHit.SetValue(stats, -999f);
+            takeDamage.Invoke(stats, new object[] { 100000f });
+            Assert.Greater((float)health.GetValue(stats), 0f, "The Phoenix Feather should revive the Warden");
+            Assert.AreEqual(0, (int)statsType.GetProperty("Revives").GetValue(stats), "The Phoenix Feather's revive should be spent");
+
+            // Fly around with everything working.
+            Type levelUpType = Type.GetType("Hookfall.Progression.LevelUpSystem, Assembly-CSharp");
+            Component levelUp = player.GetComponent(levelUpType);
+            float end = Time.realtimeSinceStartup + 6f;
+            while (Time.realtimeSinceStartup < end)
+            {
+                KeepAlive(player);
+                if (player.transform.position.y < 6f)
+                {
+                    Teleport(player, new Vector3(0f, 12f, -10f));
+                    player.GetComponent<Rigidbody>().linearVelocity = new Vector3(25f, 0f, 0f);
+                }
+                if (Time.timeScale == 0f) levelUpType.GetMethod("Pick").Invoke(levelUp, new object[] { 0 });
+                yield return null;
+            }
+            LogAssert.NoUnexpectedReceived();
+        }
+
+        /// <summary>Rarer chests offer rarer items: a Legendary chest's choices start with Legendary items.</summary>
+        [UnityTest]
+        public IEnumerator LegendaryChestOffersLegendaryItems()
+        {
+            SceneManager.LoadScene("Arena");
+            yield return null;
+            GameObject player = GameObject.Find("Player");
+            Type combatType = Type.GetType("Hookfall.Combat.CombatSystem, Assembly-CSharp");
+            Type rarityType = Type.GetType("Hookfall.Combat.Rarity, Assembly-CSharp");
+            Component combat = player.GetComponent(combatType);
+            var offer = (IList)combatType.GetMethod("RollChest").Invoke(combat, new[] { Enum.ToObject(rarityType, 3) });
+            Assert.AreEqual(3, offer.Count, "A chest offers 3 choices");
+            foreach (object choice in offer)
+            {
+                var item = (Component)choice.GetType().GetField("Item").GetValue(choice);
+                Assert.IsNotNull(item, "A Legendary chest early in a run should offer items");
+                Assert.AreEqual("Legendary", item.GetType().GetProperty("Rarity").GetValue(item).ToString(),
+                    $"{item.name} should be Legendary: there are three Legendary items and none is owned yet");
+                Assert.AreEqual(1, (int)choice.GetType().GetField("LevelsGained").GetValue(choice), "Rarer chests give rarer items, not more levels");
+            }
         }
 
         /// <summary>Jumps the run clock to 4:55 so wyverns, golems and the first elite wave all appear.</summary>

@@ -29,7 +29,14 @@ Values the GDD does not give, picked by Claude on 2026-11-07 when building Weeks
 | Chest islands | Any non-tower island at least 5 m wide | ChestSpawner |
 | Chest reach | E opens a chest within 7 m, standing or flying (3 m and on the ground only until 2026-11-08) | Chest |
 | Luck | Multiplies the Rare and Epic weights | ChestSpawner.Roll |
-| Rarity effect | New item starts at level 1 / 2 / 3 (Common / Rare / Epic); an owned item gains +1 / +2 / +3 levels | CombatSystem |
+| Rarity effect | Rarer chests offer rarer items, never more levels: new items of the chest's rarity first, then lower rarities; owned items gain +1 level; stats fill what is left (levels per rarity until 2026-11-08) | CombatSystem.RollChest |
+| Chest rarity weights | Common 60, Rare 28, Epic 10, Legendary 2; Luck multiplies all but Common. Tower cache: Rare 45, Epic 40, Legendary 15 | ChestSpawner, TowerCache |
+| Item slots | 6 attack items and 6 passives | CombatSystem |
+| Attack item rarity | Common: Orbit Blades, Shard Burst. Rare: Homing Sparks, Ram Strike. Epic: Arc Laser, Storm Aura. Legendary: Tether Coil | ItemPrefabs |
+| Common passives (stat charms, per level) | Heart Locket +20 max health; Iron Hide +1 armor; Gale Feather +10% max flight speed and +8% walk speed; Lodestone +25% pickup radius; Mending Moss +0.5 HP/s; Sage's Lens +10% XP | ItemPrefabs, StatCharm |
+| Rare passives | Whetstone +10% damage; Quick Draw +16% attack speed; Lucky Coin +20% luck (per level); Vampire Fang 2% lifesteal per level; Soul Harvest 0.6 HP per kill per level; Hunter's Eye 6% crit chance per level (×2 damage); Thorn Mail 15 damage per level back to enemies within 5 m when hit in flight | Items/ |
+| Epic passives | Ward Shell blocks one hit, recharges in 12 s (−1.5 s per level); Wind Sigil refills the double jump and dash in the air every 10 s (−1.25 s per level); Berserker Blood +20% damage per level below half health | Items/ |
+| Legendary passives | Phoenix Feather revives at zero health with 40% (+10% per level) health, recharges in 150 s (−20 s per level), not against the abyss; Heartstone Core pulses every 7 s (−0.75 s per level) in flight: 40 damage (+50% per level) within 10 m and heals 4% max health | Items/ |
 | Chest choice | 3 different choices of the rolled rarity (single random item until 2026-11-08): new items while a slot is free, levels for owned items that are not maxed; the game pauses until one is picked | CombatSystem.RollChest, ChestResultUI |
 | Everything maxed | The 3 choices become stats, each given once per level the chest would have given | CombatSystem |
 | Tower cache | Open within 3 m; progress drains at half speed while you are away | TowerCache |

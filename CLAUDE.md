@@ -10,7 +10,7 @@ Read this first in every session. The full design is in the GDD (Claude Docs art
 
 - `PlayerController.IsAirborne` is the core flag: it turns combat on (airborne) and puts enemies into Frenzy (grounded).
 - Enemy AI is **controlled chaos**: no limits on how many enemies attack at once, no waiting for turns, enemies never back off. Up to 120 alive (300 until 2026-11-08; the performance test still checks 300). The player wins by hit-and-run. Only very short attack warnings (0.3–0.4 s) for Wyvern and Golem.
-- Items come **only from chests**, which offer 3 choices to pick from. Level-ups give either a level for an owned item or a stat upgrade. Stats have no cap (movement stats soft-capped at +100%).
+- Items come **only from chests**, which offer 3 choices to pick from; rarer chests offer rarer items (Common, Rare, Epic, Legendary), never more levels. 6 attack slots and 6 passive slots; passives that deal damage act only in flight. Level-ups give either a level for an owned item or a stat upgrade. Stats have no cap (movement stats soft-capped at +100%).
 - No AI API, LLM or online model runs inside the game. In-game AI is our own C#.
 - No AI-generated audio.
 
@@ -31,7 +31,7 @@ Read this first in every session. The full design is in the GDD (Claude Docs art
 | --- | --- |
 | Core | `GameManager` (run state, modal screens, death, record, scene changes), `RunState`, `GameSettings`, `RunRecord`, `Layers` |
 | Player | `PlayerController` (`IsAirborne`, `CurrentIsland`, 1.8x air gravity, 40 m/s cap raised by Max flight speed, wall jump, ledge climb, double jump and dash once per flight), `GrappleHook` (120 m/s hook head, taut-rope swing with downhill pump, right-click power swing that reels in), `PlayerStats` + `StatType` (11 stats), `CameraRig` (drives the Cinemachine orbit camera; a Deoccluder keeps it out of the `World` layer), `WardenAnimator` (procedural animation of the Warden model, air tricks) |
-| Combat | `CombatSystem` (airborne rule, chest choices: `RollChest` then `Claim`), `ItemBase`, `ProjectileItem`, `Projectile`, `EnemyQuery`, `Rarity`, `ChestReward`, `Items/` (the 6 attack items and `TetherCoil`, the Zip item) |
+| Combat | `CombatSystem` (airborne rule, chest choices: `RollChest` then `Claim`), `ItemBase`, `ProjectileItem`, `Projectile`, `EnemyQuery`, `Rarity`, `ChestReward`, `PassiveItem` (always-on base), `Items/` (the 6 attack items, `TetherCoil` the Zip item, `StatCharm` for the stat passives, and the passives `VampireFang`, `SoulHarvest`, `HuntersEye`, `ThornMail`, `WardShell`, `WindSigil`, `BerserkerBlood`, `PhoenixFeather`, `HeartstoneCore`) |
 | Enemies | `StateMachine`, `IEnemyState`, `EnemyBase` (steering, catch-up speed, think rate, pooling, glow, fallbacks), `Bat`, `Wyvern`, `Golem`, `Boulder`, `States/`, `EnemyDirector` (spawns, mix, golems, elite waves, pools) |
 | World | `Island`, `IslandKind`, `IslandGenerator` (height bands, reachability, models, props, clouds), `Chest`, `ChestSpawner`, `TowerCache`, `GravityZone`, `StormWall` (arena edge, wind push-back), `Backdrop` (far scenery), `SkyFeatures` (places `Updraft`, `AirChannel`, `RefillCrystal`, `HookAnchor` between islands every run; `WindRings` animates their rings) |
 | Progression | `XPSystem`, `GoldWallet`, `LevelUpSystem` (3 cards; chests also offer 3, through `ChestResultUI`), `LevelUpOption`, `Pickup`, `PickupKind`, `PickupSpawner` |

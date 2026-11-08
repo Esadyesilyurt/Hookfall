@@ -84,6 +84,8 @@ namespace Hookfall.Feel
             EnemyDirector.Died += OnEnemyDied;
             EnemyDirector.Slammed += OnSlam;
             TetherCoil.ShockwaveFired += OnShockwave;
+            HeartstoneCore.Pulsed += OnShockwave;
+            if (stats != null) { stats.ShieldBlocked += OnShieldBlocked; stats.Revived += OnRevived; }
         }
 
         private void OnDisable()
@@ -102,6 +104,8 @@ namespace Hookfall.Feel
             EnemyDirector.Died -= OnEnemyDied;
             EnemyDirector.Slammed -= OnSlam;
             TetherCoil.ShockwaveFired -= OnShockwave;
+            HeartstoneCore.Pulsed -= OnShockwave;
+            if (stats != null) { stats.ShieldBlocked -= OnShieldBlocked; stats.Revived -= OnRevived; }
             if (Time.timeScale > 0f && Time.timeScale < 1f) Time.timeScale = 1f;
         }
 
@@ -192,6 +196,18 @@ namespace Hookfall.Feel
         {
             Shake(0.5f);
             if (vfx != null) vfx.Ring(position, 32, new Color(0.4f, 0.95f, 1f), radius * 3f);
+        }
+
+        private void OnShieldBlocked()
+        {
+            Shake(0.2f);
+            if (vfx != null) vfx.Ring(player.transform.position, 24, new Color(0.4f, 0.95f, 1f), 7f);
+        }
+
+        private void OnRevived()
+        {
+            Shake(0.7f);
+            if (vfx != null) vfx.Burst(player.transform.position, 60, new Color(1f, 0.62f, 0.15f), 10f, 0.35f, 1.2f);
         }
 
         private void OnAttacksChanged(bool on)

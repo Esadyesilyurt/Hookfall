@@ -1,6 +1,7 @@
-// Hookfall - base class for the six auto-attack items: cooldown, level, damage, lore (GDD 4.5).
+// Hookfall - base class for every chest item: cooldown, level, damage, lore, rarity (GDD 4.5). Attack items act only
+// in flight; passive items (PassiveItem) act all the time and use their own six slots.
 // AI disclosure: written with Claude (Anthropic) on 2026-11-04 as part of the midterm project skeleton,
-// extended on 2026-11-07 (lore, level text, chest levels). Prompts and changes are recorded in Docs/PromptLog.md.
+// extended on 2026-11-07 (lore, level text, chest levels) and 2026-11-08 (rarity, passives). Prompts and changes are recorded in Docs/PromptLog.md.
 using Hookfall.Player;
 using UnityEngine;
 
@@ -15,6 +16,8 @@ namespace Hookfall.Combat
         [SerializeField] private float baseDamage = 10f;
         [SerializeField] private float cooldown = 0.5f;
         [SerializeField, Range(1, MaxLevel)] private int level = 1;
+        [Tooltip("How rare the item is: rarer chests offer rarer items.")]
+        [SerializeField] private Rarity rarity = Rarity.Common;
 
         private float cooldownTimer;
 
@@ -24,13 +27,17 @@ namespace Hookfall.Combat
         public string Lore => lore;
         public int Level => level;
         public bool IsMaxed => level >= MaxLevel;
+        public Rarity Rarity => rarity;
+        /// <summary>Passive items tick all the time and take a passive slot instead of an attack slot.</summary>
+        public virtual bool IsPassive => false;
         public virtual float Damage => baseDamage * (Stats != null ? Stats.DamageMultiplier : 1f);
         protected float BaseDamage => baseDamage;
-        protected float EffectiveCooldown => cooldown / (Stats != null ? Mathf.Max(0.1f, Stats.AttackSpeedMultiplier) : 1f);
+        protected float Cooldown => cooldown;
+        protected virtual float EffectiveCooldown => cooldown / (Stats != null ? Mathf.Max(0.1f, Stats.AttackSpeedMultiplier) : 1f);
 
         protected virtual void Awake() => Stats = GetComponentInParent<PlayerStats>();
 
-        /// <summary>Called every frame by CombatSystem, only while attacks are active (player airborne).</summary>
+        /// <summary>Called every frame by CombatSystem: attack items only while attacks are active (player airborne), passives always.</summary>
         public void Tick(float deltaTime)
         {
             OnActiveTick(deltaTime);

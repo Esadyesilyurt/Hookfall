@@ -99,7 +99,7 @@ namespace Hookfall.Audio
             if (chests != null) chests.ChestOpened += OnChest;
             if (towerCache != null) { towerCache.Opened += OnCache; towerCache.Appeared += OnCacheAppeared; }
             if (levelUp != null) levelUp.OfferReady += OnLevelUp;
-            if (player != null && player.TryGetComponent(out PlayerStats s)) s.Damaged += OnDamaged;
+            if (player != null && player.TryGetComponent(out PlayerStats s)) { s.Damaged += OnDamaged; s.ShieldBlocked += OnShieldBlocked; s.Revived += OnRevived; }
             if (player != null) { player.WallJumped += OnWallJump; player.AirJumped += OnWallJump; player.LedgeClimbed += OnWallJump; player.Dashed += OnTrick; }
             if (warden != null) warden.TrickStarted += OnTrick;
         }
@@ -121,7 +121,7 @@ namespace Hookfall.Audio
             if (chests != null) chests.ChestOpened -= OnChest;
             if (towerCache != null) { towerCache.Opened -= OnCache; towerCache.Appeared -= OnCacheAppeared; }
             if (levelUp != null) levelUp.OfferReady -= OnLevelUp;
-            if (player != null && player.TryGetComponent(out PlayerStats s)) s.Damaged -= OnDamaged;
+            if (player != null && player.TryGetComponent(out PlayerStats s)) { s.Damaged -= OnDamaged; s.ShieldBlocked -= OnShieldBlocked; s.Revived -= OnRevived; }
             if (player != null) { player.WallJumped -= OnWallJump; player.AirJumped -= OnWallJump; player.LedgeClimbed -= OnWallJump; player.Dashed -= OnTrick; }
             if (warden != null) warden.TrickStarted -= OnTrick;
             if (GameManager.Instance != null) GameManager.Instance.RunEnded -= OnRunEnded;
@@ -201,6 +201,8 @@ namespace Hookfall.Audio
         private void OnCacheAppeared() => Play(SoundId.TowerCacheBeam);
         private void OnLevelUp() => Play(SoundId.LevelUp);
         private void OnDamaged(float amount) => Play(SoundId.PlayerHurt);
+        private void OnShieldBlocked() => Play(SoundId.HookAttach);
+        private void OnRevived() => Play(SoundId.LevelUp);
         private void OnRunEnded() => Play(SoundId.RunEnd);
         private void OnWallJump() => Play(SoundId.WallJump);
         private void OnTrick() => Play(SoundId.Trick);

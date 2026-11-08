@@ -49,6 +49,7 @@ MonoBehaviour:
   baseDamage: 15
   cooldown: 1.2
   level: 1
+  rarity: 1
   projectilePrefab: {fileID: 8185890813964748861, guid: 8355de4b8246cd042a929b32ac153c95, type: 3}
   baseMissiles: 2
   range: 25

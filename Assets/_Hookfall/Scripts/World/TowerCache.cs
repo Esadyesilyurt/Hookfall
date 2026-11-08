@@ -21,8 +21,8 @@ namespace Hookfall.World
         [SerializeField] private float openDistance = 3f;
         [Tooltip("Progress lost per second while the player is away.")]
         [SerializeField] private float decayPerSecond = 0.5f;
-        [Tooltip("Rarity weights (Common, Rare, Epic); never Common.")]
-        [SerializeField] private Vector3 rarityWeights = new Vector3(0f, 60f, 40f);
+        [Tooltip("Rarity weights (Common, Rare, Epic, Legendary); never Common.")]
+        [SerializeField] private Vector4 rarityWeights = new Vector4(0f, 45f, 40f, 15f);
 
         private PlayerStats stats;
         private CombatSystem combat;

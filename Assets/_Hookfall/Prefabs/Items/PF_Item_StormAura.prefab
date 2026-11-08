@@ -50,6 +50,7 @@ MonoBehaviour:
   baseDamage: 4
   cooldown: 0.25
   level: 1
+  rarity: 2
   baseRadius: 4
   radiusPerLevel: 0.5
   pulseSpeed: 4
