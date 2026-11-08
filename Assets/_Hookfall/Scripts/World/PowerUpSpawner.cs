@@ -37,6 +37,8 @@ namespace Hookfall.World
         [SerializeField] private int maxAlive = 3;
         [SerializeField] private float lifetime = 45f;
         [SerializeField] private float touchRadius = 3f;
+        [Tooltip("Flying this close pulls the power-up to the Warden.")]
+        [SerializeField] private float magnetRadius = 14f;
         [Tooltip("Chance weights in PowerUpKind order: Treasure Gale, Healing Dew, Berserk Rage, Timefrost, Heartstone Nova.")]
         [SerializeField] private float[] weights = { 28f, 24f, 22f, 20f, 4f };
         [SerializeField, Range(0f, 1f)] private float golemDropChance = 0.4f;
@@ -141,7 +143,7 @@ namespace Hookfall.World
             label.rectTransform.sizeDelta = new Vector2(12f, 2f);
 
             var power = root.AddComponent<PowerUp>();
-            power.Init(this, player, kind, orb.transform, labelGo.transform, touchRadius, lifetime);
+            power.Init(this, player, kind, orb.transform, labelGo.transform, touchRadius, magnetRadius, lifetime);
             alive.Add(power);
             return power;
         }

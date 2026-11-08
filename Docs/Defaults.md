@@ -176,11 +176,12 @@ Bridge passives (Rare, two schools each): Steamforged Gauntlet (Flame, Frost), T
 ### Power-ups (2026-11-08)
 | Value | Default | Where |
 | --- | --- | --- |
-| Spawning | Every 18-30 s, 20-40 m from the Warden, at most 3, gone after 45 s; touch within 3 m | PowerUpSpawner |
+| Spawning | Every 18-30 s, 20-40 m from the Warden, at most 3, gone after 45 s; flies in from 14 m, used within 3 m | PowerUpSpawner |
 | Weights | Treasure Gale 28, Healing Dew 24, Berserk Rage 22, Timefrost 20, Heartstone Nova 4 | PowerUpSpawner |
 | Effects | Gale: every gem and coin flies to you; Dew: heals 60%; Rage: +60% damage and 35% faster attacks for 10 s; Timefrost: every enemy frozen 5 s; Nova: every enemy destroyed | PowerUpSpawner, SynergySystem |
 | Golems | 20 XP, 15 gold (5 and 5 before); 40% chance to drop a power-up | EnemyPrefabs, PowerUpSpawner |
-| Tower cache | Destroys every enemy within 45 m, then three Legendary picks in a row | TowerCache, ChestResultUI |
+| Tower cache | Destroys every enemy within 45 m, then one pick from three Legendary choices | TowerCache, ChestResultUI |
+| Enemy damage | +8% per minute and +10% per Warden level above 1, fixed at spawn | EnemyDirector |
 
 ## Where the build differs from the GDD
 

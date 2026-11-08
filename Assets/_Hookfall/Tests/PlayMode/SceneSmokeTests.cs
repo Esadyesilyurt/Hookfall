@@ -791,7 +791,21 @@ namespace Hookfall.Tests
             yield return Touch("BerserkRage");
             Assert.IsTrue((bool)synergyType.GetProperty("Frenzied").GetValue(player.GetComponent(synergyType)), "Berserk Rage should start the frenzy");
 
-            yield return Touch("TreasureGale");
+            // A near pass is enough: one 10 m away flies in and is used.
+            object far = spawnerType.GetMethod("SpawnAt").Invoke(spawner, new[] { (object)(body.position + Vector3.right * 10f), Enum.Parse(kindType, "TreasureGale") });
+            float homeEnd = Time.realtimeSinceStartup + 3f;
+            while ((UnityEngine.Object)far != null && Time.realtimeSinceStartup < homeEnd) { KeepAlive(player); yield return null; }
+            Assert.IsTrue((UnityEngine.Object)far == null, "A power-up 10 m away should fly to the Warden and be used");
+
+            // Enemy damage grows with the Warden's level.
+            Type directorType = Type.GetType("Hookfall.Enemies.EnemyDirector, Assembly-CSharp");
+            Type xpType = Type.GetType("Hookfall.Progression.XPSystem, Assembly-CSharp");
+            object director = UnityEngine.Object.FindFirstObjectByType(directorType);
+            var scaleAt = directorType.GetMethod("DamageScaleAt", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            float atLevel1 = (float)scaleAt.Invoke(director, new object[] { 0f });
+            xpType.GetProperty("Level").SetValue(player.GetComponent(xpType), 21);
+            Assert.AreEqual(atLevel1 + 2f, (float)scaleAt.Invoke(director, new object[] { 0f }), 0.01f, "Level 21 should add +200% enemy damage");
+
             yield return Touch("HeartstoneNova");
             Assert.AreEqual(0, active.Count, "Heartstone Nova should destroy every enemy");
             KeepAlive(player);
