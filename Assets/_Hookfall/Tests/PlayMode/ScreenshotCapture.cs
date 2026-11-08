@@ -92,12 +92,38 @@ namespace Hookfall.Tests
                 overview.transform.SetPositionAndRotation(chest + new Vector3(18f, 14f, -22f), Quaternion.LookRotation(new Vector3(-18f, -10f, 22f)));
                 Render(overview, "chest_light");
             }
+            // Sky features: one of each, seen from 20-35 m.
+            GameObject sky = GameObject.Find("Sky Features");
+            if (sky != null)
+            {
+                Type channelType = Type.GetType("Hookfall.World.AirChannel, Assembly-CSharp");
+                var channel = sky.GetComponentInChildren(channelType);
+                if (channel != null)
+                {
+                    Vector3 a = (Vector3)channelType.GetProperty("Entry").GetValue(channel);
+                    Vector3 b = (Vector3)channelType.GetProperty("Exit").GetValue(channel);
+                    Vector3 side = Vector3.Cross((b - a).normalized, Vector3.up);
+                    LookAt(overview, (a + b) * 0.5f, side * 35f + Vector3.up * 8f);
+                    Render(overview, "sky_channel");
+                }
+                foreach (string kind in new[] { "Updraft", "RefillCrystal", "HookAnchor" })
+                {
+                    var feature = sky.GetComponentInChildren(Type.GetType($"Hookfall.World.{kind}, Assembly-CSharp"));
+                    if (feature == null) continue;
+                    Vector3 target = feature.transform.position + (kind == "Updraft" ? Vector3.up * 15f : Vector3.zero);
+                    LookAt(overview, target, kind == "Updraft" ? new Vector3(22f, 4f, -22f) : new Vector3(9f, 4f, -12f));
+                    Render(overview, "sky_" + kind.ToLower());
+                }
+            }
             UnityEngine.Object.Destroy(overview.gameObject);
 
             gmType.GetMethod("EndRun").Invoke(gm, new object[] { "Fell into the abyss" });
             yield return new WaitForSecondsRealtime(0.8f);
             yield return Grab("ui_runend");
         }
+
+        private static void LookAt(Camera camera, Vector3 target, Vector3 offset) =>
+            camera.transform.SetPositionAndRotation(target + offset, Quaternion.LookRotation(-offset));
 
         /// <summary>WaitForEndOfFrame never fires in batch mode, so the UI is moved onto the camera and rendered with it.</summary>
         private static IEnumerator Grab(string name)

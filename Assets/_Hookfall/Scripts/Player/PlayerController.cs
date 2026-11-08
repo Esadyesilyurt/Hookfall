@@ -98,6 +98,15 @@ namespace Hookfall.Player
         /// <summary>True for a moment after touching an island side, while a wall jump is possible.</summary>
         public bool TouchingWall => Time.time - lastWallTime < wallJumpGrace;
 
+        /// <summary>Refills the double jump and the dash in mid-air (refill crystals). False when neither was spent.</summary>
+        public bool RefillAirMoves()
+        {
+            if (airJumpsLeft >= airJumps && dashesLeft >= airDashes) return false;
+            airJumpsLeft = airJumps;
+            dashesLeft = airDashes;
+            return true;
+        }
+
         /// <summary>Lets the player fly faster than the air speed cap for a moment (Zip); the cap decays back.</summary>
         public void Boost(float speed) => overspeedCap = Mathf.Max(overspeedCap, Mathf.Min(speed, MaxAirSpeed * maxOverspeedFactor));
 

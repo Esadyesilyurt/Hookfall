@@ -32,6 +32,7 @@ Attacks are automatic and only fire while you are in the air.
 
 - Grappling hook with a 120 m/s hook head and a SpringJoint rope, island movement, air strafe, Cinemachine camera with speed FOV
 - Right-click Zip: a power swing that reels you in when held, with its own cooldown and charges, upgraded by two stats and the Tether Coil item
+- Updrafts, air channels between islands, refill crystals for the double jump and dash, and floating hook anchors in the open sky
 - Wall jumps off island sides, an automatic ledge climb onto islands, a double jump and a dash per flight, and flips and barrel rolls when flying fast
 - Airborne-only combat with all six attack items (Orbit Blades, Shard Burst, Arc Laser, Ram Strike, Homing Sparks, Storm Aura) and the Tether Coil
 - Enemy AI: Bat, Wyvern and Golem finite state machines, steering with separation and island avoidance, Frenzy when you land, elite waves, the GDD 5.7 fallbacks, pooling for 300 enemies

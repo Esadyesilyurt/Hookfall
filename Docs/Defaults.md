@@ -34,6 +34,11 @@ Values the GDD does not give, picked by Claude on 2026-11-07 when building Weeks
 | Everything maxed | The 3 choices become stats, each given once per level the chest would have given | CombatSystem |
 | Tower cache | Open within 3 m; progress drains at half speed while you are away | TowerCache |
 | Low gravity | A vertical cylinder of radius 40 m around the tower | GravityZone |
+| Sky features (2026-11-08) | Per run, fewer when the layout has no room: 8 updrafts, 4 air channels, 12 refill crystals, 10 hook anchors | SkyFeatures |
+| Updraft | Radius 5 m, 32 m/s² up (about 14 net of air gravity), rising at most 16 m/s, fading over the top 6 m; half beside island rims (28 m below to 6 m above the top), half between islands | SkyFeatures, Updraft |
+| Air channel | Radius 3.5 m, 38 m/s, between rims 40–120 m apart, 3 m above the start island; carries the Warden's weight while inside | SkyFeatures, AirChannel |
+| Refill crystal | Touch within 2.5 m in flight: refills the double jump and dash if either was spent; back after 8 s | SkyFeatures, RefillCrystal |
+| Hook anchor | A floating rock (PF_Rock_1 ×1.6) 5–15 m above the higher of two islands 30–110 m apart, at least 20 m from other features | SkyFeatures, HookAnchor |
 
 ### Enemies and difficulty
 | Value | Default | Where |
