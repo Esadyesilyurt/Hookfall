@@ -44,7 +44,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 83b3ef956432b384ebe11f6c49a94350, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Hookfall.Combat.Items.SkyboltCrossbow
-  displayName: Skybolt Crossbow
+  displayName: Elven Skybow
   lore: A Warden's crossbow strung with tether wire; it reaches farther than any
     wing.
   summary: Fires fast bolts at the nearest enemies from far away. Safe at low health.

@@ -44,8 +44,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c84939f0dbc400046a94ff7b5189e8a8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Hookfall.Combat.Items.StatCharm
-  displayName: Lucky Coin
-  lore: A coin that always lands on the side of rarer chests.
+  displayName: Leprechaun's Coin
+  lore: Always lands on the side of rarer chests, and never stays in your pocket
+    long.
   summary: Rarer chests appear more often.
   baseDamage: 0
   cooldown: 1

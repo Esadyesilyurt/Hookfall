@@ -44,7 +44,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 662c5f616dbd0dd43b7a3132657ef1ca, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Hookfall.Combat.Items.HomingSparks
-  displayName: Homing Sparks
+  displayName: Will-o'-Wisps
   lore: Sparks from the vault forge that still remember who their enemies are.
   summary: Sparks fly out and chase the nearest enemies.
   baseDamage: 15

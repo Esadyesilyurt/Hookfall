@@ -44,7 +44,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e042bb67a9c8e5c4c99b563c55123e62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Hookfall.Combat.Items.Starfall
-  displayName: Starfall
+  displayName: Starfall Grimoire
   lore: An old star chart of the Order; read aloud, its stars come down.
   summary: Stars fall on enemies far away and burst over everything around them.
   baseDamage: 30

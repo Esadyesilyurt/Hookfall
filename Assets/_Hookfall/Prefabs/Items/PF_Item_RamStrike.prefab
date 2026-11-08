@@ -44,7 +44,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9a2593c938a540e48a885a47df441df7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Hookfall.Combat.Items.RamStrike
-  displayName: Ram Strike
+  displayName: Rhino Spirit Charge
   lore: 'The Order''s oldest lesson: a Warden at full speed is the weapon.'
   summary: Flying fast, you hit everything you crash into; the faster, the harder.
   baseDamage: 0

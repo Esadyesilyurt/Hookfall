@@ -4,6 +4,7 @@
 // (shield, revive, crits, low-health damage, healing). Prompts and changes are recorded in Docs/PromptLog.md.
 using System;
 using Hookfall.Core;
+using Hookfall.Enemies;
 using UnityEngine;
 
 namespace Hookfall.Player
@@ -32,6 +33,8 @@ namespace Hookfall.Player
         [SerializeField] private float hookRangePerPick = 5f;
         [SerializeField] private float pickupRadiusPercentPerPick = 25f;
         [SerializeField] private float regenPerPick = 0.5f;
+        [Tooltip("Lifesteal per pick, in percent of damage dealt (added 2026-11-08).")]
+        [SerializeField] private float lifestealPercentPerPick = 2f;
         [SerializeField] private float xpPercentPerPick = 10f;
         [SerializeField] private float luckPercentPerPick = 10f;
 
@@ -53,7 +56,7 @@ namespace Hookfall.Player
 
         private float lastHitTime = -999f;
         private float damageBonus, attackSpeedBonus, walkSpeedBonus, flightSpeedBonus;
-        private float hookRangeBonus, pickupRadiusBonus, xpBonus, luckBonus;
+        private float hookRangeBonus, pickupRadiusBonus, xpBonus, luckBonus, lifesteal;
         private int zipCooldownPicks;
         private float zipRangeBonus;
         private float itemZipCooldownMultiplier = 1f;
@@ -116,6 +119,17 @@ namespace Hookfall.Player
 
         private void Awake() => CurrentHealth = maxHealth;
 
+        /// <summary>Share of all damage dealt that comes back as health (Lifesteal cards and items).</summary>
+        public float Lifesteal => lifesteal;
+
+        private void OnEnable() => EnemyDirector.Hit += OnEnemyHit;
+        private void OnDisable() => EnemyDirector.Hit -= OnEnemyHit;
+
+        private void OnEnemyHit(EnemyBase enemy, float damage)
+        {
+            if (lifesteal > 0f) Heal(damage * lifesteal);
+        }
+
         private void Update()
         {
             if (healthRegenPerSecond > 0f && CurrentHealth > 0f)
@@ -166,6 +180,7 @@ namespace Hookfall.Player
                 case StatType.HookRange: hookRangeBonus += hookRangePerPick; break;
                 case StatType.PickupRadius: pickupRadiusBonus += pickupRadiusPercentPerPick / 100f; break;
                 case StatType.Regen: healthRegenPerSecond += regenPerPick; break;
+                case StatType.Lifesteal: lifesteal += lifestealPercentPerPick / 100f; break;
                 case StatType.XPGain: xpBonus += xpPercentPerPick / 100f; break;
                 case StatType.Luck: luckBonus += luckPercentPerPick / 100f; break;
                 case StatType.ZipCooldown: zipCooldownPicks++; break;
@@ -188,6 +203,7 @@ namespace Hookfall.Player
                 case StatType.HookRange: return $"+{hookRangePerPick:0} m {name}";
                 case StatType.PickupRadius: return $"+{pickupRadiusPercentPerPick:0}% {name}";
                 case StatType.Regen: return $"+{regenPerPick:0.0}/s {name}";
+                case StatType.Lifesteal: return $"+{lifestealPercentPerPick:0}% {name}";
                 case StatType.XPGain: return $"+{xpPercentPerPick:0}% {name}";
                 case StatType.ZipCooldown: return $"-{zipCooldownPercentPerPick:0}% {name}";
                 case StatType.ZipRange: return $"+{zipRangePerPick:0} m {name}";
@@ -208,6 +224,7 @@ namespace Hookfall.Player
                 case StatType.HookRange: return "Hook range";
                 case StatType.PickupRadius: return "Pickup radius";
                 case StatType.Regen: return "Health regen";
+                case StatType.Lifesteal: return "Lifesteal";
                 case StatType.XPGain: return "XP gain";
                 case StatType.ZipCooldown: return "Zip cooldown";
                 case StatType.ZipRange: return "Zip range";
@@ -230,6 +247,7 @@ namespace Hookfall.Player
                 case StatType.PickupRadius:
                     return $"{PickupRadius:0.0} m → {basePickupRadius * (1f + pickupRadiusBonus + pickupRadiusPercentPerPick / 100f):0.0} m";
                 case StatType.Regen: return $"{healthRegenPerSecond:0.0}/s → {healthRegenPerSecond + regenPerPick:0.0}/s";
+                case StatType.Lifesteal: return $"{lifesteal * 100f:0}% → {lifesteal * 100f + lifestealPercentPerPick:0}%";
                 case StatType.XPGain: return Percent(xpBonus, xpPercentPerPick);
                 case StatType.ZipCooldown:
                     return $"{ZipCooldown:0.0} s → {Mathf.Max(minZipCooldown, ZipCooldown * (1f - zipCooldownPercentPerPick / 100f)):0.0} s";

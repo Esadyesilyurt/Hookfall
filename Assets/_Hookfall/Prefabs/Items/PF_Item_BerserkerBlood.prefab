@@ -44,8 +44,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7a2859b4c95ab2442a1f09b57f1480ac, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Hookfall.Combat.Items.BerserkerBlood
-  displayName: Berserker Blood
-  lore: A vial of golem blood; the closer to falling, the harder the Warden hits.
+  displayName: Minotaur Blood
+  lore: A vial of minotaur blood; the closer to falling, the harder you hit.
   summary: Deal much more damage while below half health.
   baseDamage: 0
   cooldown: 1

@@ -922,10 +922,10 @@ PlayerSettings:
   captureStartupLogs: {}
   activeInputHandler: 1
   windowsGamepadBackendHint: 0
-  cloudProjectId: d330fb77-1164-4afb-8d1c-2fce87d416ec
+  cloudProjectId: eaf2ed9b-b907-43fb-9300-e99e3faead41
   framebufferDepthMemorylessMode: 0
   qualitySettingsNames: []
-  projectName: Hookfall 2026-11-04_02-11-28
+  projectName: Hookfall
   organizationId: esadyesilyurt
   cloudEnabled: 0
   legacyClampBlendShapeWeights: 0

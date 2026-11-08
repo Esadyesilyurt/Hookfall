@@ -44,8 +44,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9d49c764636314344b34e204650bc336, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Hookfall.Combat.Items.ThornMail
-  displayName: Thorn Mail
-  lore: Mail grown from storm thorns; whatever bites the Warden bleeds for it.
+  displayName: Bramble Knight Mail
+  lore: Mail grown by a bramble knight; whatever bites you bleeds for it.
   summary: When you are hit in the air, enemies close by take damage back.
   baseDamage: 15
   cooldown: 1

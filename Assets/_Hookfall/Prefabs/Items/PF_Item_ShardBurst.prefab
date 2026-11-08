@@ -44,7 +44,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: df55c8e64e42b3a46ac2b92015ad20e7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Hookfall.Combat.Items.ShardBurst
-  displayName: Shard Burst
+  displayName: Crystal Hedgehog
   lore: Splinters of a cracked Heartstone ward that burst outwards whenever the Warden
     takes flight.
   summary: Shards burst out in every direction around you.

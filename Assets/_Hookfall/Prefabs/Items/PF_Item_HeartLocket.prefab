@@ -44,8 +44,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c84939f0dbc400046a94ff7b5189e8a8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Hookfall.Combat.Items.StatCharm
-  displayName: Heart Locket
-  lore: A locket with a pressed Heartstone petal; the heart beats stronger for it.
+  displayName: Dragonheart Ember
+  lore: An ember from a dragon's heart, still warm; it beats along with yours.
   summary: More max health.
   baseDamage: 0
   cooldown: 1

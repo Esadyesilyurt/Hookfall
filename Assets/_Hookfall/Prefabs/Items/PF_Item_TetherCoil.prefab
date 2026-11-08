@@ -44,7 +44,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d2a299153d7b5ac4085ff6416b077735, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Hookfall.Combat.Items.TetherCoil
-  displayName: Tether Coil
+  displayName: Wyrmhide Tether
   lore: A coil of the Order's own tether rope, wound with Heartstone wire; it hauls
     the Warden through anything in the way.
   summary: Your Zip cuts through enemies and recharges faster.

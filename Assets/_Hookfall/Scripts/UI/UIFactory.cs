@@ -318,7 +318,10 @@ namespace Hookfall.UI
             Row(keyRow, 0f, 0, TextAnchor.MiddleCenter);
             KeyCap(keyRow, (index + 1).ToString(), 38f);
             Diamond(rect, icon, name.Substring(0, 1), 130f, accent);
-            Sized(Text(rect, "Name", name, 36f, UITheme.Text, TextAlignmentOptions.Center, true), -1f, 50f).fontStyle = FontStyles.Bold;
+            TextMeshProUGUI nameText = Sized(Text(rect, "Name", name, 36f, UITheme.Text, TextAlignmentOptions.Center, true), -1f, 50f);
+            nameText.fontStyle = FontStyles.Bold;
+            nameText.textWrappingMode = TextWrappingModes.NoWrap;   // long (translated) names shrink to one line
+            FitText(nameText, 18f);
             TextMeshProUGUI tagText = Sized(Text(rect, "Tag", tag, 18f, accent), -1f, 26f);
             tagText.characterSpacing = 4f;
             tagText.fontStyle = FontStyles.Bold;

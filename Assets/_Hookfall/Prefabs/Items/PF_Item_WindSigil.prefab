@@ -44,9 +44,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cae2a148cb0784a4bb19fcc83b6e87b4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Hookfall.Combat.Items.WindSigil
-  displayName: Wind Sigil
-  lore: A sigil cut into a storm stone; it gives the Warden a second breath in the
-    air.
+  displayName: Sylph Sigil
+  lore: A sylph's sigil; the air spirits lend you a second breath.
   summary: In the air, refills your double jump and dash every few seconds.
   baseDamage: 0
   cooldown: 1

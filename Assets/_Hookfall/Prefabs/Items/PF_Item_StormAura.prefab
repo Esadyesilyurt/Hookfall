@@ -44,7 +44,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 63e024e8bdbd98842952b2c038c57430, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Hookfall.Combat.Items.StormAura
-  displayName: Storm Aura
+  displayName: Thunderbird Cloak
   lore: A storm sealed in a guardian's cloak; it crackles around the Warden while
     they fly.
   summary: A storm around you keeps hurting enemies close by.

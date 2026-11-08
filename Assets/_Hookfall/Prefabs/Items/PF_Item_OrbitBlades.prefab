@@ -44,7 +44,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a19d234747a9cae42be129f10a39f848, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Hookfall.Combat.Items.OrbitBlades
-  displayName: Orbit Blades
+  displayName: Moonblade Halo
   lore: Twin vault blades bound to the Warden by a Tether rune; they circle and cut
     whatever comes close.
   summary: Blades circle you and cut every enemy they pass.

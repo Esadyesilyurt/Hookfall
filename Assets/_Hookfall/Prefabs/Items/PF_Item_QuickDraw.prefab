@@ -44,8 +44,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c84939f0dbc400046a94ff7b5189e8a8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Hookfall.Combat.Items.StatCharm
-  displayName: Quick Draw
-  lore: An archer's glove from the fallen tower; every item fires sooner.
+  displayName: Hasty Pixie Wings
+  lore: Borrowed pixie wings that flutter impatiently; everything you swing, swings
+    sooner.
   summary: All your attack items fire more often.
   baseDamage: 0
   cooldown: 1

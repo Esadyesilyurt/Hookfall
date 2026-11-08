@@ -18,7 +18,7 @@ MonoBehaviour:
     health.'
   perks:
   - +2 Armor
-  - Starts with a Ward Shell
+  - Starts with a Turtle Spirit Shell
   maxHealthMultiplier: 1.5
   statPicks: 0100000001000000
   startingItems:

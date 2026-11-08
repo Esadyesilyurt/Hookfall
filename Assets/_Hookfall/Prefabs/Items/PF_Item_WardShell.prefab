@@ -44,8 +44,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3e33fe5acc1f5f440b748494325493ef, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Hookfall.Combat.Items.WardShell
-  displayName: Ward Shell
-  lore: A ward of the old Order folded into a bubble that turns one blow aside.
+  displayName: Turtle Spirit Shell
+  lore: The shell of an ancient sky turtle's spirit; it turns one blow aside.
   summary: A shield blocks one hit completely, then recharges.
   baseDamage: 0
   cooldown: 1

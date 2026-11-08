@@ -44,7 +44,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 47533fd99bf80e848bc77fe7c8af4ca1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Hookfall.Combat.Items.ArcLaser
-  displayName: Arc Laser
+  displayName: Sunlance Prism
   lore: A lens from the fallen archer tower; it bends the Heartstone's light into
     a sweeping blade.
   summary: A beam sweeps in front of you and burns what it touches.
