@@ -59,6 +59,17 @@ namespace Hookfall.EditorTools
                     "A coil of the Order's own tether rope, wound with Heartstone wire; it hauls the Warden through anything in the way.",
                     i => { }, Rarity.Legendary),
 
+                // Long-range attack items (2026-11-08): something to fight with from a safe distance.
+                Item<SkyboltCrossbow>("SkyboltCrossbow", "Skybolt Crossbow", 14f, 1.1f,
+                    "A Warden's crossbow strung with tether wire; it reaches farther than any wing.",
+                    i => SetRef(i, "projectilePrefab", shard), Rarity.Common),
+                Item<ChainLightning>("ChainLightning", "Chain Lightning", 22f, 1.6f,
+                    "A storm caught in a jar; uncork it and it runs from one wing to the next.",
+                    i => SetRef(i, "boltMaterial", Mat("M_Beam")), Rarity.Rare),
+                Item<Starfall>("Starfall", "Starfall", 30f, 2.5f,
+                    "An old star chart of the Order; read aloud, its stars come down.",
+                    i => SetRef(i, "projectilePrefab", spark), Rarity.Epic),
+
                 // Passive items (2026-11-08): rarer means more useful.
                 Charm("HeartLocket", "Heart Locket", Rarity.Common, "A locket with a pressed Heartstone petal; the heart beats stronger for it.", StatType.MaxHealth),
                 Charm("IronHide", "Iron Hide", Rarity.Common, "Plates hammered from the vault doors, light enough to fly in.", StatType.Armor),
@@ -103,6 +114,39 @@ namespace Hookfall.EditorTools
                 serialized.ApplyModifiedPropertiesWithoutUndo();
             }, rarity);
 
+        /// <summary>What each item does, in one plain sentence (shown on the cards above its stat lines).</summary>
+        private static readonly Dictionary<string, string> Summaries = new Dictionary<string, string>
+        {
+            { "OrbitBlades", "Blades circle you and cut every enemy they pass." },
+            { "ShardBurst", "Shards burst out in every direction around you." },
+            { "ArcLaser", "A beam sweeps in front of you and burns what it touches." },
+            { "RamStrike", "Flying fast, you hit everything you crash into; the faster, the harder." },
+            { "HomingSparks", "Sparks fly out and chase the nearest enemies." },
+            { "StormAura", "A storm around you keeps hurting enemies close by." },
+            { "TetherCoil", "Your Zip cuts through enemies and recharges faster." },
+            { "SkyboltCrossbow", "Fires fast bolts at the nearest enemies from far away. Safe at low health." },
+            { "ChainLightning", "Lightning strikes a distant enemy and jumps on to the ones near it." },
+            { "Starfall", "Stars fall on enemies far away and burst over everything around them." },
+            { "HeartLocket", "More max health." },
+            { "IronHide", "Armor: every hit hurts less." },
+            { "GaleFeather", "Fly and walk faster." },
+            { "Lodestone", "Pick up gems and gold from farther away." },
+            { "MendingMoss", "Heal more health every second." },
+            { "SagesLens", "Earn more experience." },
+            { "Whetstone", "All your attacks deal more damage." },
+            { "QuickDraw", "All your attack items fire more often." },
+            { "LuckyCoin", "Rarer chests appear more often." },
+            { "VampireFang", "Heal a share of all the damage you deal." },
+            { "SoulHarvest", "Heal a little for every enemy you defeat." },
+            { "HuntersEye", "A chance for any hit to deal double damage." },
+            { "ThornMail", "When you are hit in the air, enemies close by take damage back." },
+            { "WardShell", "A shield blocks one hit completely, then recharges." },
+            { "WindSigil", "In the air, refills your double jump and dash every few seconds." },
+            { "BerserkerBlood", "Deal much more damage while below half health." },
+            { "PhoenixFeather", "When your health reaches zero, come back to life once, then it recharges." },
+            { "HeartstoneCore", "While you fly, pulses damage every enemy around you and heal you." },
+        };
+
         private static T Item<T>(string id, string displayName, float damage, float cooldown, string lore, System.Action<T> extra, Rarity rarity)
             where T : ItemBase
         {
@@ -110,6 +154,7 @@ namespace Hookfall.EditorTools
             var item = root.AddComponent<T>();
             SetString(item, "displayName", displayName);
             SetEnum(item, "rarity", (int)rarity);
+            SetString(item, "summary", Summaries.TryGetValue(id, out string summary) ? summary : "");
             SetString(item, "lore", lore);
             SetFloat(item, "baseDamage", damage);
             SetFloat(item, "cooldown", cooldown);

@@ -46,6 +46,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Hookfall.Combat.Items.StatCharm
   displayName: Whetstone
   lore: Every edge the Warden carries comes away sharper.
+  summary: All your attacks deal more damage.
   baseDamage: 0
   cooldown: 1
   level: 1

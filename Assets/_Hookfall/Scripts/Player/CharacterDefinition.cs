@@ -13,6 +13,8 @@ namespace Hookfall.Player
         public string id = "Warden";
         public string displayName = "Warden";
         [TextArea(2, 4)] public string description = "";
+        [Tooltip("What sets the character apart, one line each, shown at a glance on its card (e.g. \"+20% Damage\").")]
+        public string[] perks = new string[0];
 
         [Header("Start of a run")]
         [Tooltip("Max health is multiplied by this.")]

@@ -1,5 +1,7 @@
 // Hookfall - Berserker Blood (Epic passive): more damage while the Warden is below half health. Always on.
 // AI disclosure: written with Claude (Anthropic) on 2026-11-08. Prompts and changes are recorded in Docs/PromptLog.md.
+using Hookfall.Core;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Hookfall.Combat.Items
@@ -27,7 +29,13 @@ namespace Hookfall.Combat.Items
             if (Stats != null) Stats.LowHealthDamageBonus = damagePerLevel * Level;
         }
 
+        public override IEnumerable<string> StatLines()
+        {
+            foreach (string text in base.StatLines()) yield return text;
+            yield return Loc.F("+{0}% damage below half health", (damagePerLevel * Level * 100f).ToString("0"));
+        }
+
         public override string DescribeNextLevel() =>
-            $"Below half health: +{damagePerLevel * Level * 100f:0}% → +{damagePerLevel * (Level + 1) * 100f:0}% damage";
+            Loc.F("+{0}% → +{1}% damage below half health", (damagePerLevel * Level * 100f).ToString("0"), (damagePerLevel * (Level + 1) * 100f).ToString("0"));
     }
 }

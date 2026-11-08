@@ -253,7 +253,7 @@ namespace Hookfall.UI
             if (attacks != lastAttacks) { attackPulse = 1f; lastAttacks = attacks; }
             attackPulse = Mathf.MoveTowards(attackPulse, 0f, dt * 4f);
             attackRect.localScale = Vector3.one * (1f + attackPulse * 0.18f);
-            attackText.text = attacks ? "ATTACKS ON" : "ATTACKS OFF";
+            attackText.text = Hookfall.Core.Loc.T(attacks ? "ATTACKS ON" : "ATTACKS OFF");
             attackText.color = attacks ? new Color(0.05f, 0.12f, 0.16f) : UITheme.TextMuted;
             attackBack.color = attacks ? UITheme.Player : new Color(0.12f, 0.15f, 0.2f, 0.85f);
         }

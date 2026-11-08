@@ -46,6 +46,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Hookfall.Combat.Items.RamStrike
   displayName: Ram Strike
   lore: 'The Order''s oldest lesson: a Warden at full speed is the weapon.'
+  summary: Flying fast, you hit everything you crash into; the faster, the harder.
   baseDamage: 0
   cooldown: 0.5
   level: 1

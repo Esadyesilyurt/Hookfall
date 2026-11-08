@@ -46,6 +46,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Hookfall.Combat.Items.StatCharm
   displayName: Sage's Lens
   lore: An archivist's lens that shows what every fight has to teach.
+  summary: Earn more experience.
   baseDamage: 0
   cooldown: 1
   level: 1

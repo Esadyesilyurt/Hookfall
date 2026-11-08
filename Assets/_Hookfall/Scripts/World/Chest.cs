@@ -44,7 +44,7 @@ namespace Hookfall.World
 
             int cost = spawner.CurrentCost;
             bool canPay = spawner.CanAfford;
-            HUD.InteractPrompt = canPay ? $"[E] Open chest  ·  {cost} gold" : $"<color=#F2403A>Chest  ·  {cost} gold needed</color>";
+            HUD.InteractPrompt = canPay ? Hookfall.Core.Loc.F("Open chest  ·  {0} gold", cost) : "<color=#F2403A>" + Hookfall.Core.Loc.F("Chest  ·  {0} gold needed", cost) + "</color>";
             if (canPay && Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame) spawner.Open(this);
         }
     }

@@ -46,6 +46,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Hookfall.Combat.Items.HuntersEye
   displayName: Hunter's Eye
   lore: A bat-hunter's monocle that finds the weak spot in every wing.
+  summary: A chance for any hit to deal double damage.
   baseDamage: 0
   cooldown: 1
   level: 1

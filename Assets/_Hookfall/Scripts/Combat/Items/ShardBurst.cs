@@ -1,5 +1,7 @@
 // Hookfall - Shard Burst: fires crystal shards in all directions; 12 damage, every 1.5 s, 30 m/s, +2 shards per level (GDD 4.5).
 // AI disclosure: written with Claude (Anthropic) on 2026-11-07. Prompts and changes are recorded in Docs/PromptLog.md.
+using Hookfall.Core;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Hookfall.Combat.Items
@@ -30,6 +32,12 @@ namespace Hookfall.Combat.Items
             }
         }
 
-        public override string DescribeNextLevel() => $"{ShardCount} → {ShardCount + shardsPerLevel} shards";
+        public override IEnumerable<string> StatLines()
+        {
+            foreach (string text in base.StatLines()) yield return text;
+            yield return Loc.F("{0} shards", ShardCount);
+        }
+
+        public override string DescribeNextLevel() => Loc.F("{0} → {1} shards", ShardCount, ShardCount + shardsPerLevel);
     }
 }

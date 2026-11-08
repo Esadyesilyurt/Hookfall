@@ -90,7 +90,7 @@ namespace Hookfall.UI
             TextAlignmentOptions alignment = TextAlignmentOptions.Center, bool outline = false)
         {
             var tmp = rt.gameObject.AddComponent<TextMeshProUGUI>();
-            tmp.text = text;
+            tmp.text = Hookfall.Core.Loc.T(text);   // fixed labels are translated here; dynamic text is translated where it is built
             tmp.fontSize = size;
             tmp.color = color;
             tmp.alignment = alignment;
@@ -287,9 +287,12 @@ namespace Hookfall.UI
         }
 
         /// <summary>A key cap with a key name, e.g. [E] or [1].</summary>
-        /// <summary>A pick-one card (level-up, chest): key cap, icon diamond, name, tag and value; a click calls onPick.</summary>
+        /// <summary>
+        /// A pick-one card (level-up, chest, character): key cap, icon diamond, name, tag, the value lines in bold (stats at a
+        /// glance) and a small detail text (what it does); a click calls onPick.
+        /// </summary>
         public static RectTransform ChoiceCard(RectTransform row, int index, Color accent, Sprite icon, string name, string tag,
-            string value, Action onPick)
+            string value, string detail, Action onPick)
         {
             var cardGo = new GameObject($"Card {index + 1}", typeof(RectTransform));
             cardGo.transform.SetParent(row, false);
@@ -304,7 +307,7 @@ namespace Hookfall.UI
             colors.colorMultiplier = 1.5f;
             button.colors = colors;
             button.onClick.AddListener(() => onPick());
-            Sized(rect, 400f, 470f);
+            Sized(rect, 400f, 560f);
             Column(rect, 12f, 30, TextAnchor.UpperCenter);
             UIPop.Add(rect, 0.08f + index * 0.09f, 0.6f);
             var hover = cardGo.AddComponent<UIHover>();
@@ -314,13 +317,24 @@ namespace Hookfall.UI
             Sized(keyRow, -1f, 40f);
             Row(keyRow, 0f, 0, TextAnchor.MiddleCenter);
             KeyCap(keyRow, (index + 1).ToString(), 38f);
-            Diamond(rect, icon, name.Substring(0, 1), 150f, accent);
+            Diamond(rect, icon, name.Substring(0, 1), 130f, accent);
             Sized(Text(rect, "Name", name, 36f, UITheme.Text, TextAlignmentOptions.Center, true), -1f, 50f).fontStyle = FontStyles.Bold;
             TextMeshProUGUI tagText = Sized(Text(rect, "Tag", tag, 18f, accent), -1f, 26f);
             tagText.characterSpacing = 4f;
             tagText.fontStyle = FontStyles.Bold;
-            Sized(Text(rect, "Value", value, 30f, UITheme.Text, TextAlignmentOptions.Center, true), -1f, 90f);
+            TextMeshProUGUI valueText = Sized(Text(rect, "Value", value, 25f, UITheme.Text, TextAlignmentOptions.Center, true), -1f, 116f);
+            valueText.fontStyle = FontStyles.Bold;
+            FitText(valueText, 15f);
+            FitText(Sized(Text(rect, "Detail", detail, 18f, UITheme.TextMuted), -1f, 84f), 12f);
             return rect;
+        }
+
+        /// <summary>Shrinks a text down to minSize when it does not fit its box (long translations, many stat lines).</summary>
+        public static void FitText(TextMeshProUGUI text, float minSize)
+        {
+            text.enableAutoSizing = true;
+            text.fontSizeMax = text.fontSize;
+            text.fontSizeMin = minSize;
         }
 
         public static RectTransform KeyCap(Transform parent, string key, float size = 44f)

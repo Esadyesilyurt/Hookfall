@@ -1,6 +1,8 @@
 // Hookfall - Wind Sigil (Epic passive): in the air, refills the double jump and the dash once per cooldown, as soon as
 // either has been spent, so long flights get extra moves without landing.
 // AI disclosure: written with Claude (Anthropic) on 2026-11-08. Prompts and changes are recorded in Docs/PromptLog.md.
+using Hookfall.Core;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Hookfall.Combat.Items
@@ -21,7 +23,13 @@ namespace Hookfall.Combat.Items
             if (timer >= Recharge && Player != null && Player.IsAirborne && Player.RefillAirMoves()) timer = 0f;
         }
 
+        public override IEnumerable<string> StatLines()
+        {
+            foreach (string text in base.StatLines()) yield return text;
+            yield return Loc.F("Refills jump and dash every {0} s", Recharge.ToString("0.#"));
+        }
+
         public override string DescribeNextLevel() =>
-            $"Air refill every {Recharge:0.#} s → {Mathf.Max(3f, rechargeTime - rechargePerLevel * Level):0.#} s";
+            Loc.F("Every {0} s → {1} s", Recharge.ToString("0.#"), Mathf.Max(3f, rechargeTime - rechargePerLevel * Level).ToString("0.#"));
     }
 }

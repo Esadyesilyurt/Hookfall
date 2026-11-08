@@ -61,7 +61,7 @@ namespace Hookfall.World
             bool standing = !player.IsAirborne && Vector3.Distance(player.transform.position, transform.position) <= openDistance;
             progress = standing ? progress + Time.deltaTime / openTime : Mathf.Max(0f, progress - decayPerSecond * Time.deltaTime / openTime);
             HUD.TowerCacheProgress = progress > 0f ? progress : -1f;
-            if (standing) HUD.InteractPrompt = "Opening the tower cache... hold your ground";
+            if (standing) HUD.InteractPrompt = Hookfall.Core.Loc.T("Opening the tower cache... hold your ground");
             if (progress < 1f) return;
 
             Rarity rarity = ChestSpawner.Roll(rarityWeights, stats.LuckMultiplier);

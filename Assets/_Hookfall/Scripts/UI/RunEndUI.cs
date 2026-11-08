@@ -87,7 +87,7 @@ namespace Hookfall.UI
         {
             GameManager gm = GameManager.Instance;
             time.text = RunRecord.FormatTime(gm.RunTime);
-            reason.text = gm.EndReason;
+            reason.text = Loc.T(gm.EndReason);
             record.SetActive(gm.NewRecord);
 
             foreach (Transform child in stats) Destroy(child.gameObject);
@@ -108,7 +108,7 @@ namespace Hookfall.UI
                 }
 
             best.text = !gm.NewRecord && RunRecord.HasRecord
-                ? $"Best watch {RunRecord.FormatTime(RunRecord.BestTime)}  ·  level {RunRecord.BestLevel}  ·  {RunRecord.BestKills} kills"
+                ? Loc.F("Best watch {0}  ·  level {1}  ·  {2} kills", RunRecord.FormatTime(RunRecord.BestTime), RunRecord.BestLevel, RunRecord.BestKills)
                 : "";
             ShowRank();
             root.SetActive(true);
@@ -117,14 +117,14 @@ namespace Hookfall.UI
         /// <summary>Waits for the run to reach the global leaderboard, then shows the player's rank.</summary>
         private async void ShowRank()
         {
-            rank.text = Leaderboard.LastSubmit != null ? "Sending to the global leaderboard..." : "";
+            rank.text = Leaderboard.LastSubmit != null ? Loc.T("Sending to the global leaderboard...") : "";
             if (Leaderboard.LastSubmit == null) return;
             await Leaderboard.LastSubmit;
             LeaderboardRow? me = await Leaderboard.Current.MineAsync();
             if (this == null) return;
             rank.text = !me.HasValue ? Leaderboard.Current.Status
-                : me.Value.Rank <= LeaderboardPanel.Shown ? $"Global rank #{me.Value.Rank}  ·  your best {RunRecord.FormatTime(me.Value.Seconds)}"
-                : $"On the global leaderboard  ·  your best {RunRecord.FormatTime(me.Value.Seconds)}";   // ranks only inside the top 20
+                : me.Value.Rank <= LeaderboardPanel.Shown ? Loc.F("Global rank #{0}  ·  your best {1}", me.Value.Rank, RunRecord.FormatTime(me.Value.Seconds))
+                : Loc.F("On the global leaderboard  ·  your best {0}", RunRecord.FormatTime(me.Value.Seconds));   // ranks only inside the top 20
         }
 
         private void Stat(string icon, string label, string value)
@@ -137,7 +137,7 @@ namespace Hookfall.UI
             UIFactory.Sized(text, 120f, 90f);
             UIFactory.Column(text, 0f, 0, TextAnchor.MiddleLeft);
             UIFactory.Sized(UIFactory.Text(text, "Value", value, 40f, UITheme.Text, TextAlignmentOptions.Left, true), -1f, 48f).fontStyle = FontStyles.Bold;
-            UIFactory.Sized(UIFactory.Text(text, "Label", label.ToUpper(), 16f, UITheme.TextMuted, TextAlignmentOptions.Left), -1f, 22f).characterSpacing = 4f;
+            UIFactory.Sized(UIFactory.Text(text, "Label", label.ToUpperInvariant(), 16f, UITheme.TextMuted, TextAlignmentOptions.Left), -1f, 22f).characterSpacing = 4f;
         }
     }
 }

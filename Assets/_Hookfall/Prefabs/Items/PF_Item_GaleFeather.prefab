@@ -46,6 +46,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Hookfall.Combat.Items.StatCharm
   displayName: Gale Feather
   lore: A feather from the storm's edge that never stops pulling forward.
+  summary: Fly and walk faster.
   baseDamage: 0
   cooldown: 1
   level: 1

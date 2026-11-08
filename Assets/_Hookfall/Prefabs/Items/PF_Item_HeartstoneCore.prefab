@@ -47,6 +47,7 @@ MonoBehaviour:
   displayName: Heartstone Core
   lore: A shard of the Heartstone itself; while the Warden flies it pulses with light
     that burns and heals.
+  summary: While you fly, pulses damage every enemy around you and heal you.
   baseDamage: 40
   cooldown: 7
   level: 1

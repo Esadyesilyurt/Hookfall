@@ -2,6 +2,7 @@
 // AI disclosure: written with Claude (Anthropic) on 2026-11-04 as part of the midterm project skeleton,
 // changed on 2026-11-07 to use the enemy list instead of physics.
 // Prompts and changes are recorded in Docs/PromptLog.md.
+using Hookfall.Core;
 using System.Collections.Generic;
 using Hookfall.Enemies;
 using UnityEngine;
@@ -52,7 +53,14 @@ namespace Hookfall.Combat.Items
 
         protected override void OnLevelChanged() => RebuildBlades();
 
-        public override string DescribeNextLevel() => $"{BladeCount} → {BladeCount + 1} blades";
+        public override IEnumerable<string> StatLines()
+        {
+            foreach (string text in base.StatLines()) yield return text;
+            yield return Loc.F("{0} blades", BladeCount);
+            yield return Loc.F("Radius {0} m", orbitRadius.ToString("0"));
+        }
+
+        public override string DescribeNextLevel() => Loc.F("{0} → {1} blades", BladeCount, BladeCount + 1);
 
         private void RebuildBlades()
         {

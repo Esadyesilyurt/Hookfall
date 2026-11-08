@@ -1,5 +1,7 @@
 // Hookfall - Vampire Fang (Rare passive): heals the Warden for a share of all damage dealt. Always on.
 // AI disclosure: written with Claude (Anthropic) on 2026-11-08. Prompts and changes are recorded in Docs/PromptLog.md.
+using Hookfall.Core;
+using System.Collections.Generic;
 using Hookfall.Enemies;
 using UnityEngine;
 
@@ -20,6 +22,12 @@ namespace Hookfall.Combat.Items
             if (Stats != null) Stats.Heal(damage * Lifesteal);
         }
 
-        public override string DescribeNextLevel() => $"Lifesteal {Lifesteal * 100f:0}% → {(Lifesteal + lifestealPerLevel) * 100f:0}%";
+        public override IEnumerable<string> StatLines()
+        {
+            foreach (string text in base.StatLines()) yield return text;
+            yield return Loc.F("Lifesteal {0}%", (Lifesteal * 100f).ToString("0"));
+        }
+
+        public override string DescribeNextLevel() => Loc.F("Lifesteal {0}% → {1}%", (Lifesteal * 100f).ToString("0"), ((Lifesteal + lifestealPerLevel) * 100f).ToString("0"));
     }
 }

@@ -51,7 +51,7 @@ namespace Hookfall.UI
             UIPop.Add(title, 0f, 1.4f);
             UIFactory.Text(UIFactory.Centre(canvas.transform, "Subtitle", new Vector2(0f, 270f), new Vector2(900f, 40f)),
                 "Choose one", 26f, UITheme.TextMuted, TextAlignmentOptions.Center, true);
-            cardRow = UIFactory.Centre(canvas.transform, "Cards", new Vector2(0f, -30f), new Vector2(1320f, 470f));
+            cardRow = UIFactory.Centre(canvas.transform, "Cards", new Vector2(0f, -60f), new Vector2(1320f, 560f));
             UIFactory.Row(cardRow, 44f, 0);
             root.SetActive(false);
         }
@@ -74,7 +74,7 @@ namespace Hookfall.UI
 
             Color color = UITheme.ForRarity(rarity);
             raysImage.color = new Color(color.r, color.g, color.b, 0.3f);
-            title.text = $"{rarity.ToString().ToUpper()} CHEST";
+            title.text = Loc.T(rarity.ToString().ToUpperInvariant() + " CHEST");
             title.color = color;
             for (int i = 0; i < options.Count; i++)
                 cards.Add(BuildCard(i, options[i], options[i].Item != null ? UITheme.ForRarity(options[i].Item.Rarity) : color));
@@ -88,32 +88,36 @@ namespace Hookfall.UI
 
         private GameObject BuildCard(int index, ChestReward choice, Color color)
         {
-            string name, tag, value;
+            string name, tag, value, detail;
             Sprite icon;
             if (choice.Item == null)
             {
-                name = PlayerStats.NameOf(choice.FallbackStat);
-                tag = $"STAT  ·  ×{choice.LevelsGained}";
-                value = "Every item is maxed";
+                var stats = FindAnyObjectByType<PlayerStats>();
+                name = Loc.T(PlayerStats.NameOf(choice.FallbackStat));
+                tag = Loc.T("STAT");
+                value = stats != null ? stats.PickText(choice.FallbackStat) : name;
+                detail = Loc.T("Every item is maxed");
                 icon = UISkin.Icon(choice.FallbackStat);
             }
             else
             {
                 name = choice.Item.DisplayName;
                 icon = UISkin.Icon(choice.Item);
+                detail = choice.Item.Summary;
+                string kind = Loc.T(choice.Item.Rarity.ToString().ToUpperInvariant() + (choice.Item.IsPassive ? " PASSIVE" : " ITEM"));
                 if (choice.IsNewItem)
                 {
-                    tag = $"NEW {choice.Item.Rarity.ToString().ToUpper()} {(choice.Item.IsPassive ? "PASSIVE" : "ITEM")}";
-                    value = $"<size=60%><i>{choice.Item.Lore}</i></size>";
+                    tag = Loc.F("NEW  ·  {0}", kind);
+                    value = string.Join("\n", choice.Item.StatLines());
                 }
                 else
                 {
-                    tag = $"{(choice.Item.IsPassive ? "PASSIVE" : "ITEM")}  ·  LEVEL {choice.Item.Level} → {Mathf.Min(choice.Item.Level + choice.LevelsGained, ItemBase.MaxLevel)}";
+                    tag = Loc.F("LEVEL {0} → {1}", choice.Item.Level, Mathf.Min(choice.Item.Level + choice.LevelsGained, ItemBase.MaxLevel));
                     value = choice.Item.DescribeNextLevel();
                 }
             }
             int captured = index;
-            return UIFactory.ChoiceCard(cardRow, index, color, icon, name, tag, value, () => Pick(captured)).gameObject;
+            return UIFactory.ChoiceCard(cardRow, index, color, icon, name, tag, value, detail, () => Pick(captured)).gameObject;
         }
 
         private void Update()

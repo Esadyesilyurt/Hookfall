@@ -47,6 +47,7 @@ MonoBehaviour:
   displayName: Arc Laser
   lore: A lens from the fallen archer tower; it bends the Heartstone's light into
     a sweeping blade.
+  summary: A beam sweeps in front of you and burns what it touches.
   baseDamage: 20
   cooldown: 2
   level: 1

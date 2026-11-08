@@ -22,7 +22,7 @@ namespace Hookfall.Online
 
         private Task<bool> ready;
 
-        public string Status { get; private set; } = "Connecting...";
+        public string Status { get; private set; } = Hookfall.Core.Loc.T("Connecting...");
         public string PlayerName => AuthenticationService.Instance.IsSignedIn ? AuthenticationService.Instance.PlayerName ?? "" : "";
 
         private Task<bool> Ready() => ready ??= Connect();
@@ -39,7 +39,7 @@ namespace Hookfall.Online
             }
             catch (Exception e)
             {
-                Status = "Offline: " + e.Message;
+                Status = Hookfall.Core.Loc.T("Offline: ") + e.Message;
                 ready = null;   // try again next time
                 return false;
             }
@@ -53,7 +53,7 @@ namespace Hookfall.Online
                 await LeaderboardsService.Instance.AddPlayerScoreAsync(LeaderboardId, seconds,
                     new AddPlayerScoreOptions { Metadata = new Meta { character = character } });
             }
-            catch (Exception e) { Status = "Score not sent: " + e.Message; }
+            catch (Exception e) { Status = Hookfall.Core.Loc.T("Score not sent: ") + e.Message; }
         }
 
         public async Task<IReadOnlyList<LeaderboardRow>> TopAsync(int count)
@@ -66,7 +66,7 @@ namespace Hookfall.Online
                     new GetScoresOptions { Limit = count, IncludeMetadata = true });
                 foreach (LeaderboardEntry entry in page.Results) rows.Add(Row(entry));
             }
-            catch (Exception e) { Status = "Leaderboard unavailable: " + e.Message; }
+            catch (Exception e) { Status = Hookfall.Core.Loc.T("Leaderboard unavailable: ") + e.Message; }
             return rows;
         }
 
@@ -85,7 +85,7 @@ namespace Hookfall.Online
         {
             if (!await Ready()) return PlayerName;
             try { return await AuthenticationService.Instance.UpdatePlayerNameAsync(name); }
-            catch (Exception e) { Status = "Name not saved: " + e.Message; return PlayerName; }
+            catch (Exception e) { Status = Hookfall.Core.Loc.T("Name not saved: ") + e.Message; return PlayerName; }
         }
 
         private static LeaderboardRow Row(LeaderboardEntry entry)

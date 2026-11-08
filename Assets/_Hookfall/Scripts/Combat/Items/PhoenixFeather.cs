@@ -1,6 +1,8 @@
 // Hookfall - Phoenix Feather (Legendary passive): when health reaches zero, the Warden comes back with part of their
 // health instead of dying; the feather then recharges on a long cooldown. A fall into the abyss still ends the run.
 // AI disclosure: written with Claude (Anthropic) on 2026-11-08. Prompts and changes are recorded in Docs/PromptLog.md.
+using Hookfall.Core;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Hookfall.Combat.Items
@@ -44,7 +46,14 @@ namespace Hookfall.Combat.Items
             else if ((timer -= deltaTime) <= 0f) Stats.Revives = 1;
         }
 
+        public override IEnumerable<string> StatLines()
+        {
+            foreach (string text in base.StatLines()) yield return text;
+            yield return Loc.F("Revive with {0}% health", (ReviveShare(Level) * 100f).ToString("0"));
+            yield return Loc.F("Recharges in {0} s", Recharge.ToString("0"));
+        }
+
         public override string DescribeNextLevel() =>
-            $"Revive with {ReviveShare(Level) * 100f:0}% → {ReviveShare(Level + 1) * 100f:0}% health, recharges in {Mathf.Max(30f, rechargeTime - rechargePerLevel * Level):0} s";
+            Loc.F("Revive with {0}% → {1}% health", (ReviveShare(Level) * 100f).ToString("0"), (ReviveShare(Level + 1) * 100f).ToString("0"));
     }
 }

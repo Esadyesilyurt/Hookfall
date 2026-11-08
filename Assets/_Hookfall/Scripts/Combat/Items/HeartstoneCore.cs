@@ -1,6 +1,7 @@
 // Hookfall - Heartstone Core (Legendary passive): while the Warden flies, a pulse of the Heartstone's light every few
 // seconds damages every enemy close by and heals the Warden. Skipped on islands (the airborne rule).
 // AI disclosure: written with Claude (Anthropic) on 2026-11-08. Prompts and changes are recorded in Docs/PromptLog.md.
+using Hookfall.Core;
 using System.Collections.Generic;
 using Hookfall.Enemies;
 using UnityEngine;
@@ -36,7 +37,15 @@ namespace Hookfall.Combat.Items
             Pulsed?.Invoke(transform.position, radius);
         }
 
+        public override IEnumerable<string> StatLines()
+        {
+            foreach (string text in base.StatLines()) yield return text;
+            yield return Loc.F("Every {0} s", PulseCooldown(Level).ToString("0.#"));
+            yield return Loc.F("Radius {0} m", radius.ToString("0"));
+            yield return Loc.F("Heals {0}% health", (healShare * 100f).ToString("0"));
+        }
+
         public override string DescribeNextLevel() =>
-            $"Pulse every {PulseCooldown(Level):0.#} s → {PulseCooldown(Level + 1):0.#} s, {BaseDamage * (1f + damagePerLevel * Level):0} damage";
+            Loc.F("Every {0} s → {1} s", PulseCooldown(Level).ToString("0.#"), PulseCooldown(Level + 1).ToString("0.#"));
     }
 }

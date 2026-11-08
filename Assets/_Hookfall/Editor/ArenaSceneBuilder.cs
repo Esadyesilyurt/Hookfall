@@ -418,7 +418,7 @@ namespace Hookfall.EditorTools
             EnsureFolder(Root + "/Data");
             ItemBase Item(string id) => AssetDatabase.LoadAssetAtPath<ItemBase>($"{Root}/Prefabs/Items/PF_Item_{id}.prefab");
             CharacterDefinition Make(string id, string name, string description, float health, StatType[] picks,
-                ItemBase[] items, int jumps, int dashes, UnlockKind unlock, float target, string unlockText)
+                ItemBase[] items, int jumps, int dashes, UnlockKind unlock, float target, string unlockText, params string[] perks)
             {
                 string path = $"{Root}/Data/SO_Character_{id}.asset";
                 var c = AssetDatabase.LoadAssetAtPath<CharacterDefinition>(path);
@@ -438,6 +438,7 @@ namespace Hookfall.EditorTools
                 c.unlock = unlock;
                 c.unlockTarget = target;
                 c.unlockText = unlockText;
+                c.perks = perks;
                 EditorUtility.SetDirty(c);
                 return c;
             }
@@ -445,16 +446,20 @@ namespace Hookfall.EditorTools
             var all = new[]
             {
                 Make("Warden", "Warden", "A Warden of the Order of the Tether: steady in every way.", 1f,
-                    new StatType[0], new[] { Item("OrbitBlades") }, 1, 1, UnlockKind.None, 0f, ""),
+                    new StatType[0], new[] { Item("OrbitBlades") }, 1, 1, UnlockKind.None, 0f, "",
+                    "Balanced in everything", "1 double jump, 1 dash"),
                 Make("Skyrunner", "Skyrunner", "A scout of the storm roads: fastest in the air, with two dashes, but fragile.", 0.8f,
                     new[] { StatType.FlightSpeed, StatType.FlightSpeed, StatType.WalkSpeed }, new[] { Item("ShardBurst"), Item("GaleFeather") },
-                    1, 2, UnlockKind.SurviveSeconds, 300f, "Hold the watch for 5:00 in one run"),
+                    1, 2, UnlockKind.SurviveSeconds, 300f, "Hold the watch for 5:00 in one run",
+                    "+20% Max flight speed", "+8% Walk speed", "2 dashes per flight"),
                 Make("Bulwark", "Bulwark", "A knight of the vault gates: heavy plate, a ward shell, and the most health.", 1.5f,
                     new[] { StatType.Armor, StatType.Armor }, new[] { Item("OrbitBlades"), Item("WardShell") },
-                    1, 1, UnlockKind.TotalKills, 1500f, "Defeat 1,500 enemies over all runs"),
+                    1, 1, UnlockKind.TotalKills, 1500f, "Defeat 1,500 enemies over all runs",
+                    "+2 Armor", "Starts with a Ward Shell"),
                 Make("Lumen", "Lumen", "A mystic of the Heartstone: hits harder and faster, and jumps twice in the air.", 0.9f,
                     new[] { StatType.Damage, StatType.AttackSpeed }, new[] { Item("HomingSparks"), Item("MendingMoss") },
-                    2, 1, UnlockKind.ReachLevel, 15f, "Reach level 15 in one run"),
+                    2, 1, UnlockKind.ReachLevel, 15f, "Reach level 15 in one run",
+                    "+10% Damage", "+8% Attack speed", "2 double jumps per flight"),
             };
             AssetDatabase.SaveAssets();
             return all;

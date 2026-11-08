@@ -47,6 +47,7 @@ MonoBehaviour:
   displayName: Phoenix Feather
   lore: The last feather of the tower's firebird; once in a long while it refuses
     to let its keeper die.
+  summary: When your health reaches zero, come back to life once, then it recharges.
   baseDamage: 0
   cooldown: 1
   level: 1

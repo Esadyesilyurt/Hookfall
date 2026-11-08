@@ -2,6 +2,8 @@
 // in flight; passive items (PassiveItem) act all the time and use their own six slots.
 // AI disclosure: written with Claude (Anthropic) on 2026-11-04 as part of the midterm project skeleton,
 // extended on 2026-11-07 (lore, level text, chest levels) and 2026-11-08 (rarity, passives). Prompts and changes are recorded in Docs/PromptLog.md.
+using System.Collections.Generic;
+using Hookfall.Core;
 using Hookfall.Player;
 using UnityEngine;
 
@@ -13,6 +15,8 @@ namespace Hookfall.Combat
 
         [SerializeField] private string displayName = "Item";
         [SerializeField, TextArea] private string lore = "";
+        [Tooltip("What the item does, in one plain sentence, for the cards.")]
+        [SerializeField, TextArea] private string summary = "";
         [SerializeField] private float baseDamage = 10f;
         [SerializeField] private float cooldown = 0.5f;
         [SerializeField, Range(1, MaxLevel)] private int level = 1;
@@ -23,8 +27,9 @@ namespace Hookfall.Combat
 
         protected PlayerStats Stats { get; private set; }
 
-        public string DisplayName => displayName;
-        public string Lore => lore;
+        public string DisplayName => Loc.T(displayName);
+        public string Lore => Loc.T(lore);
+        public string Summary => Loc.T(summary);
         public int Level => level;
         public bool IsMaxed => level >= MaxLevel;
         public Rarity Rarity => rarity;
@@ -55,6 +60,13 @@ namespace Hookfall.Combat
             if (newLevel == level) return;
             level = newLevel;
             OnLevelChanged();
+        }
+
+        /// <summary>One-glance lines for the cards ("Damage 12", "Every 1.5 s"); items add their own after these.</summary>
+        public virtual IEnumerable<string> StatLines()
+        {
+            if (baseDamage > 0f) yield return Loc.F("Damage {0}", Damage.ToString("0"));
+            if (!IsPassive && cooldown > 0f) yield return Loc.F("Every {0} s", EffectiveCooldown.ToString("0.0#"));
         }
 
         /// <summary>Text for the level-up card, e.g. "2 → 3 blades".</summary>

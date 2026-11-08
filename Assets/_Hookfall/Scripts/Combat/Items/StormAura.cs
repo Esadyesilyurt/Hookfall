@@ -1,5 +1,6 @@
 // Hookfall - Storm Aura: a damage field around the player; 4 damage every 0.25 s in 4 m, +0.5 m radius per level (GDD 4.5).
 // AI disclosure: written with Claude (Anthropic) on 2026-11-07. Prompts and changes are recorded in Docs/PromptLog.md.
+using Hookfall.Core;
 using System.Collections.Generic;
 using Hookfall.Enemies;
 using UnityEngine;
@@ -51,6 +52,12 @@ namespace Hookfall.Combat.Items
             if (field != null) field.gameObject.SetActive(active);
         }
 
-        public override string DescribeNextLevel() => $"{Radius:0.0} m → {Radius + radiusPerLevel:0.0} m radius";
+        public override IEnumerable<string> StatLines()
+        {
+            foreach (string text in base.StatLines()) yield return text;
+            yield return Loc.F("Radius {0} m", Radius.ToString("0.0"));
+        }
+
+        public override string DescribeNextLevel() => Loc.F("Radius {0} m → {1} m", Radius.ToString("0.0"), (Radius + radiusPerLevel).ToString("0.0"));
     }
 }

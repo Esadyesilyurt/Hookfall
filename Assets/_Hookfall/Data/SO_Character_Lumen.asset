@@ -16,6 +16,10 @@ MonoBehaviour:
   displayName: Lumen
   description: 'A mystic of the Heartstone: hits harder and faster, and jumps twice
     in the air.'
+  perks:
+  - +10% Damage
+  - +8% Attack speed
+  - 2 double jumps per flight
   maxHealthMultiplier: 0.9
   statPicks: 0200000003000000
   startingItems:

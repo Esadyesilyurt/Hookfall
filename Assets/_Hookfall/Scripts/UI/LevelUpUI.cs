@@ -3,6 +3,7 @@
 // AI disclosure: written with Claude (Anthropic) on 2026-11-07, restyled the same day with the UI skin.
 // Prompts and changes are recorded in Docs/PromptLog.md.
 using System.Collections.Generic;
+using Hookfall.Core;
 using Hookfall.Player;
 using Hookfall.Progression;
 using TMPro;
@@ -38,7 +39,7 @@ namespace Hookfall.UI
             subtitle = UIFactory.Text(UIFactory.Centre(canvas.transform, "Subtitle", new Vector2(0f, 270f), new Vector2(900f, 40f)),
                 "Choose one", 26f, UITheme.TextMuted, TextAlignmentOptions.Center, true);
 
-            cardRow = UIFactory.Centre(canvas.transform, "Cards", new Vector2(0f, -30f), new Vector2(1320f, 470f));
+            cardRow = UIFactory.Centre(canvas.transform, "Cards", new Vector2(0f, -60f), new Vector2(1320f, 560f));
             UIFactory.Row(cardRow, 44f, 0);
             root.SetActive(false);
         }
@@ -71,7 +72,7 @@ namespace Hookfall.UI
 
             IReadOnlyList<LevelUpOption> offer = levelUp.Offer;
             for (int i = 0; i < offer.Count; i++) cards.Add(BuildCard(i, offer[i]));
-            subtitle.text = levelUp.PendingLevels > 1 ? $"Choose one  ·  {levelUp.PendingLevels} levels to spend" : "Choose one";
+            subtitle.text = levelUp.PendingLevels > 1 ? Loc.F("Choose one  ·  {0} levels to spend", levelUp.PendingLevels) : Loc.T("Choose one");
             root.SetActive(true);
             title.gameObject.SetActive(false);
             title.gameObject.SetActive(true);   // replays the title pop
@@ -81,11 +82,12 @@ namespace Hookfall.UI
         {
             int captured = index;
             Color accent = option.IsItem ? UITheme.Gold : UITheme.Player;
-            string name = option.IsItem ? option.Item.DisplayName : PlayerStats.NameOf(option.Stat);
-            string tag = option.IsItem ? $"ITEM  ·  LEVEL {option.Item.Level} → {option.Item.Level + 1}" : "STAT";
-            string value = option.IsItem ? option.Item.DescribeNextLevel() : stats.Describe(option.Stat);
+            string name = option.IsItem ? option.Item.DisplayName : Loc.T(PlayerStats.NameOf(option.Stat));
+            string tag = option.IsItem ? Loc.F("ITEM  ·  LEVEL {0} → {1}", option.Item.Level, option.Item.Level + 1) : Loc.T("STAT");
+            string value = option.IsItem ? option.Item.DescribeNextLevel() : stats.PickText(option.Stat);
+            string detail = option.IsItem ? option.Item.Summary : Loc.F("Now {0}", stats.Describe(option.Stat));
             Sprite icon = option.IsItem ? UISkin.Icon(option.Item) : UISkin.Icon(option.Stat);
-            return UIFactory.ChoiceCard(cardRow, index, accent, icon, name, tag, value, () => Pick(captured)).gameObject;
+            return UIFactory.ChoiceCard(cardRow, index, accent, icon, name, tag, value, detail, () => Pick(captured)).gameObject;
         }
 
         private void Update()

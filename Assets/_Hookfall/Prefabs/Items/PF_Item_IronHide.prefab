@@ -46,6 +46,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Hookfall.Combat.Items.StatCharm
   displayName: Iron Hide
   lore: Plates hammered from the vault doors, light enough to fly in.
+  summary: 'Armor: every hit hurts less.'
   baseDamage: 0
   cooldown: 1
   level: 1

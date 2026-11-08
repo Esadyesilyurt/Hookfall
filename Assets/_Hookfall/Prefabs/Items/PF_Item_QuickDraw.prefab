@@ -46,6 +46,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Hookfall.Combat.Items.StatCharm
   displayName: Quick Draw
   lore: An archer's glove from the fallen tower; every item fires sooner.
+  summary: All your attack items fire more often.
   baseDamage: 0
   cooldown: 1
   level: 1

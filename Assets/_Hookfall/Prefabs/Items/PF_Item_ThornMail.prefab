@@ -46,6 +46,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Hookfall.Combat.Items.ThornMail
   displayName: Thorn Mail
   lore: Mail grown from storm thorns; whatever bites the Warden bleeds for it.
+  summary: When you are hit in the air, enemies close by take damage back.
   baseDamage: 15
   cooldown: 1
   level: 1

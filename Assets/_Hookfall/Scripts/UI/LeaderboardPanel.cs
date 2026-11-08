@@ -50,7 +50,7 @@ namespace Hookfall.UI
 
         private async void Refresh()
         {
-            rows.text = "Loading...";
+            rows.text = Loc.T("Loading...");
             mine.text = "";
             var top = await Leaderboard.Current.TopAsync(Shown);
             LeaderboardRow? me = await Leaderboard.Current.MineAsync();
@@ -59,10 +59,10 @@ namespace Hookfall.UI
             var text = new StringBuilder();
             foreach (LeaderboardRow row in top)
                 text.Append($"<pos=2%>#{row.Rank}<pos=16%>{row.Name}<pos=62%>{RunRecord.FormatTime(row.Seconds)}<pos=80%>{row.Character}\n");
-            rows.text = top.Count > 0 ? text.ToString() : "No watches on the board yet.";
-            mine.text = !me.HasValue ? "You have no score on the board yet."
-                : me.Value.Rank <= Shown ? "You are in the top 20."
-                : $"You  ·  {me.Value.Name}  ·  {RunRecord.FormatTime(me.Value.Seconds)}";   // no rank outside the top 20
+            rows.text = top.Count > 0 ? text.ToString() : Loc.T("No watches on the board yet.");
+            mine.text = !me.HasValue ? Loc.T("You have no score on the board yet.")
+                : me.Value.Rank <= Shown ? Loc.T("You are in the top 20.")
+                : Loc.F("You  ·  {0}  ·  {1}", me.Value.Name, RunRecord.FormatTime(me.Value.Seconds));   // no rank outside the top 20
             status.text = Leaderboard.Current.Status;
             string name = Leaderboard.Current.PlayerName;
             int hash = name.LastIndexOf('#');   // the service adds a #1234 tag to keep names unique
@@ -73,7 +73,7 @@ namespace Hookfall.UI
         {
             string name = nameField.text.Trim().Replace(' ', '_');   // the service does not allow spaces
             if (name.Length == 0) return;
-            status.text = "Saving...";
+            status.text = Loc.T("Saving...");
             await Leaderboard.Current.SetNameAsync(name);
             if (this != null) Refresh();
         }

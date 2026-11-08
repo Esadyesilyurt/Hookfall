@@ -134,7 +134,7 @@ namespace Hookfall.UI
                     UIFactory.Sized(UIFactory.Text(cell, "Value", Value(stat), 22f, UITheme.Text, TextAlignmentOptions.Right), 150f, 40f).fontStyle = FontStyles.Bold;
                 }
 
-            bestiary.text = string.Join("\n", enemyLore);
+            bestiary.text = string.Join("\n", System.Array.ConvertAll(enemyLore, Hookfall.Core.Loc.T));
         }
 
         private string Value(StatType stat)

@@ -14,7 +14,7 @@ namespace Hookfall.UI
     {
         public static GameObject Build(Transform parent, Action onBack)
         {
-            Image panel = UIFactory.Panel(parent, "Settings", new Vector2(800f, 660f), UITheme.Panel);
+            Image panel = UIFactory.Panel(parent, "Settings", new Vector2(800f, 740f), UITheme.Panel);
             UIFactory.Column(panel, 18f, 44, TextAnchor.UpperCenter);
             UIPop.Add(panel, 0f, 0.85f);
 
@@ -32,6 +32,16 @@ namespace Hookfall.UI
                 speedFx.GetComponentInChildren<TextMeshProUGUI>().text = SpeedFxLabel();
             }, -1f, 56f);
 
+            // Language: the menu rebuilds at once; in a run, screens built from now on use it.
+            Button language = null;
+            language = UIFactory.Button(panel.transform, Loc.T("Language: English"), () =>
+            {
+                Loc.Turkish = !Loc.Turkish;
+                if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == GameManager.MenuScene)
+                    UnityEngine.SceneManagement.SceneManager.LoadScene(GameManager.MenuScene);
+                else language.GetComponentInChildren<TextMeshProUGUI>().text = Loc.T("Language: English");
+            }, -1f, 56f);
+
             List<Resolution> resolutions = UniqueResolutions();
             int index = resolutions.FindIndex(r => r.width == Screen.width && r.height == Screen.height);
             Button resolution = null;
@@ -41,15 +51,15 @@ namespace Hookfall.UI
                 index = (index + 1) % resolutions.Count;
                 GameSettings.SetResolution(resolutions[index]);
                 resolution.GetComponentInChildren<TextMeshProUGUI>().text =
-                    $"Resolution: {resolutions[index].width} × {resolutions[index].height}";
+                    Loc.F("Resolution: {0} × {1}", resolutions[index].width, resolutions[index].height);
             }, -1f, 56f);
 
             UIFactory.Button(panel.transform, "Back", onBack, -1f, 60f);
             return panel.gameObject;
         }
 
-        private static string SpeedFxLabel() => $"Speed effects: {(GameSettings.SpeedEffects ? "On" : "Off")}";
-        private static string ResolutionLabel() => $"Resolution: {Screen.width} × {Screen.height}";
+        private static string SpeedFxLabel() => Loc.F("Speed effects: {0}", Loc.T(GameSettings.SpeedEffects ? "On" : "Off"));
+        private static string ResolutionLabel() => Loc.F("Resolution: {0} × {1}", Screen.width, Screen.height);
 
         private static List<Resolution> UniqueResolutions()
         {
