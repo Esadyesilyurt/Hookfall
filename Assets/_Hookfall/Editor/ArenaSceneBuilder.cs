@@ -255,6 +255,16 @@ namespace Hookfall.EditorTools
             SetRef(audio, "levelUp", levelUp);
             AudioWiring.AssignClips(audio);
 
+            // Open-sky features between the islands: updrafts, air channels, refill crystals, hook anchors.
+            var sky = new GameObject("Sky Features").AddComponent<SkyFeatures>();
+            SetRef(sky, "islands", generator);
+            SetRef(sky, "player", controller);
+            SetRef(sky, "audioManager", audio);
+            SetRef(sky, "vfx", vfx);
+            SetRef(sky, "particleMaterial", ToonSetup.ParticleMaterial());
+            SetRef(sky, "crystalMaterial", Mat("M_Crystal"));
+            SetRef(sky, "anchorModel", AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Hookfall/Prefabs/Islands/PF_Rock_1.prefab"));
+
             // Game feel
             Volume postFx = FeelSetup.AddVolume();
             var feel = new GameObject("Game Feel").AddComponent<FeelDirector>();

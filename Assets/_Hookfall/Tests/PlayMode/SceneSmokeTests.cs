@@ -23,6 +23,15 @@ namespace Hookfall.Tests
             Type statsType = Type.GetType("Hookfall.Player.PlayerStats, Assembly-CSharp");
             Component stats = player.GetComponent(statsType);
             statsType.GetProperty("CurrentHealth").SetValue(stats, statsType.GetProperty("MaxHealth").GetValue(stats));
+            // A fall into the abyss would end the run and stop time, and a test waiting for a physics step would hang.
+            statsType.GetMethod("SetAbyssKillHeight").Invoke(stats, new object[] { -100000f });
+        }
+
+        /// <summary>Moves the Warden at once: setting only the transform can be undone by interpolation before the next physics step.</summary>
+        private static void Teleport(GameObject player, Vector3 position)
+        {
+            player.GetComponent<Rigidbody>().position = position;
+            player.transform.position = position;
         }
 
         [UnityTest]
@@ -413,6 +422,8 @@ namespace Hookfall.Tests
             Action onClimb = () => climbed = true;
             var climbEvent = pcType.GetEvent("LedgeClimbed");
             climbEvent.AddEventHandler(controller, onClimb);
+            GameObject sky = GameObject.Find("Sky Features");
+            if (sky != null) sky.SetActive(false);   // an updraft beside the rim would lift the Warden past the side
 
             // Try inner islands until one has a clear side: start 3 m below the top, 1.5 m out from the rim, flying in.
             Component landedOn = null;
@@ -461,6 +472,82 @@ namespace Hookfall.Tests
             yield return new WaitForFixedUpdate();
             yield return new WaitForFixedUpdate();
             Assert.LessOrEqual(body.linearVelocity.magnitude, cap * 1.15f + 1f, "Boosts should not lift the speed far past the cap");
+            LogAssert.NoUnexpectedReceived();
+        }
+
+        /// <summary>Sky features: every kind is placed; updrafts lift, channels carry, crystals refill, anchors take the hook.</summary>
+        [UnityTest]
+        public IEnumerator SkyFeaturesWork()
+        {
+            SceneManager.LoadScene("Arena");
+            yield return null;
+            yield return null;   // SkyFeatures places everything in Start
+            GameObject player = GameObject.Find("Player");
+            var body = player.GetComponent<Rigidbody>();
+            Type pcType = Type.GetType("Hookfall.Player.PlayerController, Assembly-CSharp");
+            Component controller = player.GetComponent(pcType);
+            var flags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+            GameObject sky = GameObject.Find("Sky Features");
+            Assert.IsNotNull(sky, "The arena should have Sky Features");
+            Func<string, Component[]> find = name => sky.GetComponentsInChildren(Type.GetType($"Hookfall.World.{name}, Assembly-CSharp"));
+            Component[] updrafts = find("Updraft"), channels = find("AirChannel"), crystals = find("RefillCrystal"), anchors = find("HookAnchor");
+            Assert.Greater(updrafts.Length, 0, "No updraft was placed");
+            Assert.Greater(channels.Length, 0, "No air channel was placed");
+            Assert.Greater(crystals.Length, 0, "No refill crystal was placed");
+            Assert.Greater(anchors.Length, 0, "No hook anchor was placed");
+
+            // Updraft: from rest a third of the way up the column, the Warden rises.
+            Component updraft = updrafts[0];
+            Vector3 bottom = (Vector3)updraft.GetType().GetProperty("Bottom").GetValue(updraft);
+            float height = (float)updraft.GetType().GetProperty("Height").GetValue(updraft);
+            Teleport(player, bottom + Vector3.up * (height * 0.3f));
+            body.linearVelocity = Vector3.zero;
+            for (float t = 0f; t < 0.5f; t += Time.fixedDeltaTime)
+            {
+                KeepAlive(player);
+                yield return new WaitForFixedUpdate();
+            }
+            object airborne = pcType.GetProperty("IsAirborne").GetValue(controller);
+            object island = pcType.GetProperty("CurrentIsland").GetValue(controller);
+            Assert.Greater(body.linearVelocity.y, 1f, $"An updraft should lift the Warden (at {body.position}, column {bottom} + {height} m, " +
+                $"airborne {airborne}, island {island}, kinematic {body.isKinematic})");
+
+            // Air channel: from rest at its entry, the Warden is carried along it.
+            Component channel = channels[0];
+            Vector3 entry = (Vector3)channel.GetType().GetProperty("Entry").GetValue(channel);
+            Vector3 dir = ((Vector3)channel.GetType().GetProperty("Exit").GetValue(channel) - entry).normalized;
+            Teleport(player, entry + dir);
+            body.linearVelocity = Vector3.zero;
+            for (float t = 0f; t < 0.6f; t += Time.fixedDeltaTime)
+            {
+                KeepAlive(player);
+                yield return new WaitForFixedUpdate();
+            }
+            Assert.Greater(Vector3.Dot(body.position - entry, dir), 8f, "An air channel should carry the Warden along it");
+
+            // Refill crystal: with both moves spent, touching it refills them and it goes away for a while.
+            Component crystal = crystals[0];
+            pcType.GetField("airJumpsLeft", flags).SetValue(controller, 0);
+            pcType.GetField("dashesLeft", flags).SetValue(controller, 0);
+            bool taken = false;
+            for (int i = 0; i < 20 && !taken; i++)
+            {
+                KeepAlive(player);
+                Teleport(player, crystal.transform.position);
+                body.linearVelocity = Vector3.zero;
+                yield return new WaitForFixedUpdate();
+                yield return null;
+                taken = !(bool)crystal.GetType().GetProperty("Ready").GetValue(crystal);
+            }
+            Assert.IsTrue(taken, "Touching a refill crystal in flight should use it");
+            Assert.AreEqual(1, (int)pcType.GetProperty("AirJumpsLeft").GetValue(controller), "The crystal should refill the double jump");
+            Assert.AreEqual(1, (int)pcType.GetProperty("DashesLeft").GetValue(controller), "The crystal should refill the dash");
+
+            // Hook anchor: the hook accepts its collider.
+            Type hookType = Type.GetType("Hookfall.Player.GrappleHook, Assembly-CSharp");
+            Collider rock = anchors[0].GetComponentInChildren<Collider>();
+            Assert.IsNotNull(rock, "A hook anchor needs a collider");
+            Assert.IsTrue((bool)hookType.GetMethod("IsHookable").Invoke(null, new object[] { rock }), "The hook should catch a hook anchor");
             LogAssert.NoUnexpectedReceived();
         }
 

@@ -196,6 +196,10 @@ namespace Hookfall.Player
             zipCharges++;
         }
 
+        /// <summary>The hook catches islands (with their tower and props) and the floating hook anchors.</summary>
+        public static bool IsHookable(Collider collider) =>
+            collider.GetComponentInParent<Island>() != null || collider.GetComponentInParent<HookAnchor>() != null;
+
         private bool TryFindTarget(float range, out Vector3 point)
         {
             point = default;
@@ -212,8 +216,7 @@ namespace Hookfall.Player
                 if (hit.collider.transform.IsChildOf(transform)) continue;   // skip the player
                 if (hit.distance >= best) continue;
                 best = hit.distance;
-                found = hit.collider.GetComponentInParent<Island>() != null
-                        && Vector3.Distance(transform.position, hit.point) <= range;
+                found = IsHookable(hit.collider) && Vector3.Distance(transform.position, hit.point) <= range;
                 point = hit.point;
             }
             return found;
