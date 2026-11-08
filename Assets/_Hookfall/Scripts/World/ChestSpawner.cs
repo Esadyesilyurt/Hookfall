@@ -1,6 +1,7 @@
-// Hookfall - places a chest on a random island every 45 s (max 3), charges 15 gold +10 per chest opened,
+// Hookfall - places a chest on an island every 30 s (max 7; GDD: 45 s, max 3), charges 15 gold +10 per chest opened,
 // and rolls rarity: Common 70%, Rare 25%, Epic 5%, shifted by Luck (GDD 4.7).
-// AI disclosure: written with Claude (Anthropic) on 2026-11-07. Prompts and changes are recorded in Docs/PromptLog.md.
+// AI disclosure: written with Claude (Anthropic) on 2026-11-07; on 2026-11-09 more chests, placed within reach of the
+// Warden and never on large islands. Prompts and changes are recorded in Docs/PromptLog.md.
 using System;
 using System.Collections.Generic;
 using Hookfall.Combat;
@@ -18,12 +19,15 @@ namespace Hookfall.World
         [SerializeField] private Chest chestPrefab;
 
         [Header("Spawning")]
-        [SerializeField] private float interval = 45f;
-        [SerializeField] private int maxChests = 4;   // 3 until the map doubled (2026-11-08)
+        [SerializeField] private float interval = 30f;   // 45 until 2026-11-09
+        [SerializeField] private int maxChests = 7;   // 3 until the map doubled (2026-11-08), 4 until 2026-11-09
         [Tooltip("Chests appear on islands at least this wide (tiny hook points have no room).")]
         [SerializeField] private float minIslandWidth = 5f;
-        [Tooltip("The first chest appears this many seconds into the run.")]
-        [SerializeField] private float firstChestAfter = 20f;
+        [Tooltip("The first chest appears this many seconds into the stage (20 until 2026-11-09).")]
+        [SerializeField] private float firstChestAfter = 15f;
+        [Tooltip("A new chest goes on an island this far from the Warden (min, max) when one is free, so it can be " +
+                 "found on the big map; otherwise anywhere.")]
+        [SerializeField] private Vector2 nearRange = new Vector2(30f, 170f);
 
         [Header("Cost")]
         [SerializeField] private int baseCost = 15;
@@ -64,9 +68,18 @@ namespace Hookfall.World
         private void Spawn()
         {
             var candidates = new List<Island>();
+            var near = new List<Island>();
+            Vector3 p = player.transform.position;
             foreach (Island island in Island.All)
-                if (island.Kind != IslandKind.Tower && island.Kind != IslandKind.Boss && island.Width >= minIslandWidth && chests.Find(c => c.Island == island) == null)
-                    candidates.Add(island);
+            {
+                // Never on the tower, the boss's islands or the large islands, which stay empty.
+                if (island.Kind == IslandKind.Tower || island.Kind == IslandKind.Boss || island.Kind == IslandKind.Large) continue;
+                if (island.Width < minIslandWidth || chests.Find(c => c.Island == island) != null) continue;
+                candidates.Add(island);
+                float d = Vector3.Distance(p, island.Top);
+                if (d >= nearRange.x && d <= nearRange.y) near.Add(island);
+            }
+            if (near.Count > 0) candidates = near;
             if (candidates.Count == 0) return;
 
             Island chosen = candidates[Random.Range(0, candidates.Count)];

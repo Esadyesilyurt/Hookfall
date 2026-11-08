@@ -25,8 +25,8 @@ Values the GDD does not give, picked by Claude on 2026-11-07 when building Weeks
 ### Chests and the tower cache
 | Value | Default | Where |
 | --- | --- | --- |
-| First chest | 20 s into the run, then every 45 s (GDD) | ChestSpawner |
-| Chest islands | Any non-tower island at least 5 m wide | ChestSpawner |
+| First chest | 15 s into the stage, then every 30 s, up to 7 at once (GDD: 20 s, every 45 s, 3 at once; 4 at once after the map doubled; more on 2026-11-09 because chests were hard to find on the doubled map) | ChestSpawner |
+| Chest islands | An island at least 5 m wide that is not the tower, a large island or a boss island; a new chest goes on one 30-170 m from the Warden when one is free, otherwise anywhere (anywhere until 2026-11-09) | ChestSpawner |
 | Chest reach | E opens a chest within 7 m, standing or flying (3 m and on the ground only until 2026-11-08) | Chest |
 | Luck | Multiplies the Rare and Epic weights | ChestSpawner.Roll |
 | Rarity effect | Rarer chests offer rarer items, never more levels: new items of the chest's rarity first, then lower rarities; owned items gain +1 level; stats fill what is left (levels per rarity until 2026-11-08) | CombatSystem.RollChest |
@@ -51,16 +51,17 @@ Values the GDD does not give, picked by Claude on 2026-11-07 when building Weeks
 | Value | Default | Where |
 | --- | --- | --- |
 | Bat flocks | 4–8 bats, 4 m spread | EnemyDirector |
-| Bat bite | 0.25 s recovery, pursuit looks 0.5 s ahead | PF_Bat |
+| Bat bite | 0.25 s recovery; pursuit looks ahead by the time to close the gap, at most 0.5 s (a fixed 0.5 s until 2026-11-09 aimed 19 m in front of a Warden at full speed, and the horde circled that point) | PF_Bat, ChaseState |
 | Wyverns | From minute 1; 5% of spawns, +3% per minute, max 20% | EnemyDirector |
 | Wyvern | Chase 20 m/s (14 until 2026-11-08), dash 24 m (0.8 s at 30 m/s), hits within 2 m, recovers at 30% speed, dives from 10 m above an island-bound player | PF_Wyvern |
 | Golems | From minute 2 (GDD), one every 15 s up to 2 + 1 per minute, on free inner islands within 110 m | EnemyDirector |
 | Golem | Throws from 3 m up; boulder hits within 1.3 m, breaks on islands, lives 3 s | PF_Golem, PF_Boulder |
 | Elite wave | Every 5 min (GDD): 15 bats, 3 wyverns, 1 golem; ×3 health, ×1.5 damage, ×1.4 size, ×3 XP and gold, magenta glow | EnemyDirector |
-| Spawn distance | 60 m around the player, out of camera view; 90 m ahead of the flight path | EnemyDirector |
+| Spawn distance | 60 m around the player, out of camera view; 90 m ahead of the flight path; never inside an island or within 14 m above a large island (up to 6 retries, from 2026-11-09) | EnemyDirector |
 | Steering | Acceleration 60 m/s² (40 until 2026-11-08), separation 1.6 m, island raycast 0.5 s ahead; stuck twice in a row → respawn | EnemyBase |
-| Catch-up | Chasing bats and wyverns fly at least 80% of the Warden's speed, plus 0.4 m/s for every metre beyond 15 m; bats 18 m/s base (12 until 2026-11-08) | EnemyBase, PF_Bat |
-| Low FPS | Spawning pauses below 50 FPS (smoothed); hit sparks drop to a quarter | EnemyDirector, VfxManager |
+| Catch-up | Chasing bats and wyverns fly at least the Warden's speed, plus 0.8 m/s for every metre beyond 2.5 m, so at full speed the horde closes in within a few seconds and rides inside the Orbit Blades' ring but outside a bite (80% and 0.4 m/s beyond 15 m until 2026-11-09: the horde trailed 30 m behind, out of view and out of reach); bats 18 m/s base (12 until 2026-11-08) | EnemyBase, PF_Bat |
+| Lost flyers | A bat or wyvern that has not come within 30 m of the Warden for 10 s (behind an island, left behind) comes back ahead of them; beyond 120 m at once (from 2026-11-09) | EnemyBase, EnemyDirector |
+| Low FPS | Below 50 FPS (smoothed) the horde stops growing past 60 (spawning stopped outright until 2026-11-09); hit sparks drop to a quarter | EnemyDirector, VfxManager |
 
 ### Items
 | Item | Defaults beyond GDD 4.5 |
@@ -187,7 +188,7 @@ Bridge passives (Rare, two schools each): Steamforged Gauntlet (Flame, Frost), T
 ### Stages and the boss (2026-11-08)
 | Value | Default | Where |
 | --- | --- | --- |
-| Boss bar | Gold earned on the stage (spending on chests does not slow it): 1500 on stage 1, x1.6 per stage | StageDirector |
+| Boss bar | Gold earned on the stage (spending on chests does not slow it): 1000 on stage 1 (1500 until 2026-11-09, never reached in play), x1.6 per stage | StageDirector |
 | Enemies per stage | Health x2.5, damage x1.8, growth per minute and per level 35% faster, spawns x1.2, XP and gold per kill x1.5 (each once per stage after the first); waves and elite timers follow the stage clock | StageDirector, EnemyDirector |
 | New stage | New map; the Warden back to level 1 at the foot of the tower with full health; items, item levels, stats and gold kept; the chest price keeps rising; the tower cache waits its full time | StageDirector |
 | Boss arena | The boss 78 m above the tower; six islands at 30 m around it, 14-24 m below it; three updrafts and eight hook anchors lead up | StageDirector, SkyFeatures |
@@ -203,12 +204,12 @@ Bridge passives (Rare, two schools each): Steamforged Gauntlet (Flame, Frost), T
 ### Map size (2026-11-08: twice as wide)
 | Value | Default | Where |
 | --- | --- | --- |
-| Large islands | 6-8, 26-40 m wide, 70-270 m out; golems never spawn on them | IslandGenerator |
+| Large islands | 6-8, 26-40 m wide, 70-270 m out; kept empty: no golems, no chests (from 2026-11-09), and flyers never spawn on them or inside any island | IslandGenerator, EnemyDirector, ChestSpawner |
 | Inner and outer rings | 22-30 islands 40-210 m out; 42-58 small ones 190-310 m out; 8-12 perches | IslandGenerator |
 | Reach | Every island's rim within 22 m of a reachable rim (was 32 m centre to centre) | IslandGenerator |
 | Start | No prop within 4 m of the Warden's start on the tower island | IslandGenerator |
 | Edge and view | Storm wall at 390 m (wind from 350 m), far scenery 700-920 m, fog 110-400 m, far clip 1000 m | StormWall, Backdrop, ArenaSceneBuilder |
-| Open sky | 16 updrafts, 8 air channels, 24 crystals, 20 anchors; 4 chests at once | SkyFeatures, ChestSpawner |
+| Open sky | 16 updrafts, 8 air channels, 24 crystals, 20 anchors; 7 chests at once (4 until 2026-11-09) | SkyFeatures, ChestSpawner |
 
 ### Pickups and balance (2026-11-08, from the balance probe)
 | Value | Default | Where |
@@ -230,6 +231,7 @@ Bridge passives (Rare, two schools each): Steamforged Gauntlet (Flame, Frost), T
 | Own vector icons (8.3) | 3D symbols rendered in Blender as sprites, in diamond and card frames | Esad's choice on 2026-11-07 |
 | Licensed sound and music (8.3) | Kenney CC0 recordings for the effects; wind, heartbeat and music synthesised in code by Tools/Audio/make_sfx.js | Esad's choices on 2026-11-08 (Docs/Credits.md); no AI audio model is used |
 | Hook values 4.1: spring 4.5, damper 7, max air speed 35, strafe 6 | A taut rope with a downhill pump, 1.8x air gravity, 40 m/s with capped boosts, strafe 12, a power-swing Zip, wall jumps, air tricks | Esad found the swing slow and islands hard to climb (2026-11-08) |
-| Spawn rate 2/s, +15% per minute, flocks of 4–8 (4.8) | 2/s, +20% per minute, flocks of 4–8, at most 120 alive | Esad found the first build too calm (2026-11-07: 5/s, flocks of 8–14, 300 alive), then far too crowded (2026-11-08) |
+| Spawn rate 2/s, +15% per minute, flocks of 4–8 (4.8) | 3/s, +20% per minute, flocks of 4–8, at most 120 alive | Esad found the first build too calm (2026-11-07: 5/s, flocks of 8–14, 300 alive), then far too crowded (2026-11-08: 2/s), then too empty on the doubled map (2026-11-09) |
 | Six items, eleven stats (4.5, 4.6) | A seventh chest item (Tether Coil) and two Zip stats | Added with the right-click Zip on Esad's request (2026-11-07) |
+| Bat 10 health (5.3) | 8 health | With the stage's growth a fresh bat had 10.1-10.6 health, so the 10-damage Orbit Blades needed two hits and the first one knocked it out of reach: a Warden flying fast killed almost nothing (2026-11-09) |
 | Islands at any height, arena edge not described (4.9, 7.1) | Three height bands with a reachability check, and a storm wall at 390 m (195 m until the map doubled on 2026-11-08) with far scenery beyond | Esad's feedback: islands could not be climbed and the edge felt empty |

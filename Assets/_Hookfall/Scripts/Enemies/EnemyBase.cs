@@ -3,7 +3,9 @@
 // AI disclosure: written with Claude (Anthropic) on 2026-11-04 as part of the midterm project skeleton,
 // rewritten on 2026-11-07 for steering, think LOD, pooling and elites, and given catch-up speed and the school statuses
 // (burn, chill, freeze, shock, bleed) on 2026-11-08; hooks for the stage boss, the boss zone that keeps the horde
-// below the boss arena and the stage reward scale were added the same day. Prompts and changes are recorded in Docs/PromptLog.md.
+// below the boss arena and the stage reward scale were added the same day; on 2026-11-09 the horde was made to keep
+// up with a fast Warden, and a flyer lost behind islands or left behind comes back ahead of them. Prompts and changes
+// are recorded in Docs/PromptLog.md.
 using System.Collections.Generic;
 using Hookfall.Core;
 using Hookfall.Player;
@@ -35,11 +37,14 @@ namespace Hookfall.Enemies
         [SerializeField] private float avoidWeight = 2.5f;
 
         [Header("Catch-up (2026-11-08: a flying Warden left every bat behind)")]
-        [Tooltip("When chasing, the enemy flies at least this share of the player's speed.")]
-        [SerializeField] private float playerSpeedMatch = 0.8f;
-        [Tooltip("Extra speed for every metre beyond catchUpDistance, so stragglers close in.")]
-        [SerializeField] private float catchUpPerMetre = 0.4f;
-        [SerializeField] private float catchUpDistance = 15f;
+        [Tooltip("When chasing, the enemy flies at least this share of the player's speed. 0.8 until 2026-11-09: at full " +
+                 "speed the horde trailed 30 m behind, out of view and out of reach of short-range items.")]
+        [SerializeField] private float playerSpeedMatch = 1f;
+        [Tooltip("Extra speed for every metre beyond catchUpDistance, so stragglers close in (0.4 until 2026-11-09).")]
+        [SerializeField] private float catchUpPerMetre = 0.8f;
+        [Tooltip("15 m until 2026-11-09. A horde matching the Warden's speed settles this far away: 2.5 m is inside the " +
+                 "Orbit Blades' ring (3.9 m) but outside a bite (1.5 m), so flying fast hits them without being bitten.")]
+        [SerializeField] private float catchUpDistance = 2.5f;
 
         [Header("Thinking (GDD 5.2)")]
         [SerializeField] private float nearDistance = 60f;
@@ -50,6 +55,10 @@ namespace Hookfall.Enemies
         [SerializeField] private float despawnDistance = 120f;
         [SerializeField] private float stuckCheckInterval = 3f;
         [SerializeField] private float stuckMinDistance = 1f;
+        [Tooltip("A flyer that has not come within engageDistance of the Warden for this many seconds is lost (behind " +
+                 "an island, left behind) and comes back ahead of them (2026-11-09: on the doubled map lost flyers filled the cap).")]
+        [SerializeField] private float lostAfter = 10f;
+        [SerializeField] private float engageDistance = 30f;
 
         [Header("Visuals")]
         [Tooltip("Shader colour property used for the hit flash, elite glow and attack warning (toon Shader Graph).")]
@@ -77,7 +86,7 @@ namespace Hookfall.Enemies
         private float flashTimer;
         private float healthMultiplier = 1f, damageMultiplier = 1f, rewardMultiplier = 1f;
         private float thinkTimer, thinkElapsed;
-        private float stuckTimer;
+        private float stuckTimer, lostTimer;
         private int stuckStrikes;
         private Vector3 lastCheckedPosition;
         private Vector3 desiredVelocity;
@@ -154,9 +163,7 @@ namespace Hookfall.Enemies
             transform.localScale = baseScale;
             Health = MaxHealth;
             Velocity = desiredVelocity = Vector3.zero;
-            lastCheckedPosition = transform.position;
-            stuckTimer = 0f;
-            stuckStrikes = 0;
+            ResetStuck();
             thinkTimer = Random.value * nearThinkInterval;   // spread thinking over frames
             baseGlow = Color.black;
             warning = false;
@@ -464,15 +471,25 @@ namespace Hookfall.Enemies
                 return;
             }
 
-            if (DistanceToPlayer > despawnDistance)
+            float distance = DistanceToPlayer;
+            if (distance > despawnDistance)
             {
                 Director?.Relocate(this);   // too far: respawn closer, out of view
                 ResetStuck();
                 return;
             }
 
+            if (!CanGetStuck) return;
+            lostTimer = distance < engageDistance ? 0f : lostTimer + elapsed;
+            if (lostTimer > lostAfter)
+            {
+                Director?.Relocate(this);   // never reached the Warden: back ahead of them
+                ResetStuck();
+                return;
+            }
+
             stuckTimer += elapsed;
-            if (stuckTimer < stuckCheckInterval || !CanGetStuck) return;
+            if (stuckTimer < stuckCheckInterval) return;
             if (Vector3.Distance(transform.position, lastCheckedPosition) < stuckMinDistance)
             {
                 stuckStrikes++;
@@ -490,7 +507,7 @@ namespace Hookfall.Enemies
         private void ResetStuck()
         {
             lastCheckedPosition = transform.position;
-            stuckTimer = 0f;
+            stuckTimer = lostTimer = 0f;
             stuckStrikes = 0;
         }
     }

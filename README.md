@@ -61,7 +61,7 @@ Attacks are automatic and only fire while you are in the air.
 | `Tools/Audio/make_sfx.js` | Synthesises the wind loop, heartbeat and music stems: `node Tools/Audio/make_sfx.js` |
 | Hookfall > Build All Scenes | Rebuilds scenes, prefabs, materials, the UI skin and audio wiring from code |
 | Hookfall > Clear Best Run | Forgets the saved best run |
-| Window > General > Test Runner > PlayMode | Smoke tests (both scenes run clean, every enemy, item, the Zip and the tower cache work) and the 300-enemy performance test |
+| Window > General > Test Runner > PlayMode | Smoke tests (both scenes run clean, every enemy, item, the Zip and the tower cache work) and the performance tests (the game's 120 enemies and the plan's 300, 60 FPS each) |
 
 Defaults chosen where the GDD gives no number, and where the build differs from the GDD: [Docs/Defaults.md](Docs/Defaults.md). Audio file names and licences: [Docs/Credits.md](Docs/Credits.md).
 

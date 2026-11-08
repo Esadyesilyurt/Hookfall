@@ -52,8 +52,10 @@ namespace Hookfall.World
         [SerializeField] private Material beamMaterial;
 
         [Header("The boss bar: gold earned on the stage")]
-        [Tooltip("About 7 minutes into the first stage: the probe's Warden earned about 200 gold in the first 90 s, and the rate grows with the waves.")]
-        [SerializeField] private int firstBossGold = 1500;
+        [Tooltip("1500 until 2026-11-09, read off a probe circling the tower; Esad never reached it. A probe crossing the " +
+                 "map at full speed (BalanceProbe.AcrossTheMap) puts 1000 at about 4 minutes for the Ember Witch and about " +
+                 "8 for a Warden who never opens a chest.")]
+        [SerializeField] private int firstBossGold = 1000;
         [SerializeField] private float bossGoldPerStage = 1.6f;
 
         [Header("Enemies on later stages (each multiplied once per stage after the first)")]

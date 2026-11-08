@@ -39,9 +39,12 @@ namespace Hookfall.EditorTools
                 Transform r = Pivot(visual.transform, "Wing_R", new Vector3(0.25f, 0.05f, 0f));
                 Part(r, "Membrane", PrimitiveType.Cube, new Vector3(0.45f, 0f, 0f), new Vector3(0.9f, 0.04f, 0.5f), Mat("M_Bat"));
             }
-            Stats(bat, "Bat", 10f, 18f, 5f, 1f, 1, 0.6f);   // 12 m/s until 2026-11-08: bats never caught up
+            // 12 m/s until 2026-11-08: bats never caught up. 10 health until 2026-11-09: with the stage's growth a fresh bat
+            // had 10.1-10.6, so a 10-damage starting item needed two hits, and the first one knocked it out of reach.
+            Stats(bat, "Bat", 8f, 18f, 5f, 1f, 1, 0.6f);
             SetFloat(bat, "knockback", 7f);
             Wings(bat, visual.transform, 16f, 40f);
+            NoShadows(root);
             return SavePrefab(root, Folder + "/PF_Bat.prefab").GetComponent<Bat>();
         }
 
@@ -67,6 +70,7 @@ namespace Hookfall.EditorTools
             SetFloat(wyvern, "knockback", 2.5f);
             SetFloat(wyvern, "hitPunch", 0.15f);
             Wings(wyvern, visual.transform, 7f, 35f);
+            NoShadows(root);
             return SavePrefab(root, Folder + "/PF_Wyvern.prefab").GetComponent<Wyvern>();
         }
 
@@ -210,6 +214,13 @@ namespace Hookfall.EditorTools
             SetFloat(enemy, "xpReward", xp);
             SetInt(enemy, "goldReward", gold);
             SetFloat(enemy, "hitRadius", hitRadius);
+        }
+
+        /// <summary>Flyers cast no shadow (2026-11-09): in the open sky it never lands on anything, and once the horde
+        /// kept up with the Warden, 300 bats on screen drew every part again for each shadow cascade.</summary>
+        private static void NoShadows(GameObject root)
+        {
+            foreach (Renderer r in root.GetComponentsInChildren<Renderer>()) r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
         }
 
         private static void Wings(EnemyBase enemy, Transform visual, float speed, float angle)
