@@ -80,7 +80,8 @@ namespace Hookfall.EditorTools
             AddArenaEdge(null);
             FeelSetup.AddVolume();
 
-            new GameObject("Main Menu").AddComponent<MainMenuUI>();
+            var menu = new GameObject("Main Menu").AddComponent<MainMenuUI>();
+            foreach (CharacterDefinition character in CreateCharacters()) AddToList(menu, "characters", character);
             EditorSceneManager.SaveScene(scene, MenuPath);
         }
 
@@ -136,7 +137,14 @@ namespace Hookfall.EditorTools
             hookTrail.startColor = new Color(0.3f, 0.95f, 1f, 0.8f);
             hookTrail.endColor = new Color(0.3f, 0.95f, 1f, 0f);
 
-            AddWarden(player, controller, hook);
+            // Every character's model, each with its own animator; CharacterLoadout shows the selected one.
+            CharacterDefinition[] characters = CreateCharacters();
+            var loadout = player.AddComponent<CharacterLoadout>();
+            foreach (CharacterDefinition character in characters)
+            {
+                AddToList(loadout, "characters", character);
+                AddToList(loadout, "models", AddWarden(player, controller, hook, character.id));
+            }
 
             var itemsRoot = new GameObject("Items");
             itemsRoot.transform.SetParent(player.transform, false);
@@ -197,8 +205,8 @@ namespace Hookfall.EditorTools
             SetRef(rig, "targetBody", body);
 
             SetRef(controller, "cameraTransform", camGo.transform);
-            WardenAnimator wardenAnimator = player.GetComponentInChildren<WardenAnimator>();
-            if (wardenAnimator != null) SetRef(wardenAnimator, "cameraTransform", camGo.transform);
+            foreach (WardenAnimator wardenAnimator in player.GetComponentsInChildren<WardenAnimator>(true))
+                SetRef(wardenAnimator, "cameraTransform", camGo.transform);
             SetRef(hook, "aimSource", camGo.transform);
             SetRef(hook, "rope", rope);
             SetRef(hook, "hookHead", hookHead.transform);
@@ -382,15 +390,15 @@ namespace Hookfall.EditorTools
             serialized.ApplyModifiedPropertiesWithoutUndo();
         }
 
-        /// <summary>The Warden model replaces the capsule's renderer; WardenAnimator moves its parts.</summary>
-        private static void AddWarden(GameObject player, PlayerController controller, GrappleHook hook)
+        /// <summary>A character model replaces the capsule's renderer; WardenAnimator moves its parts (all models share them).</summary>
+        private static GameObject AddWarden(GameObject player, PlayerController controller, GrappleHook hook, string model)
         {
-            GameObject warden = InstantiateModel("Warden", player.transform);
-            if (warden == null) return;
-            warden.name = "Warden";
+            GameObject warden = InstantiateModel(model, player.transform);
+            if (warden == null) return null;
+            warden.name = model;
             warden.transform.localPosition = new Vector3(0f, -1f, 0f);   // capsule centre to feet
-            Object.DestroyImmediate(player.GetComponent<MeshRenderer>());
-            Object.DestroyImmediate(player.GetComponent<MeshFilter>());
+            if (player.TryGetComponent(out MeshRenderer capsuleRenderer)) Object.DestroyImmediate(capsuleRenderer);
+            if (player.TryGetComponent(out MeshFilter capsuleMesh)) Object.DestroyImmediate(capsuleMesh);
             var animator = warden.AddComponent<WardenAnimator>();
             SetRef(animator, "controller", controller);
             SetRef(animator, "hook", hook);
@@ -401,6 +409,55 @@ namespace Hookfall.EditorTools
             SetRef(animator, "cape", EnemyPrefabs.FindDeep(warden.transform, "Cape"));
             SetRef(animator, "scarf", EnemyPrefabs.FindDeep(warden.transform, "Scarf"));
             SetRef(animator, "head", EnemyPrefabs.FindDeep(warden.transform, "Head"));
+            return warden;
+        }
+
+        /// <summary>The four characters as SO_Character_ assets (rewritten on every build: tune them here).</summary>
+        private static CharacterDefinition[] CreateCharacters()
+        {
+            EnsureFolder(Root + "/Data");
+            ItemBase Item(string id) => AssetDatabase.LoadAssetAtPath<ItemBase>($"{Root}/Prefabs/Items/PF_Item_{id}.prefab");
+            CharacterDefinition Make(string id, string name, string description, float health, StatType[] picks,
+                ItemBase[] items, int jumps, int dashes, UnlockKind unlock, float target, string unlockText)
+            {
+                string path = $"{Root}/Data/SO_Character_{id}.asset";
+                var c = AssetDatabase.LoadAssetAtPath<CharacterDefinition>(path);
+                if (c == null)
+                {
+                    c = ScriptableObject.CreateInstance<CharacterDefinition>();
+                    AssetDatabase.CreateAsset(c, path);
+                }
+                c.id = id;
+                c.displayName = name;
+                c.description = description;
+                c.maxHealthMultiplier = health;
+                c.statPicks = picks;
+                c.startingItems = items;
+                c.airJumps = jumps;
+                c.airDashes = dashes;
+                c.unlock = unlock;
+                c.unlockTarget = target;
+                c.unlockText = unlockText;
+                EditorUtility.SetDirty(c);
+                return c;
+            }
+
+            var all = new[]
+            {
+                Make("Warden", "Warden", "A Warden of the Order of the Tether: steady in every way.", 1f,
+                    new StatType[0], new[] { Item("OrbitBlades") }, 1, 1, UnlockKind.None, 0f, ""),
+                Make("Skyrunner", "Skyrunner", "A scout of the storm roads: fastest in the air, with two dashes, but fragile.", 0.8f,
+                    new[] { StatType.FlightSpeed, StatType.FlightSpeed, StatType.WalkSpeed }, new[] { Item("ShardBurst"), Item("GaleFeather") },
+                    1, 2, UnlockKind.SurviveSeconds, 300f, "Hold the watch for 5:00 in one run"),
+                Make("Bulwark", "Bulwark", "A knight of the vault gates: heavy plate, a ward shell, and the most health.", 1.5f,
+                    new[] { StatType.Armor, StatType.Armor }, new[] { Item("OrbitBlades"), Item("WardShell") },
+                    1, 1, UnlockKind.TotalKills, 1500f, "Defeat 1,500 enemies over all runs"),
+                Make("Lumen", "Lumen", "A mystic of the Heartstone: hits harder and faster, and jumps twice in the air.", 0.9f,
+                    new[] { StatType.Damage, StatType.AttackSpeed }, new[] { Item("HomingSparks"), Item("MendingMoss") },
+                    2, 1, UnlockKind.ReachLevel, 15f, "Reach level 15 in one run"),
+            };
+            AssetDatabase.SaveAssets();
+            return all;
         }
 
         private static Pickup GetOrCreatePickup(string name, PickupKind kind, float size)

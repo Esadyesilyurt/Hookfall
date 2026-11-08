@@ -711,6 +711,9 @@ def main():
     sys.path.append(os.path.dirname(os.path.abspath(__file__)))
     import hookfall_models_v2
     hookfall_models_v2.install(globals())
+    # The playable characters besides the Warden (2026-11-08).
+    import hookfall_characters
+    hookfall_characters.install(globals())
 
     argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
     out_dir = os.path.abspath(argv[0]) if argv else os.path.abspath("Assets/_Hookfall/Art/Models")
@@ -752,6 +755,10 @@ def main():
         "Bush": lambda: bush(out_dir, prev_dir),
         "Lantern": lambda: lantern(out_dir, prev_dir),
         "Statue": lambda: statue(out_dir, prev_dir),
+        "Skyrunner": lambda: hookfall_characters.skyrunner(out_dir, prev_dir),
+        "Bulwark": lambda: hookfall_characters.bulwark(out_dir, prev_dir),
+        "Lumen": lambda: hookfall_characters.lumen(out_dir, prev_dir),
+        "WardenPortrait": lambda: hookfall_characters.warden_portrait(out_dir, prev_dir),
         "Icons": lambda: icons(os.path.join(out_dir, "..", "UI", "Resources", "Icons"), prev_dir),
     }
     for name, job in jobs.items():

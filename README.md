@@ -32,6 +32,7 @@ Attacks are automatic and only fire while you are in the air.
 
 - Grappling hook with a 120 m/s hook head and a SpringJoint rope, island movement, air strafe, Cinemachine camera with speed FOV
 - Right-click Zip: a power swing that reels you in when held, with its own cooldown and charges, upgraded by two stats and the Tether Coil item
+- Four characters (Warden, Skyrunner, Bulwark, Lumen) with their own models, stats and starting items; three unlock through quests
 - A global leaderboard of best watches (Unity Gaming Services for now, Steam later; setup in Docs/Leaderboard.md)
 - Six attack items and eighteen passives (lifesteal, shield, revive, crits and more) in four rarities; rarer chests offer rarer items
 - Updrafts, air channels between islands, refill crystals for the double jump and dash, and floating hook anchors in the open sky

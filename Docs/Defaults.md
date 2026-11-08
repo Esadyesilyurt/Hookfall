@@ -121,6 +121,14 @@ Values the GDD does not give, picked by Claude on 2026-11-07 when building Weeks
 | Props | Rocks, ruins, crystals, bushes, lanterns and statues have mesh colliders (none before 2026-11-08) | ModelSetup |
 | Sound mix | Effects 60%, music 45% by default; hits play at most every 0.09 s and two at once, deaths every 0.07 s, gems every 0.06 s; rare events louder | GameSettings, AudioWiring |
 
+### Characters (2026-11-08)
+| Character | Start | Unlock |
+| --- | --- | --- |
+| Warden | 100 health, Orbit Blades, 1 double jump, 1 dash | Always |
+| Skyrunner | 80 health, +20% max flight speed, +8% walk speed, Shard Burst and Gale Feather, 2 dashes | Hold the watch for 5:00 in one run |
+| Bulwark | 150 health, +2 armor, Orbit Blades and Ward Shell | 1,500 kills over all runs |
+| Lumen | 90 health, +10% damage, +8% attack speed, Homing Sparks and Mending Moss, 2 double jumps | Reach level 15 in one run |
+
 ## Where the build differs from the GDD
 
 | GDD | What was built | Why |

@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4a762caf975b3d34396293d095ea84ff, type: 3}
+  m_Name: SO_Character_Skyrunner
+  m_EditorClassIdentifier: Assembly-CSharp::Hookfall.Player.CharacterDefinition
+  id: Skyrunner
+  displayName: Skyrunner
+  description: 'A scout of the storm roads: fastest in the air, with two dashes,
+    but fragile.'
+  maxHealthMultiplier: 0.8
+  statPicks: 050000000500000004000000
+  startingItems:
+  - {fileID: 7301829150397582880, guid: fd48b6749150f3b40986bf3defffcab3, type: 3}
+  - {fileID: 5739816383329832732, guid: 81a81bfa7b54b2d4093bcd1a92c14d13, type: 3}
+  airJumps: 1
+  airDashes: 2
+  unlock: 1
+  unlockTarget: 300
+  unlockText: Hold the watch for 5:00 in one run

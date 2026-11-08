@@ -100,6 +100,13 @@ namespace Hookfall.Player
         /// <summary>True for a moment after touching an island side, while a wall jump is possible.</summary>
         public bool TouchingWall => Time.time - lastWallTime < wallJumpGrace;
 
+        /// <summary>The character's air moves per flight (CharacterLoadout).</summary>
+        public void SetAirMoves(int jumps, int dashes)
+        {
+            airJumps = jumps;
+            airDashes = dashes;
+        }
+
         /// <summary>Refills the double jump and the dash in mid-air (refill crystals). False when neither was spent.</summary>
         public bool RefillAirMoves()
         {
