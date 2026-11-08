@@ -39,7 +39,7 @@ Read this first in every session. The full design is in the GDD (Claude Docs art
 | Online | `ILeaderboard` (what the game needs from a leaderboard), `UgsLeaderboard` (Unity Gaming Services, for now), `Leaderboard` (current board, run submission; never from batch-mode tests), `LeaderboardRow`; setup in `Docs/Leaderboard.md` |
 | VFX, Audio, Feel | `VfxManager` (one world-space particle system for all bursts), `AudioManager` + `SoundId` (clips wired by file name), `FeelDirector` (shake, hit-stop, FOV kicks, post-FX pulses), `CutsceneDirector` (the boss's entrance and the portal, in unscaled time), `LightBeam`, `DamageNumbers` |
 | Editor | Menu **Hookfall > Build All Scenes** (`ArenaSceneBuilder`) rebuilds MainMenu and Arena; `EnemyPrefabs`, `ItemPrefabs`, `ModelSetup` (**Import Models**), `ToonSetup` (**Setup Toon Rendering**), `UISetup` (**Build UI Skin**), `FeelSetup`, `AudioWiring`, `RecordTools` (**Clear Best Run**), `BuildUtil` |
-| Tests | `Tests/PlayMode/SceneSmokeTests` (scenes run clean, kills happen, every enemy and item, tower cache, the horde keeps up with a fast Warden, large islands stay empty), `PerformanceTests` (300 enemies, asserts 60 FPS), `ScreenshotCapture` (runs only when `HOOKFALL_SHOT_DIR` is set), `BalanceProbe` (explicit: flies every character on one map, times a boss fight, and crosses the map for six minutes counting the enemies in reach and the gold against the boss target; `-testFilter Hookfall.Tests.BalanceProbe`, `HOOKFALL_PROBE=Warden,FrostSeer` for some), `RecordGuard` (tests never touch the saved best run) |
+| Tests | `Tests/PlayMode/SceneSmokeTests` (scenes run clean, kills happen, every enemy and item, tower cache, the horde keeps up with a fast Warden, large islands stay empty), `PerformanceTests` (the game's 120 enemies and the plan's 300, each asserts 60 FPS; needs graphics, so ask first), `ScreenshotCapture` (runs only when `HOOKFALL_SHOT_DIR` is set), `BalanceProbe` (explicit: flies every character on one map, times a boss fight, and crosses the map for six minutes counting the enemies in reach and the gold against the boss target; `-testFilter Hookfall.Tests.BalanceProbe`, `HOOKFALL_PROBE=Warden,FrostSeer` for some), `RecordGuard` (tests never touch the saved best run) |
 | Tools | `Tools/Blender/hookfall_models.py` (+ `hookfall_models_v2.py`, `hookfall_characters.py`, `hookfall_item_icons.py`, `hookfall_boss.py`) makes every model, the item icons, the character portraits and the UI icons; `Tools/ShaderGraph/make_graphs.js` makes `SG_Toon`, `SG_Backdrop` and `SG_Outline` from Unity's samples; `Tools/Audio/make_sfx.js` synthesises the placeholder audio, `Tools/Audio/make_boss_sfx.js` the boss, portal and stage sounds |
 
 Scenes and prefabs are generated: change the builder code, not the scene, then run **Build All Scenes**. Defaults the GDD does not give, and deviations from it, are in `Docs/Defaults.md`.
@@ -47,7 +47,7 @@ Scenes and prefabs are generated: change the builder code, not the scene, then r
 ## Checking work without the editor
 
 - Compile and build: `Unity.exe -batchmode -nographics -quit -projectPath . -executeMethod Hookfall.EditorTools.ArenaSceneBuilder.BatchBuild -logFile <log>`, then search the log for `error CS`.
-- Play-mode tests: `Unity.exe -batchmode -projectPath . -runTests -testPlatform PlayMode -testResults <xml> -logFile <log>` (no `-nographics`, no `-quit`).
+- Play-mode tests: `Unity.exe -batchmode -nographics -projectPath . -runTests -testPlatform PlayMode -testResults <xml> -logFile <log>` (no `-quit`). `SceneSmokeTests` pass with `-nographics`. Without it Unity opens a window that takes focus from whatever Esad is doing: run the FPS tests (`PerformanceTests`) and screenshots only after asking Esad, who should close GPU-heavy programs first (a game left running cut the measured FPS to a third).
 - In batch mode `AssetDatabase.ImportPackage` does nothing and `WaitForEndOfFrame` never fires. `EditorSceneManager.NewScene` unloads assets loaded before it, so load prefabs after it.
 
 ## Schedule (from the production plan)
@@ -56,7 +56,7 @@ Scenes and prefabs are generated: change the builder code, not the scene, then r
 | --- | --- | --- |
 | 9 | Hook, swing and air strafe feel good; hook projectile; Cinemachine camera | Built; feel needs playtesting |
 | 10 | Core loop playable with placeholders: XP gems and gold pickups, 3-card level-up screen, run-end screen | Built |
-| 11 | Wyvern and Golem state machines, steering separation and island avoidance, object pooling, 300-enemy test at 60 FPS; island model pipeline | Built; 300 enemies: 87 FPS average at 1080p on an RTX 2060 (PerformanceTests, 2026-11-08; 118 before bats could keep up) |
+| 11 | Wyvern and Golem state machines, steering separation and island avoidance, object pooling, 300-enemy test at 60 FPS; island model pipeline | Built; 300 enemies: 114 FPS average at 1080p on an RTX 2060, the game's 120: 169 (PerformanceTests, 2026-11-09; 300 gave 87 on 2026-11-08 and 118 before bats could keep up) |
 | 12 | All 6 items, all stats, chests and gold costs, tower cache, gravity zone, elite waves; first playtest | Built; playtest to do |
 | 13 | Toon shader and outline, VFX, licensed audio, final uGUI HUD; second playtest | Built; Kenney CC0 effects, synthesised music |
 | 14 | Bug fixes, optimisation, final build | To do |
