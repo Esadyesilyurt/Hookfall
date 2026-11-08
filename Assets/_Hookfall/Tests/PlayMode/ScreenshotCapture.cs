@@ -25,6 +25,9 @@ namespace Hookfall.Tests
         {
             if (string.IsNullOrEmpty(Folder)) Assert.Ignore("Set HOOKFALL_SHOT_DIR to capture screenshots.");
             Directory.CreateDirectory(Folder);
+            // HOOKFALL_SHOT_LANG=tr renders every shot in Turkish (RecordGuard puts the player's language back).
+            Type locType = Type.GetType("Hookfall.Core.Loc, Assembly-CSharp");
+            locType.GetProperty("Turkish").SetValue(null, Environment.GetEnvironmentVariable("HOOKFALL_SHOT_LANG") == "tr");
 
             SceneManager.LoadScene("MainMenu");
             yield return new WaitForSecondsRealtime(1f);
@@ -73,6 +76,18 @@ namespace Hookfall.Tests
             yield return new WaitForSecondsRealtime(0.6f);
             yield return Grab("ui_pause");
             gmType.GetMethod("SetPaused").Invoke(gm, new object[] { false });
+
+            // An Epic chest's three cards.
+            Type chestUiType = Type.GetType("Hookfall.UI.ChestResultUI, Assembly-CSharp");
+            Type combatType = Type.GetType("Hookfall.Combat.CombatSystem, Assembly-CSharp");
+            Type statsType2 = Type.GetType("Hookfall.Player.PlayerStats, Assembly-CSharp");
+            chestUiType.GetMethod("Offer").Invoke(null, new object[] { player.GetComponent(combatType), player.GetComponent(statsType2),
+                Enum.ToObject(Type.GetType("Hookfall.Combat.Rarity, Assembly-CSharp"), 2) });
+            yield return new WaitForSecondsRealtime(0.8f);
+            yield return Grab("ui_chest");
+            object chestUi = chestUiType.GetProperty("Instance").GetValue(null);
+            chestUiType.GetMethod("Pick", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).Invoke(chestUi, new object[] { 0 });
+            yield return null;
 
             // Overview from outside the arena, without the HUD.
             Camera cam = Camera.main;

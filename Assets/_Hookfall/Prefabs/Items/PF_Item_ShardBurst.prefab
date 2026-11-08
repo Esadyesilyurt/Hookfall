@@ -47,6 +47,7 @@ MonoBehaviour:
   displayName: Shard Burst
   lore: Splinters of a cracked Heartstone ward that burst outwards whenever the Warden
     takes flight.
+  summary: Shards burst out in every direction around you.
   baseDamage: 12
   cooldown: 1.5
   level: 1

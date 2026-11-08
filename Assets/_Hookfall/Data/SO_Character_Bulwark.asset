@@ -16,6 +16,9 @@ MonoBehaviour:
   displayName: Bulwark
   description: 'A knight of the vault gates: heavy plate, a ward shell, and the most
     health.'
+  perks:
+  - +2 Armor
+  - Starts with a Ward Shell
   maxHealthMultiplier: 1.5
   statPicks: 0100000001000000
   startingItems:

@@ -46,6 +46,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Hookfall.Combat.Items.StatCharm
   displayName: Heart Locket
   lore: A locket with a pressed Heartstone petal; the heart beats stronger for it.
+  summary: More max health.
   baseDamage: 0
   cooldown: 1
   level: 1

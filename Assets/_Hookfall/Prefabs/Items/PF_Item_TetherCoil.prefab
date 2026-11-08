@@ -47,6 +47,7 @@ MonoBehaviour:
   displayName: Tether Coil
   lore: A coil of the Order's own tether rope, wound with Heartstone wire; it hauls
     the Warden through anything in the way.
+  summary: Your Zip cuts through enemies and recharges faster.
   baseDamage: 25
   cooldown: 1
   level: 1

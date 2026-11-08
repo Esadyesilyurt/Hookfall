@@ -28,7 +28,8 @@ namespace Hookfall.UI
 
         /// <summary>An icon by name, e.g. "OrbitBlades", "MaxHealth", "Gold"; null if it was not rendered.</summary>
         public static Sprite Icon(string name) => Get("Icons/ICON_" + name);
-        public static Sprite Icon(ItemBase item) => item != null ? Icon(item.DisplayName.Replace(" ", "")) : null;
+        // By the prefab id (PF_Item_OrbitBlades -> ICON_OrbitBlades): the display name is translated.
+        public static Sprite Icon(ItemBase item) => item != null ? Icon(item.name.Replace("PF_Item_", "").Replace("(Clone)", "")) : null;
         public static Sprite Icon(StatType stat) => Icon(stat.ToString());
 
         /// <summary>LiberationSans with a dark outline, for text drawn over the game world.</summary>

@@ -1,6 +1,7 @@
 // Hookfall - Ward Shell (Epic passive): a bubble shield that blocks one hit completely, then recharges on a cooldown
 // that shortens with each level. Shown as a faint bubble around the Warden while charged. Always on.
 // AI disclosure: written with Claude (Anthropic) on 2026-11-08. Prompts and changes are recorded in Docs/PromptLog.md.
+using System.Collections.Generic;
 using Hookfall.Core;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -48,7 +49,14 @@ namespace Hookfall.Combat.Items
             if (bubble != null) bubble.SetActive(Stats.ShieldCharges > 0);
         }
 
+        public override IEnumerable<string> StatLines()
+        {
+            foreach (string text in base.StatLines()) yield return text;
+            yield return Loc.T("Blocks 1 hit completely");
+            yield return Loc.F("Recharges in {0} s", Recharge.ToString("0.#"));
+        }
+
         public override string DescribeNextLevel() =>
-            $"Blocks a hit, recharges in {Recharge:0.#} s → {Mathf.Max(3f, rechargeTime - rechargePerLevel * Level):0.#} s";
+            Loc.F("Recharges in {0} s → {1} s", Recharge.ToString("0.#"), Mathf.Max(3f, rechargeTime - rechargePerLevel * Level).ToString("0.#"));
     }
 }

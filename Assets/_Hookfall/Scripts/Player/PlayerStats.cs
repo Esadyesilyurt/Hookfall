@@ -173,6 +173,28 @@ namespace Hookfall.Player
             }
         }
 
+        /// <summary>What one pick of a stat gives, at a glance: "+20 Max health", "+10% Damage".</summary>
+        public string PickText(StatType stat)
+        {
+            string name = Loc.T(NameOf(stat));
+            switch (stat)
+            {
+                case StatType.MaxHealth: return $"+{maxHealthPerPick:0} {name}";
+                case StatType.Armor: return $"+{armorPerPick:0} {name}";
+                case StatType.Damage: return $"+{damagePercentPerPick:0}% {name}";
+                case StatType.AttackSpeed: return $"+{attackSpeedPercentPerPick:0}% {name}";
+                case StatType.WalkSpeed: return $"+{walkSpeedPercentPerPick:0}% {name}";
+                case StatType.FlightSpeed: return $"+{flightSpeedPercentPerPick:0}% {name}";
+                case StatType.HookRange: return $"+{hookRangePerPick:0} m {name}";
+                case StatType.PickupRadius: return $"+{pickupRadiusPercentPerPick:0}% {name}";
+                case StatType.Regen: return $"+{regenPerPick:0.0}/s {name}";
+                case StatType.XPGain: return $"+{xpPercentPerPick:0}% {name}";
+                case StatType.ZipCooldown: return $"-{zipCooldownPercentPerPick:0}% {name}";
+                case StatType.ZipRange: return $"+{zipRangePerPick:0} m {name}";
+                default: return $"+{luckPercentPerPick:0}% {name}";
+            }
+        }
+
         public static string NameOf(StatType stat)
         {
             switch (stat)

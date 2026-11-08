@@ -47,6 +47,7 @@ MonoBehaviour:
   displayName: Orbit Blades
   lore: Twin vault blades bound to the Warden by a Tether rune; they circle and cut
     whatever comes close.
+  summary: Blades circle you and cut every enemy they pass.
   baseDamage: 10
   cooldown: 0.5
   level: 1

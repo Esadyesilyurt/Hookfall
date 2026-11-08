@@ -46,6 +46,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Hookfall.Combat.Items.VampireFang
   displayName: Vampire Fang
   lore: A wyvern's fang on a cord; what it cuts, the Warden drinks.
+  summary: Heal a share of all the damage you deal.
   baseDamage: 0
   cooldown: 1
   level: 1

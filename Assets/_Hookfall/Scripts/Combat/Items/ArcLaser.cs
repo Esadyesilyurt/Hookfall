@@ -1,5 +1,6 @@
 // Hookfall - Arc Laser: a beam sweeps a full circle around the player; 20 damage, every 2 s, 8 m, +15% damage per level (GDD 4.5).
 // AI disclosure: written with Claude (Anthropic) on 2026-11-07. Prompts and changes are recorded in Docs/PromptLog.md.
+using Hookfall.Core;
 using System.Collections.Generic;
 using Hookfall.Enemies;
 using UnityEngine;
@@ -84,7 +85,13 @@ namespace Hookfall.Combat.Items
             if (beam != null) beam.enabled = false;
         }
 
+        public override IEnumerable<string> StatLines()
+        {
+            foreach (string text in base.StatLines()) yield return text;
+            yield return Loc.F("Range {0} m", range.ToString("0"));
+        }
+
         public override string DescribeNextLevel() =>
-            $"{BaseDamage * (1f + damagePerLevel * (Level - 1)):0} → {BaseDamage * (1f + damagePerLevel * Level):0} damage";
+            Loc.F("{0} → {1} damage", (BaseDamage * (1f + damagePerLevel * (Level - 1))).ToString("0"), (BaseDamage * (1f + damagePerLevel * Level)).ToString("0"));
     }
 }

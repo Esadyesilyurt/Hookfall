@@ -1,5 +1,6 @@
 // Hookfall - Ram Strike: above 20 m/s, touching an enemy deals speed × 1.5 damage; +20% damage per level (GDD 4.5).
 // AI disclosure: written with Claude (Anthropic) on 2026-11-07. Prompts and changes are recorded in Docs/PromptLog.md.
+using Hookfall.Core;
 using System.Collections.Generic;
 using Hookfall.Enemies;
 using Hookfall.Player;
@@ -68,7 +69,14 @@ namespace Hookfall.Combat.Items
             if (!active && aura != null) aura.SetActive(false);
         }
 
+        public override IEnumerable<string> StatLines()
+        {
+            foreach (string text in base.StatLines()) yield return text;
+            yield return Loc.F("Damage = speed × {0}", (speedToDamage * LevelFactor(Level)).ToString("0.0"));
+            yield return Loc.F("Above {0} m/s", minSpeed.ToString("0"));
+        }
+
         public override string DescribeNextLevel() =>
-            $"speed × {speedToDamage * LevelFactor(Level):0.0} → × {speedToDamage * LevelFactor(Level + 1):0.0}";
+            Loc.F("Damage = speed × {0} → × {1}", (speedToDamage * LevelFactor(Level)).ToString("0.0"), (speedToDamage * LevelFactor(Level + 1)).ToString("0.0"));
     }
 }

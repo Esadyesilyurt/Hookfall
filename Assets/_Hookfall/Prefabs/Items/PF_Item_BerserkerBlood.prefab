@@ -46,6 +46,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Hookfall.Combat.Items.BerserkerBlood
   displayName: Berserker Blood
   lore: A vial of golem blood; the closer to falling, the harder the Warden hits.
+  summary: Deal much more damage while below half health.
   baseDamage: 0
   cooldown: 1
   level: 1

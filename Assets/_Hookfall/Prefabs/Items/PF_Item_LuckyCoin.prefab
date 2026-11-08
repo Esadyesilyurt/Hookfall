@@ -46,6 +46,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Hookfall.Combat.Items.StatCharm
   displayName: Lucky Coin
   lore: A coin that always lands on the side of rarer chests.
+  summary: Rarer chests appear more often.
   baseDamage: 0
   cooldown: 1
   level: 1

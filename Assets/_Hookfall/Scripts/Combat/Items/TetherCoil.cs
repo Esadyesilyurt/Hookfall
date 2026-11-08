@@ -1,6 +1,7 @@
 // Hookfall - Tether Coil: the Zip item (added 2026-11-07). Zipping through enemies cuts them; each level shortens the
 // Zip cooldown, levels 3 and 5 add a charge, and from level 4 the Warden lands with a shockwave.
 // AI disclosure: written with Claude (Anthropic) on 2026-11-07. Prompts and changes are recorded in Docs/PromptLog.md.
+using Hookfall.Core;
 using System.Collections.Generic;
 using Hookfall.Enemies;
 using Hookfall.Player;
@@ -85,10 +86,18 @@ namespace Hookfall.Combat.Items
         public override string DescribeNextLevel()
         {
             int next = Mathf.Min(Level, cooldownMultiplier.Length - 1);
-            string text = $"Zip cooldown ×{cooldownMultiplier[next]:0.00}";
-            if (extraCharges[next] > extraCharges[Level - 1]) text += ", +1 charge";
-            if (Level + 1 == (int)shockwaveFromLevel) text += ", landing shockwave";
+            string text = Loc.F("Zip cooldown ×{0}", cooldownMultiplier[next].ToString("0.00"));
+            if (extraCharges[next] > extraCharges[Level - 1]) text += "\n" + Loc.T("+1 Zip charge");
+            if (Level + 1 == (int)shockwaveFromLevel) text += "\n" + Loc.T("Landing shockwave");
             return text;
+        }
+
+        public override IEnumerable<string> StatLines()
+        {
+            foreach (string text in base.StatLines()) yield return text;
+            int i = Mathf.Clamp(Level - 1, 0, cooldownMultiplier.Length - 1);
+            yield return Loc.F("Zip cooldown ×{0}", cooldownMultiplier[i].ToString("0.00"));
+            if (extraCharges[i] > 0) yield return Loc.F("+{0} Zip charges", extraCharges[i]);
         }
     }
 }

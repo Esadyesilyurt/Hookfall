@@ -46,6 +46,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Hookfall.Combat.Items.WardShell
   displayName: Ward Shell
   lore: A ward of the old Order folded into a bubble that turns one blow aside.
+  summary: A shield blocks one hit completely, then recharges.
   baseDamage: 0
   cooldown: 1
   level: 1

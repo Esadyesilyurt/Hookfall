@@ -16,6 +16,10 @@ MonoBehaviour:
   displayName: Skyrunner
   description: 'A scout of the storm roads: fastest in the air, with two dashes,
     but fragile.'
+  perks:
+  - +20% Max flight speed
+  - +8% Walk speed
+  - 2 dashes per flight
   maxHealthMultiplier: 0.8
   statPicks: 050000000500000004000000
   startingItems:

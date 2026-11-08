@@ -669,6 +669,28 @@ namespace Hookfall.Tests
             LogAssert.NoUnexpectedReceived();
         }
 
+        /// <summary>Language: with Turkish chosen, the main menu shows Turkish labels.</summary>
+        [UnityTest]
+        public IEnumerator TurkishMenuIsTranslated()
+        {
+            Type locType = Type.GetType("Hookfall.Core.Loc, Assembly-CSharp");
+            locType.GetProperty("Turkish").SetValue(null, true);
+            try
+            {
+                SceneManager.LoadScene("MainMenu");
+                yield return null;
+                var texts = new System.Collections.Generic.List<string>();
+                // The test assembly has no TextMeshPro reference: read every text component by reflection.
+                foreach (GameObject root in SceneManager.GetActiveScene().GetRootGameObjects())
+                    foreach (Component c in root.GetComponentsInChildren<Component>(true))
+                        if (c != null && c.GetType().Name == "TextMeshProUGUI") texts.Add((string)c.GetType().GetProperty("text").GetValue(c));
+                CollectionAssert.Contains(texts, "Oyna", "The Play button should read Oyna in Turkish");
+                CollectionAssert.Contains(texts, "BEKÇİNİ SEÇ", "The character select title should be Turkish");
+                LogAssert.NoUnexpectedReceived();
+            }
+            finally { locType.GetProperty("Turkish").SetValue(null, false); }
+        }
+
         /// <summary>Jumps the run clock to 4:55 so wyverns, golems and the first elite wave all appear.</summary>
         [UnityTest]
         public IEnumerator LateRunSpawnsEveryEnemy()

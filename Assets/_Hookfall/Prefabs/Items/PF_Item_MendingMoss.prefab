@@ -46,6 +46,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Hookfall.Combat.Items.StatCharm
   displayName: Mending Moss
   lore: Moss from the tower's shaded side; it closes wounds while nobody watches.
+  summary: Heal more health every second.
   baseDamage: 0
   cooldown: 1
   level: 1

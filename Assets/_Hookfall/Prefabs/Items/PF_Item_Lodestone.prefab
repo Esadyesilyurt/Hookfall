@@ -46,6 +46,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Hookfall.Combat.Items.StatCharm
   displayName: Lodestone
   lore: A stone that drags every loose shard and coin towards its keeper.
+  summary: Pick up gems and gold from farther away.
   baseDamage: 0
   cooldown: 1
   level: 1

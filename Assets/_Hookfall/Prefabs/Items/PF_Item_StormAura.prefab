@@ -47,6 +47,7 @@ MonoBehaviour:
   displayName: Storm Aura
   lore: A storm sealed in a guardian's cloak; it crackles around the Warden while
     they fly.
+  summary: A storm around you keeps hurting enemies close by.
   baseDamage: 4
   cooldown: 0.25
   level: 1

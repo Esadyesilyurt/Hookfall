@@ -47,6 +47,7 @@ MonoBehaviour:
   displayName: Wind Sigil
   lore: A sigil cut into a storm stone; it gives the Warden a second breath in the
     air.
+  summary: In the air, refills your double jump and dash every few seconds.
   baseDamage: 0
   cooldown: 1
   level: 1

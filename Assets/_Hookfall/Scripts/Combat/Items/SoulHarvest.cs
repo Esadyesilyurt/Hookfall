@@ -1,5 +1,7 @@
 // Hookfall - Soul Harvest (Rare passive): every kill heals the Warden a little. Always on.
 // AI disclosure: written with Claude (Anthropic) on 2026-11-08. Prompts and changes are recorded in Docs/PromptLog.md.
+using Hookfall.Core;
+using System.Collections.Generic;
 using Hookfall.Enemies;
 using UnityEngine;
 
@@ -20,6 +22,12 @@ namespace Hookfall.Combat.Items
             if (killed && Stats != null) Stats.Heal(HealPerKill);
         }
 
-        public override string DescribeNextLevel() => $"{HealPerKill:0.0} → {HealPerKill + healPerKillPerLevel:0.0} health per kill";
+        public override IEnumerable<string> StatLines()
+        {
+            foreach (string text in base.StatLines()) yield return text;
+            yield return Loc.F("+{0} health per kill", HealPerKill.ToString("0.0"));
+        }
+
+        public override string DescribeNextLevel() => Loc.F("+{0} → +{1} health per kill", HealPerKill.ToString("0.0"), (HealPerKill + healPerKillPerLevel).ToString("0.0"));
     }
 }

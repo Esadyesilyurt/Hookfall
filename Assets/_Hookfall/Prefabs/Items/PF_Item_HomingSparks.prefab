@@ -46,6 +46,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Hookfall.Combat.Items.HomingSparks
   displayName: Homing Sparks
   lore: Sparks from the vault forge that still remember who their enemies are.
+  summary: Sparks fly out and chase the nearest enemies.
   baseDamage: 15
   cooldown: 1.2
   level: 1

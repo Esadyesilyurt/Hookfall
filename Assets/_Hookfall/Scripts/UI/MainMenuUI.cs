@@ -66,7 +66,7 @@ namespace Hookfall.UI
             UIFactory.Row(bestRow, 12f, 0);
             UIFactory.Icon(bestRow, UISkin.Icon("Timer"), 44f);
             string best = RunRecord.HasRecord
-                ? $"<b>Best watch {RunRecord.FormatTime(RunRecord.BestTime)}</b>\nLevel {RunRecord.BestLevel} · {RunRecord.BestKills} kills"
+                ? Loc.F("<b>Best watch {0}</b>\nLevel {1} · {2} kills", RunRecord.FormatTime(RunRecord.BestTime), RunRecord.BestLevel, RunRecord.BestKills)
                 : "No watch held yet";
             UIFactory.Sized(UIFactory.Text(bestRow, "Text", best, 24f, UITheme.Gold, TextAlignmentOptions.Left), 280f, 80f);
             UIPop.Add(panel, 0.25f, 0.9f, new Vector2(-60f, 0f));
@@ -119,22 +119,27 @@ namespace Hookfall.UI
         /// <summary>One card per character: portrait, what it does, or its unlock quest and progress while locked.</summary>
         private GameObject BuildSelect(Transform canvas)
         {
-            Image image = UIFactory.Panel(canvas, "Characters", new Vector2(1780f, 780f), UITheme.Panel);
+            Image image = UIFactory.Panel(canvas, "Characters", new Vector2(1780f, 870f), UITheme.Panel);
             UIFactory.Column(image, 18f, 40, TextAnchor.UpperCenter);
             TextMeshProUGUI title = UIFactory.Sized(UIFactory.Text(image.transform, "Title", "CHOOSE YOUR WARDEN", 46f, UITheme.Player, TextAlignmentOptions.Center, true), -1f, 60f);
             title.characterSpacing = 10f;
             RectTransform row = UIFactory.Rect(image.transform, "Cards", Vector2.zero, Vector2.zero, Vector2.zero, Vector2.zero);
-            UIFactory.Sized(row, -1f, 480f);
+            UIFactory.Sized(row, -1f, 570f);
             UIFactory.Row(row, 26f, 0);
             for (int i = 0; i < characters.Length; i++)
             {
                 CharacterDefinition character = characters[i];
                 bool open = CharacterRoster.IsUnlocked(character);
-                string tag = !open ? $"LOCKED  ·  {CharacterRoster.ProgressText(character)}"
-                    : character.id == CharacterRoster.SelectedId ? "LAST PLAYED" : "UNLOCKED";
-                string text = $"<size=62%>{(open ? character.description : character.unlockText)}</size>";
+                string tag = !open ? Loc.F("LOCKED  ·  {0}", CharacterRoster.ProgressText(character))
+                    : Loc.T(character.id == CharacterRoster.SelectedId ? "LAST PLAYED" : "UNLOCKED");
+                var lines = new System.Collections.Generic.List<string> { Loc.F("Health {0}", (100f * character.maxHealthMultiplier).ToString("0")) };
+                foreach (string perk in character.perks) lines.Add(Loc.T(perk));
+                var items = new System.Collections.Generic.List<string>();
+                foreach (var item in character.startingItems) if (item != null) items.Add(item.DisplayName);
+                string detail = open ? Loc.T(character.description) + "\n" + Loc.F("Starts with: {0}", string.Join(", ", items))
+                    : Loc.T(character.unlockText);
                 RectTransform card = UIFactory.ChoiceCard(row, i, open ? UITheme.Player : UITheme.TextMuted,
-                    UISkin.Icon(character.id), character.displayName, tag, text, () => Choose(character));
+                    UISkin.Icon(character.id), Loc.T(character.displayName), tag, string.Join("\n", lines), detail, () => Choose(character));
                 if (!open)
                 {
                     // A dark veil over a locked card (UIPop owns the card's CanvasGroup alpha, so it cannot be used).

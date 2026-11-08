@@ -46,6 +46,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Hookfall.Combat.Items.SoulHarvest
   displayName: Soul Harvest
   lore: A lantern that keeps a spark of everything the Warden brings down.
+  summary: Heal a little for every enemy you defeat.
   baseDamage: 0
   cooldown: 1
   level: 1
