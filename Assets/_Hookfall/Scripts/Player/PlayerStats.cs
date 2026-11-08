@@ -1,6 +1,7 @@
 // Hookfall - player health, armor, every stat upgrade and the abyss check (GDD 4.3, 4.6).
 // AI disclosure: written with Claude (Anthropic) on 2026-11-04 as part of the midterm project skeleton,
-// extended on 2026-11-07 with all 11 stat upgrades and on 2026-11-08 with a base health regen. Prompts and changes are recorded in Docs/PromptLog.md.
+// extended on 2026-11-07 with all 11 stat upgrades and on 2026-11-08 with a base health regen and the passive-item hooks
+// (shield, revive, crits, low-health damage, healing). Prompts and changes are recorded in Docs/PromptLog.md.
 using System;
 using Hookfall.Core;
 using UnityEngine;
@@ -62,7 +63,18 @@ namespace Hookfall.Player
         public float CurrentHealth { get; private set; }
         public float Armor => armor;
         public float Regen => healthRegenPerSecond;
-        public float DamageMultiplier => 1f + damageBonus;
+        public float DamageMultiplier => 1f + damageBonus + (CurrentHealth < maxHealth * 0.5f ? LowHealthDamageBonus : 0f);
+
+        // Set by passive items.
+        /// <summary>Chance for an enemy hit to deal double damage.</summary>
+        public float CritChance { get; set; }
+        /// <summary>Extra damage multiplier while below half health.</summary>
+        public float LowHealthDamageBonus { get; set; }
+        /// <summary>Each charge blocks one hit completely.</summary>
+        public int ShieldCharges { get; set; }
+        /// <summary>Each one brings the Warden back when health reaches zero, with this share of max health.</summary>
+        public int Revives { get; set; }
+        public float ReviveHealth { get; set; } = 0.5f;
         public float AttackSpeedMultiplier => 1f + attackSpeedBonus;
         public float XPMultiplier => 1f + xpBonus;
         public float LuckMultiplier => 1f + luckBonus;
@@ -84,6 +96,13 @@ namespace Hookfall.Player
         }
 
         public event Action<float> Damaged;
+        public event Action ShieldBlocked;
+        public event Action Revived;
+
+        public void Heal(float amount)
+        {
+            if (!IsDead) CurrentHealth = Mathf.Min(maxHealth, CurrentHealth + amount);
+        }
 
         private void Awake() => CurrentHealth = maxHealth;
 
@@ -102,10 +121,23 @@ namespace Hookfall.Player
         {
             if (IsDead || Time.time - lastHitTime < invulnerabilityAfterHit) return;
             lastHitTime = Time.time;
+            if (ShieldCharges > 0)
+            {
+                ShieldCharges--;
+                ShieldBlocked?.Invoke();
+                return;
+            }
 
             float damage = Mathf.Max(1f, amount - armor);
             CurrentHealth = Mathf.Max(0f, CurrentHealth - damage);
             Damaged?.Invoke(damage);
+            if (IsDead && Revives > 0)
+            {
+                Revives--;
+                CurrentHealth = maxHealth * ReviveHealth;
+                Revived?.Invoke();
+                return;
+            }
             if (IsDead) GameManager.Instance?.EndRun("Health reached zero");
         }
 

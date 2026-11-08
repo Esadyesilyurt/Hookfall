@@ -50,6 +50,7 @@ MonoBehaviour:
   baseDamage: 25
   cooldown: 1
   level: 1
+  rarity: 3
   cooldownMultiplier:
   - 0.9
   - 0.85

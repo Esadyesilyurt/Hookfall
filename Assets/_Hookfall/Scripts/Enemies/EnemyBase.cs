@@ -204,6 +204,7 @@ namespace Hookfall.Enemies
         public void TakeDamage(float amount)
         {
             if (IsDead) return;
+            if (PlayerStats != null && PlayerStats.CritChance > 0f && Random.value < PlayerStats.CritChance) amount *= 2f;   // Hunter's Eye
             Health -= amount;
             flashTimer = flashDuration;
             punch = hitPunch;

@@ -1,6 +1,6 @@
 // Hookfall - the core rule: items attack only while the player is airborne (GDD 4.4); also gives chest items (GDD 4.5, 4.7).
 // AI disclosure: written with Claude (Anthropic) on 2026-11-04 as part of the midterm project skeleton,
-// extended on 2026-11-07 with chest rewards and on 2026-11-08 with the 3-choice chest. Prompts and changes are recorded in Docs/PromptLog.md.
+// extended on 2026-11-07 with chest rewards and on 2026-11-08 with the 3-choice chest, item rarity and passive slots. Prompts and changes are recorded in Docs/PromptLog.md.
 using System;
 using System.Collections.Generic;
 using Hookfall.Player;
@@ -11,6 +11,7 @@ namespace Hookfall.Combat
     public class CombatSystem : MonoBehaviour
     {
         public const int MaxItems = 6;
+        public const int MaxPassives = 6;
 
         [SerializeField] private PlayerController player;
         [Tooltip("Airborne time before attacks switch on.")]
@@ -23,8 +24,6 @@ namespace Hookfall.Combat
         [SerializeField] private Transform itemsRoot;
         [Tooltip("Every item a chest can give, as prefabs.")]
         [SerializeField] private List<ItemBase> itemPrefabs = new List<ItemBase>();
-        [Tooltip("Starting level of a new item per rarity, and levels added to an owned one: Common, Rare, Epic.")]
-        [SerializeField] private int[] levelsPerRarity = { 1, 2, 3 };
         [Tooltip("How many different choices a chest offers.")]
         [SerializeField] private int chestChoices = 3;
 
@@ -67,8 +66,8 @@ namespace Hookfall.Combat
                 if (AttacksActive && groundedTime >= disableDelay) SetAttacksActive(false);
             }
 
-            if (!AttacksActive) return;
-            foreach (ItemBase item in items) item.Tick(Time.deltaTime);
+            foreach (ItemBase item in items)
+                if (item.IsPassive || AttacksActive) item.Tick(Time.deltaTime);
         }
 
         public bool Owns(ItemBase prefab) => Find(prefab) != null;
@@ -77,30 +76,47 @@ namespace Hookfall.Combat
         public ChestReward Grant(Rarity rarity, PlayerStats stats) => Claim(RollChest(rarity)[0], stats);
 
         /// <summary>
-        /// A chest's different choices, nothing given yet: new items while a slot is free, levels for owned items that are
-        /// not maxed, and stats only when no item can be offered. Never empty.
+        /// A chest's different choices, nothing given yet. A rarer chest offers rarer items, never more levels: new items
+        /// of the chest's own rarity first, then of the rarities below it; then one more level for owned items that are not
+        /// maxed; stats only fill what is left. Never empty.
         /// </summary>
         public List<ChestReward> RollChest(Rarity rarity)
         {
-            int levels = levelsPerRarity[Mathf.Clamp((int)rarity, 0, levelsPerRarity.Length - 1)];
-            var pool = new List<ChestReward>();
-            foreach (ItemBase prefab in itemPrefabs)
-            {
-                ItemBase owned = Find(prefab);
-                if (owned == null) { if (items.Count < MaxItems) pool.Add(new ChestReward(rarity, prefab, true, levels)); }
-                else if (!owned.IsMaxed) pool.Add(new ChestReward(rarity, owned, false, levels));
-            }
-            if (pool.Count == 0)
-                foreach (StatType stat in Enum.GetValues(typeof(StatType))) pool.Add(new ChestReward(rarity, null, false, levels, stat));
-
             var offer = new List<ChestReward>();
+            var pool = new List<ChestReward>();
+            for (int tier = (int)rarity; tier >= 0 && offer.Count < chestChoices; tier--)
+            {
+                pool.Clear();
+                foreach (ItemBase prefab in itemPrefabs)
+                    if ((int)prefab.Rarity == tier && Find(prefab) == null && HasFreeSlot(prefab.IsPassive))
+                        pool.Add(new ChestReward(prefab.Rarity, prefab, true, 1));
+                TakeRandom(pool, offer);
+            }
+            pool.Clear();
+            foreach (ItemBase item in items)
+                if (!item.IsMaxed) pool.Add(new ChestReward(item.Rarity, item, false, 1));
+            TakeRandom(pool, offer);
+            pool.Clear();
+            foreach (StatType stat in Enum.GetValues(typeof(StatType))) pool.Add(new ChestReward(rarity, null, false, 1, stat));
+            TakeRandom(pool, offer);
+            return offer;
+        }
+
+        public bool HasFreeSlot(bool passive)
+        {
+            int used = 0;
+            foreach (ItemBase item in items) if (item.IsPassive == passive) used++;
+            return used < (passive ? MaxPassives : MaxItems);
+        }
+
+        private void TakeRandom(List<ChestReward> pool, List<ChestReward> offer)
+        {
             while (offer.Count < chestChoices && pool.Count > 0)
             {
                 int i = UnityEngine.Random.Range(0, pool.Count);
                 offer.Add(pool[i]);
                 pool.RemoveAt(i);
             }
-            return offer;
         }
 
         /// <summary>Gives one choice from RollChest and returns what it became (the new item's instance, the levels really gained).</summary>

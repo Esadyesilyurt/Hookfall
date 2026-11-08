@@ -50,6 +50,7 @@ MonoBehaviour:
   baseDamage: 10
   cooldown: 0.5
   level: 1
+  rarity: 0
   orbitRadius: 3
   orbitSpeed: 240
   bladeHitRadius: 0.9

@@ -35,11 +35,13 @@ namespace Hookfall.UI
         private Image crosshair, zipRing, attackBack, xpGlow;
         private RectTransform promptRow;
         private readonly Image[] zipPips = new Image[3];
-        private readonly Image[] slotIcons = new Image[CombatSystem.MaxItems];
-        private readonly Image[] slotFrames = new Image[CombatSystem.MaxItems];
-        private readonly RectTransform[] slotPips = new RectTransform[CombatSystem.MaxItems];
-        private readonly ItemBase[] slotItem = new ItemBase[CombatSystem.MaxItems];
-        private readonly int[] slotLevel = new int[CombatSystem.MaxItems];
+        private const int SlotCount = CombatSystem.MaxItems + CombatSystem.MaxPassives;   // attack slots, then passive slots
+        private readonly Image[] slotIcons = new Image[SlotCount];
+        private readonly Image[] slotFrames = new Image[SlotCount];
+        private readonly TextMeshProUGUI[] slotGlyphs = new TextMeshProUGUI[SlotCount];
+        private readonly RectTransform[] slotPips = new RectTransform[SlotCount];
+        private readonly ItemBase[] slotItem = new ItemBase[SlotCount];
+        private readonly int[] slotLevel = new int[SlotCount];
         private float trail = 1f;
         private int shownLevel = 1;
         private float levelFlash, attackPulse;
@@ -129,14 +131,20 @@ namespace Hookfall.UI
             UIFactory.KeyCap(promptRow, "E");
             promptText = UIFactory.Sized(UIFactory.Text(promptRow, "Text", "", 26f, UITheme.Gold, TextAlignmentOptions.Left, true), 560f, 46f);
 
-            // Bottom left: six item slots with icons and level pips.
-            for (int i = 0; i < CombatSystem.MaxItems; i++)
+            // Bottom left: six item slots with icons and level pips, and six smaller passive slots above them.
+            for (int i = 0; i < SlotCount; i++)
             {
-                RectTransform slot = UIFactory.Rect(c, $"Slot {i + 1}", Vector2.zero, Vector2.zero, new Vector2(24f + i * 102f, 24f), new Vector2(94f, 94f), Vector2.zero);
+                bool passive = i >= CombatSystem.MaxItems;
+                int column = passive ? i - CombatSystem.MaxItems : i;
+                float size = passive ? 66f : 94f;
+                Vector2 position = passive ? new Vector2(24f + column * 74f, 128f) : new Vector2(24f + column * 102f, 24f);
+                RectTransform slot = UIFactory.Rect(c, $"Slot {i + 1}", Vector2.zero, Vector2.zero, position, new Vector2(size, size), Vector2.zero);
                 slotFrames[i] = UIFactory.Image(slot, UITheme.Panel, UISkin.Card);
-                RectTransform iconRect = UIFactory.Centre(slot, "Icon", new Vector2(0f, 6f), new Vector2(60f, 60f));
+                RectTransform iconRect = UIFactory.Centre(slot, "Icon", new Vector2(0f, size * 0.06f), new Vector2(size * 0.64f, size * 0.64f));
                 slotIcons[i] = UIFactory.Image(iconRect, Color.white);
                 slotIcons[i].preserveAspect = true;
+                // Items with no icon yet show their first letter instead.
+                slotGlyphs[i] = UIFactory.Text(UIFactory.Centre(slot, "Glyph", new Vector2(0f, size * 0.06f), new Vector2(size, size * 0.6f)), "", size * 0.4f, UITheme.Text, TextAlignmentOptions.Center, true);
                 slotLevel[i] = -1;
             }
 
@@ -252,21 +260,33 @@ namespace Hookfall.UI
 
         private void DrawSlots()
         {
-            for (int i = 0; i < CombatSystem.MaxItems; i++)
+            for (int i = 0; i < SlotCount; i++)
             {
-                ItemBase item = combat != null && i < combat.Items.Count ? combat.Items[i] : null;
+                ItemBase item = SlotItem(i);
                 int level = item != null ? item.Level : 0;
                 if (slotItem[i] == item && slotLevel[i] == level) continue;   // redraw only when the slot changes
                 slotItem[i] = item;
                 slotLevel[i] = level;
                 slotIcons[i].sprite = UISkin.Icon(item);
                 slotIcons[i].enabled = item != null && slotIcons[i].sprite != null;
-                slotFrames[i].color = item != null ? UITheme.PanelLight : new Color(0.15f, 0.19f, 0.26f, 0.7f);
+                slotGlyphs[i].text = item != null && slotIcons[i].sprite == null ? item.DisplayName.Substring(0, 1) : "";
+                slotFrames[i].color = item != null ? Color.Lerp(UITheme.PanelLight, UITheme.ForRarity(item.Rarity), 0.35f) : new Color(0.15f, 0.19f, 0.26f, 0.7f);
                 if (slotPips[i] != null) Destroy(slotPips[i].gameObject);
                 slotPips[i] = item != null
-                    ? UIFactory.Pips(slotFrames[i].transform, item.Level, ItemBase.MaxLevel, 10f, UITheme.Player, new Color(1f, 1f, 1f, 0.2f))
+                    ? UIFactory.Pips(slotFrames[i].transform, item.Level, ItemBase.MaxLevel, i < CombatSystem.MaxItems ? 10f : 7f, UITheme.Player, new Color(1f, 1f, 1f, 0.2f))
                     : null;
             }
+        }
+
+        /// <summary>The item shown in a slot: the n-th attack item, or for the upper row the n-th passive.</summary>
+        private ItemBase SlotItem(int slot)
+        {
+            if (combat == null) return null;
+            bool passive = slot >= CombatSystem.MaxItems;
+            int index = passive ? slot - CombatSystem.MaxItems : slot;
+            foreach (ItemBase item in combat.Items)
+                if (item.IsPassive == passive && index-- == 0) return item;
+            return null;
         }
 
         private void DrawCacheMarker()

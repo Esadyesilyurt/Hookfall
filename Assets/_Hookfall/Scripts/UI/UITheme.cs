@@ -29,6 +29,7 @@ namespace Hookfall.UI
             {
                 case Rarity.Rare: return new Color(0.35f, 0.62f, 1f);
                 case Rarity.Epic: return new Color(0.78f, 0.42f, 1f);
+                case Rarity.Legendary: return new Color(1f, 0.62f, 0.15f);
                 default: return new Color(0.85f, 0.87f, 0.9f);
             }
         }

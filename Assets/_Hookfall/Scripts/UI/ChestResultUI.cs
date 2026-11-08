@@ -76,7 +76,8 @@ namespace Hookfall.UI
             raysImage.color = new Color(color.r, color.g, color.b, 0.3f);
             title.text = $"{rarity.ToString().ToUpper()} CHEST";
             title.color = color;
-            for (int i = 0; i < options.Count; i++) cards.Add(BuildCard(i, options[i], color));
+            for (int i = 0; i < options.Count; i++)
+                cards.Add(BuildCard(i, options[i], options[i].Item != null ? UITheme.ForRarity(options[i].Item.Rarity) : color));
 
             shownAt = Time.unscaledTime;
             root.SetActive(true);
@@ -102,12 +103,12 @@ namespace Hookfall.UI
                 icon = UISkin.Icon(choice.Item);
                 if (choice.IsNewItem)
                 {
-                    tag = $"NEW ITEM  ·  LEVEL {choice.LevelsGained}";
+                    tag = $"NEW {choice.Item.Rarity.ToString().ToUpper()} {(choice.Item.IsPassive ? "PASSIVE" : "ITEM")}";
                     value = $"<size=60%><i>{choice.Item.Lore}</i></size>";
                 }
                 else
                 {
-                    tag = $"ITEM  ·  LEVEL {choice.Item.Level} → {Mathf.Min(choice.Item.Level + choice.LevelsGained, ItemBase.MaxLevel)}";
+                    tag = $"{(choice.Item.IsPassive ? "PASSIVE" : "ITEM")}  ·  LEVEL {choice.Item.Level} → {Mathf.Min(choice.Item.Level + choice.LevelsGained, ItemBase.MaxLevel)}";
                     value = choice.Item.DescribeNextLevel();
                 }
             }
