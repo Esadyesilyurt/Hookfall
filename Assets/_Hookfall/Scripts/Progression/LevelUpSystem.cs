@@ -14,6 +14,8 @@ namespace Hookfall.Progression
     public class LevelUpSystem : MonoBehaviour
     {
         [SerializeField] private int choices = 3;
+        [Tooltip("Damage gained on every level-up regardless of the card picked (added 2026-11-08), as a share: 0.02 = +2%.")]
+        [SerializeField] private float damagePerLevel = 0.02f;
 
         private XPSystem xp;
         private PlayerStats stats;
@@ -42,6 +44,7 @@ namespace Hookfall.Progression
         private void OnLeveledUp(int newLevel)
         {
             pendingLevels++;
+            stats.AddLevelDamage(damagePerLevel);
             TryShowNext();
         }
 

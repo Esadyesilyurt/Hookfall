@@ -17,8 +17,8 @@ Solo project by Esad Yesilyurt for *Game Studio: AI in Game Development* (Istanb
 | Mouse | Aim and turn the camera |
 | Left mouse button | Throw the hook at an island; hold to swing (faster on the way down), release to fly on |
 | Right mouse button | Zip: a power swing; keep holding and it reels you up to the island (own cooldown and charges) |
-| A / D | Walk on islands; light air strafe while flying |
-| W / S | Walk on islands |
+| A / D | Walk on islands; strafe sharply while flying |
+| W / S | Walk on islands; climb up / slide down the hook rope |
 | Space | Jump on islands; wall jump when touching an island side in the air (W/A/S/D steers it); otherwise one double jump per flight |
 | Left Shift | Dash in the air, once per flight, towards W/A/S/D or where the camera looks; refilled on landing |
 | E | Open a chest within 7 m, on foot or in flight |

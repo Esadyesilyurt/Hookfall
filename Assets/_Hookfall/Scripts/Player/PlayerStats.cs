@@ -96,6 +96,9 @@ namespace Hookfall.Player
         }
 
         public event Action<float> Damaged;
+        /// <summary>The small damage gain every level-up gives (LevelUpSystem), on top of any Damage cards.</summary>
+        public void AddLevelDamage(float bonus) => damageBonus += bonus;
+
         public event Action ShieldBlocked;
         public event Action Revived;
 

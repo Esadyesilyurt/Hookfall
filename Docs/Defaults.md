@@ -108,7 +108,9 @@ Values the GDD does not give, picked by Claude on 2026-11-07 when building Weeks
 | Air gravity | ×1.8 while airborne (faster swings, harder climbs) | PlayerController |
 | Max air speed | 40 m/s, +10% per Max flight speed pick (soft-capped at +100%); Zip and release boosts at most 15% over it (55 m/s with uncapped boosts until later on 2026-11-08; GDD 4.1: 35) | PlayerController, PlayerStats |
 | Ledge climb | Touching an island side or rim underside with the feet up to 8 m below the top: a 0.35 s move out past the rim, 1.2 m above the top, then onto the surface 1.5 m inside the rim | PlayerController |
-| Air strafe | 12 m/s² (GDD 4.1: 6) | PlayerController |
+| Air strafe | A/D only: 40 m/s² up to 16 m/s sideways, faster momentum kept (12 m/s² until later on 2026-11-08; GDD 4.1: 6) | PlayerController |
+| Rope climb | W shortens the rope at 12 m/s with a 14 m/s² pull (down to 4 m), S lets it out up to hook range | GrappleHook |
+| Level damage | +2% damage on every level-up, whatever card is picked | LevelUpSystem |
 | Zip (power swing) | Spring 120, pump 22 m/s², 20% reel-in; after 0.9 s held it reels in at 10 m/s with a 16 m/s² pull, down to 4 m; ends after 4 s or on release | GrappleHook |
 | Wall jump | Space within 0.2 s of touching an island side: 14 m/s up, 8 m/s off the wall, 9 m/s towards W/A/S/D; 0.3 s cooldown | PlayerController |
 | Air tricks | Above 24 m/s, airborne, no rope out, after 0.2 s: front flip, back flip or barrel roll at 620°/s, finishing the turn | WardenAnimator |

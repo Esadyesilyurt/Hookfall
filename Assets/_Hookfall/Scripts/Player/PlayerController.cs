@@ -17,8 +17,10 @@ namespace Hookfall.Player
         [SerializeField] private float groundCheckDistance = 0.2f;
 
         [Header("In the air")]
-        [Tooltip("Sideways push with A/D; momentum from the swing stays in charge.")]
-        [SerializeField] private float airStrafeAcceleration = 12f;
+        [Tooltip("Sideways acceleration with A/D in the air (12 until 2026-11-08). W/S work the rope instead (GrappleHook).")]
+        [SerializeField] private float airStrafeAcceleration = 40f;
+        [Tooltip("A/D push up to this sideways speed; faster momentum is kept, and the opposite key brakes it quickly.")]
+        [SerializeField] private float airStrafeSpeed = 16f;
         [Tooltip("Air speed cap before Flight speed picks (GDD 35 m/s; 55 for a while on 2026-11-08, lowered to 40 the same day because chained swings got too fast).")]
         [SerializeField] private float maxAirSpeed = 40f;
         [Tooltip("Gravity multiplier in the air: a heavier Warden swings faster down and slows harder going up.")]
@@ -214,8 +216,8 @@ namespace Hookfall.Player
                 {
                     Body.AddForce(Physics.gravity * (airGravityMultiplier - 1f), ForceMode.Acceleration);
 
-                    // Air strafe: only A/D. Momentum from the swing stays in charge.
-                    if (!Mathf.Approximately(moveInput.x, 0f))
+                    // Air strafe: only A/D, sharp up to airStrafeSpeed; swing momentum beyond it stays.
+                    if (!Mathf.Approximately(moveInput.x, 0f) && moveInput.x * Vector3.Dot(Body.linearVelocity, right) < airStrafeSpeed)
                         Body.AddForce(right * (moveInput.x * airStrafeAcceleration), ForceMode.Acceleration);
                 }
 

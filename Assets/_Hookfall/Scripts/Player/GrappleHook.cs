@@ -45,6 +45,11 @@ namespace Hookfall.Player
         [SerializeField] private float zipMaxTime = 4f;
         [SerializeField] private float zipEndLift = 4f;
 
+        [Header("Climbing the rope (W up, S down)")]
+        [SerializeField] private float ropeClimbSpeed = 12f;
+        [Tooltip("Pull towards the anchor while W is held (m/s²).")]
+        [SerializeField] private float ropeClimbPull = 14f;
+
         [Header("References")]
         [Tooltip("Usually the main camera: the hook fires through the screen centre.")]
         [SerializeField] private Transform aimSource;
@@ -142,6 +147,15 @@ namespace Hookfall.Player
             Vector3 along = Vector3.ProjectOnPlane(velocity, ropeDir);
             if (velocity.y < 0f && along.sqrMagnitude > 0.25f)
                 body.AddForce(along.normalized * (IsZipping ? zipPump : swingPump), ForceMode.Acceleration);
+
+            // W climbs the rope, S lets it out.
+            Keyboard keyboard = Keyboard.current;
+            float climb = keyboard == null ? 0f : (keyboard.wKey.isPressed ? 1f : 0f) - (keyboard.sKey.isPressed ? 1f : 0f);
+            if (climb != 0f)
+            {
+                joint.maxDistance = Mathf.Clamp(joint.maxDistance - climb * ropeClimbSpeed * dt, zipMinRope, Mathf.Max(MaxRange, ZipRange));
+                if (climb > 0f) body.AddForce(ropeDir * ropeClimbPull, ForceMode.Acceleration);
+            }
 
             if (!IsZipping) return;
             zipTimer += dt;
