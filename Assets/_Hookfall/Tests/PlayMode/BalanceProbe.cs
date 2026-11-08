@@ -1,6 +1,7 @@
 // Hookfall - balance probe (2026-11-08): flies every character through the first 90 s of a run on an autopilot (a
 // circle around the tower, picking the first level-up card) and logs kills, level, gold and damage taken, so the
-// characters can be compared; then gives the Warden a mid-run build and times a boss fight. Not a pass/fail test:
+// characters can be compared; then gives the Warden a mid-run build and times a boss fight; and (2026-11-09) crosses
+// the big map island to island, counting the enemies close enough to fight and the gold coming in. Not a pass/fail test:
 // [Explicit], run it on purpose with -testFilter Hookfall.Tests.BalanceProbe. Results go to the log as "[Hookfall] Probe".
 // AI disclosure: written with Claude (Anthropic) on 2026-11-08. Prompts and changes are recorded in Docs/PromptLog.md.
 using System;
@@ -43,6 +44,51 @@ namespace Hookfall.Tests
                 var run = new Run();
                 yield return run.Fly(90f, (t, p) => new Vector3(Mathf.Cos(t * 0.6f) * 30f, 52f + Mathf.Sin(t * 0.9f) * 3f, Mathf.Sin(t * 0.6f) * 30f));
                 string line = $"  {id,-12} kills {run.Kills,4}  level {run.Level,2}  gold {run.Gold,4}  damage taken {run.Damage,6:0}  hits {run.Hits,3}  first level-up {run.FirstLevelUp,5:0.0} s";
+                Debug.Log("[Hookfall] Probe " + line.Trim());
+                report.AppendLine(line);
+            }
+            Debug.Log(report.ToString());
+        }
+
+        /// <summary>A player crossing the big map island to island at swing speed for six minutes: how many enemies stay
+        /// close enough to fight, how fast gold comes in and when the first boss would rise (2026-11-09).</summary>
+        [UnityTest, Explicit, Timeout(1200000)]
+        public IEnumerator AcrossTheMap()
+        {
+            string only = Environment.GetEnvironmentVariable("HOOKFALL_PROBE");
+            string[] ids = !string.IsNullOrEmpty(only) ? only.Split(',') : new[] { "Warden", "EmberWitch" };
+            Type directorType = T("Hookfall.Enemies.EnemyDirector"), stageType = T("Hookfall.World.StageDirector");
+            var flags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+            var report = new StringBuilder("[Hookfall] Probe: six minutes crossing the map at 38 m/s, island to island\n");
+            foreach (string id in ids)
+            {
+                PlayerPrefs.SetString("hf_character", id);
+                SceneManager.LoadScene("Arena");
+                yield return null;
+                int target = (int)stageType.GetProperty("GoldTarget").GetValue(stageType.GetProperty("Instance").GetValue(null));
+                SceneSmokeTests.NoBoss();
+                SameMap();
+                // The frame-rate fallback would measure this machine's batch run, not the game: off for the probe.
+                directorType.GetField("minFps", flags).SetValue(UnityEngine.Object.FindAnyObjectByType(directorType), 0f);
+                yield return null;
+                var random = new System.Random(7);
+                var waypoint = new Vector3(0f, 55f, -60f);
+                var run = new Run { Speed = 38f, Watch = true };
+                yield return run.Fly(360f, (t, p) =>
+                {
+                    if (new Vector2(p.x - waypoint.x, p.z - waypoint.z).magnitude < 8f)
+                    {
+                        // The next hop 50-130 m on; near the storm wall, a long leg back across the middle.
+                        float angle = (float)random.NextDouble() * Mathf.PI * 2f;
+                        Vector3 next = waypoint + new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle)) * (50f + (float)random.NextDouble() * 80f);
+                        if (new Vector2(next.x, next.z).magnitude > 260f) next = new Vector3(-next.x * 0.5f, 0f, -next.z * 0.5f);
+                        waypoint = new Vector3(next.x, 55f + (float)random.NextDouble() * 4f, next.z);
+                    }
+                    return waypoint;
+                });
+                string line = $"  {id,-12} kills {run.Kills,4}  gold at 2/4/6 min {run.GoldAt[0]}/{run.GoldAt[1]}/{run.GoldAt[2]} (boss at {target})  " +
+                              $"enemies within 30 m {run.Near / Mathf.Max(1, run.Samples):0.0}, within 70 m {run.Mid / Mathf.Max(1, run.Samples):0.0}, " +
+                              $"alive {run.Alive / Mathf.Max(1, run.Samples):0}  damage taken {run.Damage:0} in {run.Hits} hits";
                 Debug.Log("[Hookfall] Probe " + line.Trim());
                 report.AppendLine(line);
             }
@@ -119,6 +165,12 @@ namespace Hookfall.Tests
         {
             public int Kills, Level, Gold, Hits;
             public float Damage, FirstLevelUp = -1f, Elapsed;
+            public float Speed = 26f;
+            /// <summary>Count the enemies around the Warden every frame and note the gold earned every two minutes.</summary>
+            public bool Watch;
+            public float Near, Mid, Alive;
+            public int Samples;
+            public readonly int[] GoldAt = new int[3];
 
             public IEnumerator Fly(float seconds, Func<float, Vector3, Vector3> path, Func<bool> done = null)
             {
@@ -162,7 +214,8 @@ namespace Hookfall.Tests
                         Elapsed += Time.deltaTime;
                         Vector3 target = path(Elapsed + 0.4f, body.position);
                         Vector3 v = (target - body.position) * 2.5f;
-                        body.linearVelocity = Vector3.ClampMagnitude(v, 26f);
+                        body.linearVelocity = Vector3.ClampMagnitude(v, Speed);
+                        if (Watch) Count(body.position, (int)walletType.GetProperty("Earned").GetValue(wallet));
                     }
                     int level = (int)xpType.GetProperty("Level").GetValue(xp);
                     if (level > 1 && FirstLevelUp < 0f) FirstLevelUp = Elapsed;
@@ -172,6 +225,20 @@ namespace Hookfall.Tests
                 Kills = (int)gmType.GetProperty("Kills").GetValue(gm);
                 Level = (int)xpType.GetProperty("Level").GetValue(xp);
                 Gold = (int)walletType.GetProperty("Earned").GetValue(wallet);
+            }
+
+            private void Count(Vector3 at, int earned)
+            {
+                var active = (IList)T("Hookfall.Enemies.EnemyBase").GetField("Active").GetValue(null);
+                foreach (Component enemy in active)
+                {
+                    float d = Vector3.Distance(enemy.transform.position, at);
+                    if (d < 30f) Near++;
+                    if (d < 70f) Mid++;
+                }
+                Alive += active.Count;
+                Samples++;
+                GoldAt[Mathf.Min(2, Mathf.FloorToInt(Elapsed / 120f))] = earned;
             }
         }
     }

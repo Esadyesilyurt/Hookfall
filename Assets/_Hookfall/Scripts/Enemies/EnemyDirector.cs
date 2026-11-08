@@ -3,7 +3,8 @@
 // AI disclosure: written with Claude (Anthropic) on 2026-11-04 as part of the midterm project skeleton,
 // rewritten on 2026-11-07 (pooling, wyverns, golems, elites, performance fallback); stages on 2026-11-08: time and
 // growth restart every stage on top of the StageDirector's multipliers, the boss calls escorts, a new stage clears
-// the sky. Prompts and changes are recorded in Docs/PromptLog.md.
+// the sky; 2026-11-09: a busier first stage, a low frame rate holds the horde instead of emptying the sky, and flyers
+// never appear inside an island or on a large one. Prompts and changes are recorded in Docs/PromptLog.md.
 using System;
 using System.Collections.Generic;
 using Hookfall.Core;
@@ -25,8 +26,9 @@ namespace Hookfall.Enemies
         [SerializeField] private Boulder boulderPrefab;
 
         [Header("Spawning (GDD 4.8)")]
-        [Tooltip("GDD 4.8: 2 per second. Raised to 5 on 2026-11-07, back to 2 on 2026-11-08 (too many enemies).")]
-        [SerializeField] private float baseSpawnPerSecond = 2f;
+        [Tooltip("GDD 4.8: 2 per second. Raised to 5 on 2026-11-07, back to 2 on 2026-11-08 (too many enemies), " +
+                 "3 on 2026-11-09 (too few on the doubled map).")]
+        [SerializeField] private float baseSpawnPerSecond = 3f;
         [Tooltip("+20% spawn rate per minute survived.")]
         [SerializeField] private float spawnGrowthPerMinute = 0.2f;
         [Tooltip("300 until 2026-11-08; the performance test still checks 300.")]
@@ -73,6 +75,9 @@ namespace Hookfall.Enemies
 
         [Header("Performance fallback (GDD 5.7)")]
         [SerializeField] private float minFps = 50f;
+        [Tooltip("Below minFps the horde stops growing past this size. Until 2026-11-09 spawning stopped outright, " +
+                 "which could leave the sky almost empty in the editor.")]
+        [SerializeField] private int lowPerformanceCap = 60;
 
         [Header("Arena")]
         [Tooltip("Spawns stay inside this horizontal radius (inside the storm wall).")]
@@ -142,15 +147,15 @@ namespace Hookfall.Enemies
             LowPerformance = smoothedFps < minFps;
 
             float minutes = MinutesSurvived;
-            bool full = AliveCount >= maxAlive;
-            if (!full && !LowPerformance)
+            int cap = LowPerformance ? Mathf.Min(maxAlive, lowPerformanceCap) : maxAlive;
+            if (AliveCount < cap)
             {
                 float spawnRate = baseSpawnPerSecond * StageSpawns * Mathf.Pow(1f + spawnGrowthPerMinute, minutes);
                 spawnBudget += spawnRate * Time.deltaTime;
             }
-            else spawnBudget = 0f;   // fallback: cap reached or frame rate low, pause spawning
+            else spawnBudget = 0f;   // cap reached (a lower one while the frame rate is low): wait
 
-            while (spawnBudget >= 1f && AliveCount < maxAlive)
+            while (spawnBudget >= 1f && AliveCount < cap)
             {
                 spawnBudget -= 1f;
                 if (wyvernPrefab != null && Random.value < WyvernShare(minutes)) SpawnFlyer(wyvernPrefab, PickSpawnPoint(), minutes);
@@ -289,8 +294,31 @@ namespace Hookfall.Enemies
 
         // ---------- Placement and fallbacks ----------
 
-        /// <summary>Ahead of the player's flight path most of the time, otherwise around them and out of camera view.</summary>
+        /// <summary>A spawn point in open sky: never inside an island's rock or on a large island (kept empty).</summary>
         private Vector3 PickSpawnPoint()
+        {
+            Vector3 point = SpawnCandidate();
+            for (int attempt = 0; attempt < 6 && InsideIsland(point); attempt++) point = SpawnCandidate();
+            return point;
+        }
+
+        /// <summary>Inside an island (its rock hangs about its width below the top) or just above a large island.</summary>
+        private static bool InsideIsland(Vector3 p)
+        {
+            foreach (Island island in Island.All)
+            {
+                Vector3 top = island.Top;
+                float radius = island.Width * 0.6f + 2f;
+                float dx = p.x - top.x, dz = p.z - top.z;
+                if (dx * dx + dz * dz > radius * radius) continue;
+                float above = island.Kind == IslandKind.Large ? 14f : 3f;
+                if (p.y < top.y + above && p.y > top.y - island.Width - 2f) return true;
+            }
+            return false;
+        }
+
+        /// <summary>Ahead of the player's flight path most of the time, otherwise around them and out of camera view.</summary>
+        private Vector3 SpawnCandidate()
         {
             Vector3 velocity = player.Body.linearVelocity;
             Vector3 origin = player.transform.position;

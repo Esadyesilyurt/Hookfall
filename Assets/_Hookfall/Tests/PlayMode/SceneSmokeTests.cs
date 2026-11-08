@@ -1089,9 +1089,10 @@ namespace Hookfall.Tests
             LogAssert.NoUnexpectedReceived();
         }
 
-        /// <summary>The doubled map: many more islands, reaching much further, with large islands golems never take.</summary>
+        /// <summary>The doubled map: many more islands, reaching much further, with large islands that stay empty: no
+        /// golem, no chest, and no flyer spawns on them or inside any island (chests and flyers from 2026-11-09).</summary>
         [UnityTest]
-        public IEnumerator BigMapAndGolemFreeLargeIslands()
+        public IEnumerator BigMapKeepsLargeIslandsEmpty()
         {
             SceneManager.LoadScene("Arena");
             yield return null;
@@ -1124,7 +1125,83 @@ namespace Hookfall.Tests
                 Assert.AreNotEqual("Large", islandType.GetProperty("Kind").GetValue(home).ToString(), "Golems never spawn on large islands");
             }
             Assert.Greater(golems, 0, "Golems should still find islands");
+
+            var flags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+            Type chestSpawnerType = Type.GetType("Hookfall.World.ChestSpawner, Assembly-CSharp");
+            object chests = UnityEngine.Object.FindAnyObjectByType(chestSpawnerType);
+            for (int i = 0; i < 40; i++) chestSpawnerType.GetMethod("Spawn", flags).Invoke(chests, null);
+            int placed = 0;
+            foreach (Component chest in (IList)chestSpawnerType.GetProperty("Chests").GetValue(chests))
+            {
+                placed++;
+                string kind = islandType.GetProperty("Kind").GetValue(chest.GetType().GetProperty("Island").GetValue(chest)).ToString();
+                Assert.IsFalse(kind == "Large" || kind == "Tower" || kind == "Boss", $"No chest goes on a {kind} island");
+            }
+            Assert.Greater(placed, 20, "Chests should still find islands");
+
+            // Flyers, with the Warden standing on a large island: at most a rare point after every retry failed.
+            Component largeIsland = null;
+            foreach (Component island in (IList)islandType.GetField("All").GetValue(null))
+                if (islandType.GetProperty("Kind").GetValue(island).ToString() == "Large") { largeIsland = island; break; }
+            GameObject player = GameObject.Find("Player");
+            KeepAlive(player);
+            Teleport(player, (Vector3)islandType.GetProperty("Top").GetValue(largeIsland) + Vector3.up * 1.5f);
+            yield return new WaitForFixedUpdate();
+            var inside = directorType.GetMethod("InsideIsland", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+            int blocked = 0;
+            for (int i = 0; i < 200; i++)
+            {
+                var point = (Vector3)directorType.GetMethod("PickSpawnPoint", flags).Invoke(director, null);
+                if ((bool)inside.Invoke(null, new object[] { point })) blocked++;
+            }
+            Assert.LessOrEqual(blocked, 2, $"{blocked} of 200 spawn points were inside an island or on a large one");
             yield return null;
+            LogAssert.NoUnexpectedReceived();
+        }
+
+        /// <summary>A Warden with only the Orbit Blades flying at 38 m/s across the big map still meets the horde: enemies
+        /// keep up and come within reach (2026-11-09: they trailed 30 m behind, out of view, and the sky looked empty).</summary>
+        [UnityTest]
+        public IEnumerator HordeKeepsUpWithAFastWarden()
+        {
+            PlayerPrefs.SetString("hf_character", "Warden");
+            SceneManager.LoadScene("Arena");
+            yield return null;
+            GameObject player = GameObject.Find("Player");
+            var body = player.GetComponent<Rigidbody>();
+            var flags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+            Type directorType = Type.GetType("Hookfall.Enemies.EnemyDirector, Assembly-CSharp");
+            Type levelUpType = Type.GetType("Hookfall.Progression.LevelUpSystem, Assembly-CSharp");
+            Type gmType = Type.GetType("Hookfall.Core.GameManager, Assembly-CSharp");
+            Component levelUp = player.GetComponent(levelUpType);
+            // The frame-rate fallback depends on the machine running the test, not on the game.
+            directorType.GetField("minFps", flags).SetValue(UnityEngine.Object.FindAnyObjectByType(directorType), 0f);
+            var active = (IList)Type.GetType("Hookfall.Enemies.EnemyBase, Assembly-CSharp").GetField("Active").GetValue(null);
+
+            // Above every island, so nothing blocks the Warden; legs of 200 m and more, like a player crossing the map.
+            Vector3[] route = { new Vector3(0f, 55f, -60f), new Vector3(170f, 57f, 30f), new Vector3(-30f, 55f, 190f), new Vector3(-210f, 58f, -40f), new Vector3(50f, 56f, -220f) };
+            Teleport(player, route[0]);
+            int leg = 1, samples = 0;
+            float flown = 0f, close = 0f;
+            while (flown < 30f)
+            {
+                KeepAlive(player);
+                if (Time.timeScale == 0f && levelUp != null) levelUpType.GetMethod("Pick").Invoke(levelUp, new object[] { 0 });
+                if (Vector3.Distance(body.position, route[leg]) < 8f) leg = (leg + 1) % route.Length;
+                body.linearVelocity = (route[leg] - body.position).normalized * 38f;
+                flown += Time.deltaTime;
+                if (flown > 10f && Time.timeScale > 0f)
+                {
+                    foreach (Component enemy in active) if (Vector3.Distance(enemy.transform.position, body.position) < 8f) close++;
+                    samples++;
+                }
+                yield return null;
+            }
+            close /= Mathf.Max(1, samples);
+            int kills = (int)gmType.GetProperty("Kills").GetValue(gmType.GetProperty("Instance").GetValue(null));
+            // Before the fix: about 4 within 8 m and 0-3 kills; after it about 7.6 and 24 (2026-11-09).
+            Assert.Greater(close, 3f, $"Enemies should keep up with a Warden at 38 m/s (on average {close:0.0} within 8 m)");
+            Assert.GreaterOrEqual(kills, 10, $"The Orbit Blades should reach the horde in fast flight ({kills} kills in 30 s)");
             LogAssert.NoUnexpectedReceived();
         }
 

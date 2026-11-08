@@ -38,6 +38,7 @@ namespace Hookfall.Tests
             Type statsType = Type.GetType("Hookfall.Player.PlayerStats, Assembly-CSharp");
             Component stats = player.GetComponent(statsType);
 
+            int picks = 0;
             void Keep()
             {
                 statsType.GetProperty("CurrentHealth").SetValue(stats, statsType.GetProperty("MaxHealth").GetValue(stats));
@@ -46,8 +47,10 @@ namespace Hookfall.Tests
                     player.transform.position = new Vector3(0f, 14f, -12f);
                     player.GetComponent<Rigidbody>().linearVelocity = new Vector3(18f, 6f, 8f);
                 }
-                if (Time.timeScale == 0f) levelUpType.GetMethod("Pick").Invoke(levelUp, new object[] { 0 });
+                if (Time.timeScale == 0f) { levelUpType.GetMethod("Pick").Invoke(levelUp, new object[] { 0 }); picks++; }
             }
+            Type gmType = Type.GetType("Hookfall.Core.GameManager, Assembly-CSharp");
+            object gm = gmType.GetProperty("Instance").GetValue(null);
 
             float until = Time.realtimeSinceStartup + 20f;
             while ((int)alive.GetValue(director) < 290 && Time.realtimeSinceStartup < until)
@@ -62,6 +65,8 @@ namespace Hookfall.Tests
 
             var frames = new List<float>();
             int fewest = int.MaxValue, most = 0;
+            int killsBefore = (int)gmType.GetProperty("Kills").GetValue(gm);
+            picks = 0;
             until = Time.realtimeSinceStartup + 10f;
             while (Time.realtimeSinceStartup < until)
             {
@@ -81,7 +86,8 @@ namespace Hookfall.Tests
             float avg = sum / frames.Count;
             float p95 = frames[(int)(frames.Count * 0.95f)];
             string report = $"[Hookfall] Perf: {fewest}-{most} enemies alive, {frames.Count} frames, average {avg:0.00} ms ({1000f / avg:0} FPS), " +
-                            $"95th percentile {p95:0.00} ms ({1000f / p95:0} FPS), rendered at 1920x1080, GPU {SystemInfo.graphicsDeviceName}";
+                            $"95th percentile {p95:0.00} ms ({1000f / p95:0} FPS), rendered at 1920x1080, GPU {SystemInfo.graphicsDeviceName}; " +
+                            $"{(int)gmType.GetProperty("Kills").GetValue(gm) - killsBefore} kills and {picks} level-up picks while measuring";
             Debug.Log(report);
             string file = Environment.GetEnvironmentVariable("HOOKFALL_PERF_FILE");
             if (!string.IsNullOrEmpty(file)) File.WriteAllText(file, report);

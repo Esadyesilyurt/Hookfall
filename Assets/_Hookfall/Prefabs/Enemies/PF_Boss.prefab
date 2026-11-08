@@ -339,15 +339,17 @@ MonoBehaviour:
   separationWeight: 1.2
   avoidLookAhead: 0.5
   avoidWeight: 2.5
-  playerSpeedMatch: 0.8
-  catchUpPerMetre: 0.4
-  catchUpDistance: 15
+  playerSpeedMatch: 1
+  catchUpPerMetre: 0.8
+  catchUpDistance: 2.5
   nearDistance: 60
   nearThinkInterval: 0.1
   farThinkInterval: 0.5
   despawnDistance: 120
   stuckCheckInterval: 3
   stuckMinDistance: 1
+  lostAfter: 10
+  engageDistance: 30
   glowProperty: _EmissionColor
   flashDuration: 0.08
   flashColor: {r: 0.35, g: 0.28, b: 0.34, a: 1}

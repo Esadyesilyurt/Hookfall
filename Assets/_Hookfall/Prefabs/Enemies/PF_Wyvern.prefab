@@ -49,7 +49,7 @@ MeshRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2467419598497848973}
   m_Enabled: 1
-  m_CastShadows: 1
+  m_CastShadows: 0
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
   m_StaticShadowCaster: 0
@@ -175,7 +175,7 @@ MeshRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3763182701137162429}
   m_Enabled: 1
-  m_CastShadows: 1
+  m_CastShadows: 0
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
   m_StaticShadowCaster: 0
@@ -267,7 +267,7 @@ MeshRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4089484350191899498}
   m_Enabled: 1
-  m_CastShadows: 1
+  m_CastShadows: 0
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
   m_StaticShadowCaster: 0
@@ -368,15 +368,17 @@ MonoBehaviour:
   separationWeight: 1.2
   avoidLookAhead: 0.5
   avoidWeight: 2.5
-  playerSpeedMatch: 0.8
-  catchUpPerMetre: 0.4
-  catchUpDistance: 15
+  playerSpeedMatch: 1
+  catchUpPerMetre: 0.8
+  catchUpDistance: 2.5
   nearDistance: 60
   nearThinkInterval: 0.1
   farThinkInterval: 0.5
   despawnDistance: 120
   stuckCheckInterval: 3
   stuckMinDistance: 1
+  lostAfter: 10
+  engageDistance: 30
   glowProperty: _EmissionColor
   flashDuration: 0.08
   flashColor: {r: 1, g: 1, b: 1, a: 1}
