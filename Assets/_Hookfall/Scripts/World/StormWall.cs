@@ -13,8 +13,8 @@ namespace Hookfall.World
         [SerializeField] private Material lightningMaterial;
 
         [Header("Shape")]
-        [SerializeField] private float radius = 195f;
-        [SerializeField] private int cloudsPerLayer = 24;
+        [SerializeField] private float radius = 390f;   // 195 until the map doubled (2026-11-08)
+        [SerializeField] private int cloudsPerLayer = 40;
         [Tooltip("Cloud layers stop below the horizon line seen from the islands, so the sky and far scenery stay visible above.")]
         [SerializeField] private float[] layerHeights = { -120f, -80f, -40f, 0f, 30f };
         [SerializeField] private Vector2 cloudScale = new Vector2(6f, 10f);
@@ -22,7 +22,7 @@ namespace Hookfall.World
 
         [Header("Wind")]
         [Tooltip("The wind starts pushing at this distance from the tower (horizontal).")]
-        [SerializeField] private float pushFrom = 170f;
+        [SerializeField] private float pushFrom = 350f;
         [Tooltip("Inward acceleration at the wall, in m/s².")]
         [SerializeField] private float pushStrength = 80f;
 

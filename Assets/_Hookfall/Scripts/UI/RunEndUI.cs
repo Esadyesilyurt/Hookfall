@@ -91,6 +91,8 @@ namespace Hookfall.UI
             record.SetActive(gm.NewRecord);
 
             foreach (Transform child in stats) Destroy(child.gameObject);
+            int stage = Hookfall.World.StageDirector.Instance != null ? Hookfall.World.StageDirector.Instance.Stage : 1;
+            Stat("Timer", "Stage", stage.ToString());   // stages since 2026-11-08
             Stat("XPGain", "Level", (xp != null ? xp.Level : 1).ToString());
             Stat("Kills", "Kills", gm.Kills.ToString());
             Stat("Gold", "Gold", (gold != null ? gold.Earned : 0).ToString());
@@ -108,7 +110,7 @@ namespace Hookfall.UI
                 }
 
             best.text = !gm.NewRecord && RunRecord.HasRecord
-                ? Loc.F("Best watch {0}  ·  level {1}  ·  {2} kills", RunRecord.FormatTime(RunRecord.BestTime), RunRecord.BestLevel, RunRecord.BestKills)
+                ? Loc.F("Best run: stage {0}  ·  {1}  ·  {2} kills", RunRecord.BestStage, RunRecord.FormatTime(RunRecord.BestTime), RunRecord.BestKills)
                 : "";
             ShowRank();
             root.SetActive(true);
@@ -123,8 +125,8 @@ namespace Hookfall.UI
             LeaderboardRow? me = await Leaderboard.Current.MineAsync();
             if (this == null) return;
             rank.text = !me.HasValue ? Leaderboard.Current.Status
-                : me.Value.Rank <= LeaderboardPanel.Shown ? Loc.F("Global rank #{0}  ·  your best {1}", me.Value.Rank, RunRecord.FormatTime(me.Value.Seconds))
-                : Loc.F("On the global leaderboard  ·  your best {0}", RunRecord.FormatTime(me.Value.Seconds));   // ranks only inside the top 20
+                : me.Value.Rank <= LeaderboardPanel.Shown ? Loc.F("Global rank #{0}  ·  your best {1}", me.Value.Rank, Loc.F("S{0}", me.Value.Stage) + " " + RunRecord.FormatTime(me.Value.RunSeconds))
+                : Loc.F("On the global leaderboard  ·  your best {0}", Loc.F("S{0}", me.Value.Stage) + " " + RunRecord.FormatTime(me.Value.RunSeconds));   // ranks only inside the top 20
         }
 
         private void Stat(string icon, string label, string value)

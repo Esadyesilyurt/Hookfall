@@ -127,7 +127,7 @@ namespace Hookfall.EditorTools
                         float a = Mathf.Clamp01(1f - d);
                         tex.SetPixel(x, y, new Color(1f, 1f, 1f, a * a));
                     }
-                File.WriteAllBytes(path, tex.EncodeToPNG());
+                BuildUtil.WriteIfChanged(path, tex.EncodeToPNG());
                 Object.DestroyImmediate(tex);
                 AssetDatabase.ImportAsset(path);
                 var importer = (TextureImporter)AssetImporter.GetAtPath(path);

@@ -8,10 +8,10 @@ namespace Hookfall.World
     public class Backdrop : MonoBehaviour
     {
         [SerializeField] private GameObject[] prefabs;
-        [SerializeField] private int count = 14;
-        [SerializeField] private Vector2 radius = new Vector2(430f, 600f);
-        [SerializeField] private Vector2 height = new Vector2(-120f, 90f);
-        [SerializeField] private Vector2 scale = new Vector2(1.6f, 3.2f);
+        [SerializeField] private int count = 22;   // 14 at 430-600 m until the map doubled (2026-11-08)
+        [SerializeField] private Vector2 radius = new Vector2(700f, 920f);
+        [SerializeField] private Vector2 height = new Vector2(-160f, 120f);
+        [SerializeField] private Vector2 scale = new Vector2(2.4f, 4.6f);
         [SerializeField] private float driftSpeed = 0.4f;
 
         private void Awake()

@@ -133,7 +133,7 @@ namespace Hookfall.Player
         private void Update()
         {
             Keyboard keyboard = Keyboard.current;
-            if (keyboard == null) return;
+            if (keyboard == null || Time.timeScale <= 0f) return;   // nothing queued under a pause, a choice screen or a cutscene
 
             float x = (keyboard.dKey.isPressed ? 1f : 0f) - (keyboard.aKey.isPressed ? 1f : 0f);
             float y = (keyboard.wKey.isPressed ? 1f : 0f) - (keyboard.sKey.isPressed ? 1f : 0f);

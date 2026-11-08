@@ -48,15 +48,15 @@ MonoBehaviour:
   lore: A frost wyrm's last breath, kept in a horn; blow it and winter rushes out
     ahead of you.
   summary: Breathes a fan of frost ahead of you that chills everything it hits.
-  baseDamage: 9
-  cooldown: 1.4
+  baseDamage: 10
+  cooldown: 1.3
   level: 1
   rarity: 1
   schools: 01000000
   projectilePrefab: {fileID: 8481211734425419368, guid: 509bff0c6b3890742a6fd570bd16d743, type: 3}
   baseShards: 5
   shardsPerLevel: 1
-  shardSpeed: 28
-  shardLifetime: 0.45
+  shardSpeed: 30
+  shardLifetime: 0.6
   flatten: 0.6
   coneAngle: 50

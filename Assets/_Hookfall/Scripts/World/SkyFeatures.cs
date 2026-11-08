@@ -1,7 +1,8 @@
 // Hookfall - fills the open sky between islands every run: updrafts that lift, air channels that carry the Warden from
 // island to island, crystals that refill the double jump and dash in mid-air, and floating rocks the hook can catch.
 // Placed from the run's island layout and seed once the IslandGenerator has built it (added on 2026-11-08 because
-// the map felt empty between islands).
+// the map felt empty between islands). Rebuilt for every stage's new layout, doubled with the map, and asked for the
+// updrafts and anchors that lead up to the boss arena (2026-11-08).
 // AI disclosure: written with Claude (Anthropic) on 2026-11-08. Prompts and changes are recorded in Docs/PromptLog.md.
 using System.Collections.Generic;
 using Hookfall.Audio;
@@ -29,10 +30,10 @@ namespace Hookfall.World
         [SerializeField] private GameObject anchorModel;
 
         [Header("How many per run (fewer when the layout has no room)")]
-        [SerializeField] private int updrafts = 8;
-        [SerializeField] private int airChannels = 4;
-        [SerializeField] private int crystals = 12;
-        [SerializeField] private int anchors = 10;
+        [SerializeField] private int updrafts = 16;     // 8, 4, 12 and 10 until the map doubled (2026-11-08)
+        [SerializeField] private int airChannels = 8;
+        [SerializeField] private int crystals = 24;
+        [SerializeField] private int anchors = 20;
 
         [Header("Updrafts")]
         [SerializeField] private float updraftRadius = 5f;
@@ -59,12 +60,31 @@ namespace Hookfall.World
         private readonly List<Vector3> taken = new List<Vector3>();
         private Material lineMaterial;   // the particle material without its soft-dot texture, so ring lines stay solid all the way round
 
-        private void Start()
+        private void Start() => Build();
+
+        /// <summary>A new stage: the old features go with the old map and new ones are placed for the new layout.</summary>
+        public void Rebuild()
         {
+            for (int i = transform.childCount - 1; i >= 0; i--)
+            {
+                GameObject child = transform.GetChild(i).gameObject;
+                child.SetActive(false);
+                Destroy(child);
+            }
+            Build();
+        }
+
+        private void Build()
+        {
+            all.Clear();
+            taken.Clear();
             all.AddRange(Island.All);
             if (player == null || all.Count < 2) return;
-            lineMaterial = new Material(particleMaterial) { name = "Sky Lines" };
-            lineMaterial.SetTexture("_BaseMap", Texture2D.whiteTexture);
+            if (lineMaterial == null)
+            {
+                lineMaterial = new Material(particleMaterial) { name = "Sky Lines" };
+                lineMaterial.SetTexture("_BaseMap", Texture2D.whiteTexture);
+            }
             Random.State previous = Random.state;
             Random.InitState((islands != null ? islands.UsedSeed : 0) + 7919);
 
@@ -74,6 +94,32 @@ namespace Hookfall.World
             PlacePoints(anchors, new Vector2(30f, 110f), 5f, 15f, 6f, anchorSpacing, MakeAnchor, true);
 
             Random.state = previous;
+        }
+
+        /// <summary>
+        /// The way up to the boss: three updrafts from low above the tower island to just over the boss's lowest island,
+        /// between its islands, and a spiral of hook anchors. All under parent, so they go when the arena goes.
+        /// </summary>
+        public void BuildBossAccess(Transform parent, Vector3 lowestIsland, float ring, float angleOffset)
+        {
+            if (player == null) return;
+            if (lineMaterial == null)
+            {
+                lineMaterial = new Material(particleMaterial) { name = "Sky Lines" };
+                lineMaterial.SetTexture("_BaseMap", Texture2D.whiteTexture);
+            }
+            for (int i = 0; i < 3; i++)
+            {
+                float a = (angleOffset + i * 120f) * Mathf.Deg2Rad;
+                var bottom = new Vector3(lowestIsland.x + Mathf.Cos(a) * (ring + 2f), 2f, lowestIsland.z + Mathf.Sin(a) * (ring + 2f));
+                MakeUpdraft(parent, bottom, lowestIsland.y + 8f - bottom.y);
+            }
+            for (int i = 0; i < 8; i++)
+            {
+                float a = (angleOffset + 60f + i * 50f) * Mathf.Deg2Rad;
+                float r = Mathf.Lerp(16f, ring - 4f, (i % 4) / 3f);
+                MakeAnchor(new Vector3(lowestIsland.x + Mathf.Cos(a) * r, Mathf.Lerp(26f, lowestIsland.y - 4f, i / 7f), lowestIsland.z + Mathf.Sin(a) * r), parent);
+            }
         }
 
         // ---------- Effects the features ask for ----------
@@ -122,14 +168,19 @@ namespace Hookfall.World
             if (Physics.CheckCapsule(bottom, top, updraftRadius * 0.6f, 1 << Layers.World, QueryTriggerInteraction.Ignore)) return false;
             if (!Spaced(bottom + Vector3.up * (height * 0.5f), 15f)) return false;
 
+            MakeUpdraft(transform, bottom, height);
+            taken.Add(bottom + Vector3.up * (height * 0.5f));
+            return true;
+        }
+
+        private void MakeUpdraft(Transform parent, Vector3 bottom, float height)
+        {
             var go = new GameObject("Updraft");
-            go.transform.SetParent(transform, false);
+            go.transform.SetParent(parent, false);
             go.transform.position = bottom;
             go.AddComponent<Updraft>().Init(player, updraftRadius, height, updraftLift, updraftMaxRise);
             Stream(go.transform, Vector3.zero, Quaternion.Euler(-90f, 0f, 0f), updraftRadius * 0.9f, 12f, height / 12f, 45f, WindColor, new Vector2(0.5f, 1.1f));
-            FlowingRings(go.transform, Quaternion.Euler(-90f, 0f, 0f), 4, updraftRadius * 0.85f, height, 6f, WindColor, 0.22f);
-            taken.Add(bottom + Vector3.up * (height * 0.5f));
-            return true;
+            FlowingRings(go.transform, Quaternion.Euler(-90f, 0f, 0f), Mathf.Max(4, Mathf.CeilToInt(height / 14f)), updraftRadius * 0.85f, height, 6f, WindColor, 0.22f);
         }
 
         private void PlaceChannels()
@@ -190,15 +241,18 @@ namespace Hookfall.World
             go.AddComponent<RefillCrystal>().Init(this, player, visual.transform, crystalTouchRadius, crystalRespawn);
         }
 
-        private void MakeAnchor(Vector3 position)
+        private void MakeAnchor(Vector3 position) => MakeAnchor(position, transform);
+
+        private void MakeAnchor(Vector3 position, Transform parent)
         {
-            GameObject rock = anchorModel != null ? Instantiate(anchorModel, transform) : GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            GameObject rock = anchorModel != null ? Instantiate(anchorModel, parent) : GameObject.CreatePrimitive(PrimitiveType.Sphere);
             rock.name = "Hook Anchor";
-            rock.transform.SetParent(transform, true);
+            rock.transform.SetParent(parent, true);
             rock.transform.SetPositionAndRotation(position, Quaternion.Euler(Random.Range(-20f, 20f), Random.Range(0f, 360f), 180f));   // upside down: the flat face points down
             rock.transform.localScale = Vector3.one * anchorScale * (anchorModel != null ? 1f : 2.5f);
             foreach (Collider c in rock.GetComponentsInChildren<Collider>()) c.gameObject.layer = Layers.World;   // the camera stays out of it
-            Transform ring = Ring(transform, position, Quaternion.Euler(75f, 0f, 0f), 2.6f * anchorScale, ChannelColor, 0.3f);
+            Transform ring = Ring(parent, Vector3.zero, Quaternion.Euler(75f, 0f, 0f), 2.6f * anchorScale, ChannelColor, 0.3f);
+            ring.position = position;
             rock.AddComponent<HookAnchor>().Init(ring);
         }
 

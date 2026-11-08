@@ -134,6 +134,18 @@ namespace Hookfall.EditorTools
         }
 
         /// <summary>Instantiates a model under parent, or returns null so the caller can build a placeholder.</summary>
+        /// <summary>Writes a generated file only when its bytes changed: rewriting identical textures on every build
+        /// once failed on a file Windows still had mapped (IOException 1224, 2026-11-08).</summary>
+        public static void WriteIfChanged(string path, byte[] bytes)
+        {
+            if (System.IO.File.Exists(path))
+            {
+                byte[] old = System.IO.File.ReadAllBytes(path);
+                if (old.Length == bytes.Length && System.Linq.Enumerable.SequenceEqual(old, bytes)) return;
+            }
+            System.IO.File.WriteAllBytes(path, bytes);
+        }
+
         public static GameObject InstantiateModel(string modelName, Transform parent)
         {
             GameObject model = Model(modelName);

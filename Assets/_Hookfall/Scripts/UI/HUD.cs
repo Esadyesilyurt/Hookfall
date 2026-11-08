@@ -2,7 +2,8 @@
 // gold and kills, crosshair with the Zip cooldown ring and charges, the ATTACKS ON/OFF pill, item slots with icons
 // and level pips, control hints, the tower cache marker and the storm warning. Built in uGUI from code.
 // AI disclosure: written with Claude (Anthropic) on 2026-11-04 as an IMGUI placeholder, rewritten on 2026-11-07 in
-// uGUI and again the same day with the UI skin and icons. Prompts and changes are recorded in Docs/PromptLog.md.
+// uGUI and again the same day with the UI skin and icons; the stage, the boss bar, the boss's health and an objective
+// marker were added on 2026-11-08. Prompts and changes are recorded in Docs/PromptLog.md.
 using Hookfall.Combat;
 using Hookfall.Core;
 using Hookfall.Player;
@@ -42,9 +43,25 @@ namespace Hookfall.UI
         /// <summary>0..1 while the tower cache is being opened, otherwise negative.</summary>
         public static float TowerCacheProgress = -1f;
 
+        private static Vector3? objective;
+        private static string objectiveLabel;
+        private static Color objectiveColor;
+
+        /// <summary>Where the run goes next (the boss, the portal); null hides the marker.</summary>
+        public static void SetObjective(Vector3? position, string label, Color color)
+        {
+            objective = position;
+            objectiveLabel = label;
+            objectiveColor = color;
+        }
+
         private GameObject root;
         private RectTransform xpFill, healthFill, trailFill, cacheMarker, cacheArrow, cacheProgressFill, levelBadge, attackRect;
         private TextMeshProUGUI synergyText;
+        private TextMeshProUGUI stageText, bossNameText, objectiveText;
+        private RectTransform bossGoldFill, bossHealthFill, bossTrailFill, bossBar, objectiveMarker, objectiveArrow;
+        private Image objectivePanel;
+        private float bossTrail = 1f;
         private SynergySystem synergy;
         private int synergyHash = -1;
         private TextMeshProUGUI levelText, healthText, timeText, goldText, killsText, attackText, promptText, stormText;
@@ -110,7 +127,26 @@ namespace Hookfall.UI
             UIFactory.Stretch(timeTextRect);
             timeTextRect.offsetMin = new Vector2(36f, 0f);
             timeText.fontStyle = FontStyles.Bold;
-            stormText = UIFactory.Text(UIFactory.Rect(c, "Storm", new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -130f), new Vector2(900f, 40f)),
+            // Under the time: the stage and the boss bar, which fills with the gold earned on the stage (2026-11-08).
+            stageText = UIFactory.Text(UIFactory.Rect(c, "Stage", new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -120f), new Vector2(640f, 30f)),
+                "", 22f, UITheme.Text, TextAlignmentOptions.Center, true);
+            bossGoldFill = UIFactory.Bar(c, "Boss Bar", new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -144f), new Vector2(320f, 12f),
+                UITheme.Track, new Color(1f, 0.35f, 0.85f));
+            // The boss's health across the top while it fights.
+            bossBar = UIFactory.Rect(c, "Boss Health", new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -186f), new Vector2(820f, 26f));
+            UIFactory.Image(bossBar, UITheme.Track, UISkin.Pill);
+            bossTrailFill = UIFactory.Rect(bossBar, "Trail", Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero, new Vector2(0f, 0.5f));
+            UIFactory.Image(bossTrailFill, new Color(1f, 0.92f, 0.85f, 0.9f), UISkin.Pill);
+            bossHealthFill = UIFactory.Rect(bossBar, "Fill", Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero, new Vector2(0f, 0.5f));
+            UIFactory.Image(bossHealthFill, new Color(0.9f, 0.22f, 0.62f), UISkin.Pill);
+            UIFactory.Image(UIFactory.Fill(bossBar, "Frame"), new Color(1f, 1f, 1f, 0.4f), UISkin.PillFrame);
+            foreach (float mark in new[] { 0.7f, 0.35f })   // where it calls its escort
+                UIFactory.Image(UIFactory.Rect(bossBar, "Mark", new Vector2(mark, 0f), new Vector2(mark, 1f), Vector2.zero, new Vector2(3f, 0f)), new Color(1f, 1f, 1f, 0.6f));
+            bossNameText = UIFactory.Text(UIFactory.Rect(bossBar, "Name", new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0f, 20f), new Vector2(0f, 34f)),
+                "", 26f, new Color(1f, 0.8f, 0.95f), TextAlignmentOptions.Center, true);
+            bossNameText.fontStyle = FontStyles.Bold;
+            bossNameText.characterSpacing = 6f;
+            stormText = UIFactory.Text(UIFactory.Rect(c, "Storm", new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -300f), new Vector2(900f, 40f)),
                 "The storm pushes you back", 28f, new Color(0.7f, 0.82f, 1f), TextAlignmentOptions.Center, true);
 
             // Top right: gold and kills.
@@ -190,6 +226,14 @@ namespace Hookfall.UI
             ((RectTransform)cacheText.transform).offsetMin = new Vector2(40f, 0f);
             cacheArrow = UIFactory.Centre(cacheMarker, "Arrow", Vector2.zero, new Vector2(40f, 40f));
             UIFactory.Text(cacheArrow, ">", 40f, UITheme.Gold, TextAlignmentOptions.Center, true).fontStyle = FontStyles.Bold;
+            // The objective marker (the boss, the portal): over its target on screen, on the screen edge when not.
+            objectivePanel = UIFactory.Panel(c, "Objective Marker", new Vector2(190f, 52f), UITheme.Panel);
+            objectiveMarker = (RectTransform)objectivePanel.transform;
+            objectiveText = UIFactory.Text(objectiveMarker, "Label", "", 24f, UITheme.Text);
+            UIFactory.Stretch((RectTransform)objectiveText.transform);
+            objectiveText.fontStyle = FontStyles.Bold;
+            objectiveArrow = UIFactory.Centre(objectiveMarker, "Arrow", Vector2.zero, new Vector2(36f, 36f));
+            UIFactory.Text(objectiveArrow, ">", 36f, UITheme.Text, TextAlignmentOptions.Center, true).fontStyle = FontStyles.Bold;
             cacheProgressFill = UIFactory.Bar(c, "Cache Progress", new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, -210f), new Vector2(380f, 18f),
                 UITheme.Track, UITheme.Gold);
         }
@@ -212,7 +256,7 @@ namespace Hookfall.UI
         private void LateUpdate()
         {
             GameManager gm = GameManager.Instance;
-            root.SetActive(gm == null || gm.State != RunState.Dead);
+            root.SetActive(gm == null || (gm.State != RunState.Dead && gm.State != RunState.Cutscene));
             float dt = Time.unscaledDeltaTime;
 
             if (xp != null)
@@ -254,6 +298,8 @@ namespace Hookfall.UI
 
             DrawSlots();
             DrawCacheMarker();
+            DrawStage(dt);
+            DrawObjective();
 
             float age = Time.unscaledTime - announceTime;
             announce.gameObject.SetActive(age < 2.6f);
@@ -349,6 +395,69 @@ namespace Hookfall.UI
             foreach (ItemBase item in combat.Items)
                 if (item.IsPassive == passive && index-- == 0) return item;
             return null;
+        }
+
+        /// <summary>The stage, the gold the boss still needs, and the boss's health while it fights.</summary>
+        private void DrawStage(float dt)
+        {
+            StageDirector stage = StageDirector.Instance;
+            bool gathering = stage != null && stage.Current == StageDirector.Phase.Gathering;
+            stageText.gameObject.SetActive(stage != null);
+            bossGoldFill.parent.gameObject.SetActive(gathering);
+            if (stage != null)
+            {
+                string text = Hookfall.Core.Loc.F("STAGE {0}", stage.Stage);
+                if (gathering) text += "  ·  " + Hookfall.Core.Loc.F("Boss {0} / {1} gold", Mathf.Min(stage.GoldProgress, stage.GoldTarget), stage.GoldTarget);
+                else if (stage.Current == StageDirector.Phase.Portal) text += "  ·  " + Hookfall.Core.Loc.T("The portal is open");
+                if (stageText.text != text) stageText.text = text;
+                if (gathering) UIFactory.SetFill(bossGoldFill, stage.GoldProgress / (float)Mathf.Max(1, stage.GoldTarget));
+            }
+            Hookfall.Enemies.Boss boss = stage != null ? stage.Boss : null;
+            bool fight = boss != null && boss.Fighting && !boss.IsDead;
+            bossBar.gameObject.SetActive(fight);
+            if (!fight) { bossTrail = 1f; return; }
+            float health = boss.Health / Mathf.Max(1f, boss.MaxHealth);
+            UIFactory.SetFill(bossHealthFill, health);
+            bossTrail = health < bossTrail ? Mathf.MoveTowards(bossTrail, health, dt * 0.4f) : health;
+            UIFactory.SetFill(bossTrailFill, bossTrail);
+            string name = Hookfall.Core.Loc.Upper(stage.BossName) + (boss.Raging ? "  ·  " + Hookfall.Core.Loc.T("ENRAGED") : "");
+            if (bossNameText.text != name) bossNameText.text = name;
+        }
+
+        private void DrawObjective()
+        {
+            bool show = objective.HasValue && Camera.main != null;
+            objectiveMarker.gameObject.SetActive(show);
+            if (!show) return;
+            if (objectiveText.text != objectiveLabel) objectiveText.text = objectiveLabel;
+            objectiveText.color = objectiveColor;
+            objectivePanel.color = new Color(0.08f, 0.1f, 0.16f, 0.85f);
+            Camera cam = Camera.main;
+            Vector3 local = cam.transform.InverseTransformPoint(objective.Value);
+            var canvasRect = (RectTransform)objectiveMarker.parent;
+            Vector2 half = canvasRect.rect.size * 0.5f - new Vector2(130f, 80f);
+            bool onScreen = false;
+            if (local.z > 0f)
+            {
+                Vector3 viewport = cam.WorldToViewportPoint(objective.Value);
+                Vector2 p = new Vector2((viewport.x - 0.5f) * canvasRect.rect.width, (viewport.y - 0.5f) * canvasRect.rect.height);
+                if (Mathf.Abs(p.x) < half.x && Mathf.Abs(p.y) < half.y)
+                {
+                    onScreen = true;
+                    objectiveMarker.anchoredPosition = p + new Vector2(0f, 60f);
+                    objectiveArrow.localRotation = Quaternion.Euler(0f, 0f, -90f);
+                    objectiveArrow.anchoredPosition = new Vector2(0f, -40f);
+                }
+            }
+            if (onScreen) return;
+            Vector2 dir = new Vector2(local.x, local.y);
+            if (local.z < 0f) dir = -dir;
+            if (dir.sqrMagnitude < 0.0001f) dir = Vector2.up;
+            dir.Normalize();
+            float scale = Mathf.Min(half.x / Mathf.Max(0.001f, Mathf.Abs(dir.x)), half.y / Mathf.Max(0.001f, Mathf.Abs(dir.y)));
+            objectiveMarker.anchoredPosition = dir * scale;
+            objectiveArrow.localRotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg);
+            objectiveArrow.anchoredPosition = dir * 120f;
         }
 
         private void DrawCacheMarker()

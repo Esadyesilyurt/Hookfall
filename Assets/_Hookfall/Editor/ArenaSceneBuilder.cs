@@ -70,7 +70,7 @@ namespace Hookfall.EditorTools
             var cam = camGo.AddComponent<Camera>();
             cam.clearFlags = CameraClearFlags.SolidColor;
             cam.backgroundColor = SkyColor;
-            cam.farClipPlane = 600f;
+            cam.farClipPlane = 1000f;
             camGo.AddComponent<AudioListener>();
             FeelSetup.EnablePostProcessing(cam);
             camGo.transform.SetPositionAndRotation(new Vector3(0f, 14f, -46f), Quaternion.Euler(8f, 0f, 0f));
@@ -96,6 +96,8 @@ namespace Hookfall.EditorTools
             Wyvern wyvernPrefab = EnemyPrefabs.Wyvern();
             Golem golemPrefab = EnemyPrefabs.Golem();
             Boulder boulderPrefab = EnemyPrefabs.Boulder();
+            Boss bossPrefab = EnemyPrefabs.Boss();   // stages (2026-11-08)
+            Portal portalPrefab = EnemyPrefabs.Portal();
             List<ItemBase> itemPrefabs = ItemPrefabs.CreateItems();
             Chest chestPrefab = ItemPrefabs.CreateChest();
 
@@ -161,7 +163,7 @@ namespace Hookfall.EditorTools
             var cam = camGo.AddComponent<Camera>();
             cam.clearFlags = CameraClearFlags.SolidColor;
             cam.backgroundColor = SkyColor;
-            cam.farClipPlane = 600f;
+            cam.farClipPlane = 1000f;
             camGo.AddComponent<AudioListener>();
             FeelSetup.EnablePostProcessing(cam);
             camGo.AddComponent<CinemachineBrain>();
@@ -172,7 +174,7 @@ namespace Hookfall.EditorTools
             vcam.Follow = player.transform;
             vcam.Lens.FieldOfView = 70f;
             vcam.Lens.NearClipPlane = 0.1f;
-            vcam.Lens.FarClipPlane = 600f;
+            vcam.Lens.FarClipPlane = 1000f;   // 600 until the map doubled (2026-11-08)
             var orbit = vcamGo.AddComponent<CinemachineOrbitalFollow>();
             orbit.OrbitStyle = CinemachineOrbitalFollow.OrbitStyles.Sphere;
             orbit.Radius = 8f;
@@ -299,6 +301,31 @@ namespace Hookfall.EditorTools
             SetRef(feel, "volume", postFx);
             SetRef(feel, "vfx", vfx);
             SetRef(powerUps, "feel", feel);
+            // Stages: the boss bar, the boss, its portal and the cutscenes (2026-11-08).
+            var cutscenes = new GameObject("Cutscenes").AddComponent<CutsceneDirector>();
+            SetRef(cutscenes, "cam", cam);
+            SetRef(cutscenes, "brain", camGo.GetComponent<CinemachineBrain>());
+            SetRef(cutscenes, "playerCamera", vcam);
+            SetRef(cutscenes, "player", controller);
+            SetRef(cutscenes, "audioManager", audio);
+            SetRef(cutscenes, "particleMaterial", ToonSetup.ParticleMaterial());
+            var stages = new GameObject("StageDirector").AddComponent<StageDirector>();
+            SetRef(stages, "player", controller);
+            SetRef(stages, "islands", generator);
+            SetRef(stages, "enemies", director);
+            SetRef(stages, "chests", chests);
+            SetRef(stages, "towerCache", cache);
+            SetRef(stages, "sky", sky);
+            SetRef(stages, "powerUps", powerUps);
+            SetRef(stages, "pickups", pickups);
+            SetRef(stages, "cutscenes", cutscenes);
+            SetRef(stages, "audioManager", audio);
+            SetRef(stages, "vfx", vfx);
+            SetRef(stages, "feel", feel);
+            SetRef(stages, "bossPrefab", bossPrefab);
+            SetRef(stages, "portalPrefab", portalPrefab);
+            SetRef(stages, "beamMaterial", ItemPrefabs.BeamMaterial());
+
             var numbers = new GameObject("Damage Numbers").AddComponent<DamageNumbers>();
             SetRef(numbers, "fontMaterial", AssetDatabase.LoadAssetAtPath<Material>("Assets/TextMesh Pro/Resources/Fonts & Materials/LiberationSans SDF - Outline.mat"));
 
@@ -366,8 +393,8 @@ namespace Hookfall.EditorTools
             RenderSettings.fog = true;
             RenderSettings.fogMode = FogMode.Linear;
             RenderSettings.fogColor = SkyColor;   // distant islands melt into the sky haze (GDD 8.1)
-            RenderSettings.fogStartDistance = 80f;
-            RenderSettings.fogEndDistance = 260f;
+            RenderSettings.fogStartDistance = 110f;   // 80 and 260 until the map doubled (2026-11-08)
+            RenderSettings.fogEndDistance = 400f;
         }
 
         private static void WireIslandGenerator(IslandGenerator generator, PlayerStats stats)

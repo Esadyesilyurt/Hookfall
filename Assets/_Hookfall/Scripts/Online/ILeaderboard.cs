@@ -12,7 +12,7 @@ namespace Hookfall.Online
         string Status { get; }
         string PlayerName { get; }
 
-        /// <summary>Sends a finished run; the service keeps each player's best time.</summary>
+        /// <summary>Sends a finished run's score (Leaderboard.Score: stage and time); the service keeps each player's best.</summary>
         Task SubmitAsync(float seconds, string character);
         Task<IReadOnlyList<LeaderboardRow>> TopAsync(int count);
         /// <summary>The player's own row, or null when they have no score yet or the service is offline.</summary>

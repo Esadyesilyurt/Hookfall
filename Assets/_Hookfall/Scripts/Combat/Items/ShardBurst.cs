@@ -18,7 +18,6 @@ namespace Hookfall.Combat.Items
         [SerializeField] private float coneAngle = 360f;
 
         private int ShardCount => baseShards + shardsPerLevel * (Level - 1) + ExtraProjectiles * (coneAngle < 360f ? 1 : 2);
-        private Rigidbody body;
 
         protected override void Attack()
         {
@@ -36,17 +35,16 @@ namespace Hookfall.Combat.Items
             }
         }
 
-        /// <summary>A fan of shards ahead: along the flight, or at the nearest enemy when slow.</summary>
+        /// <summary>A fan of shards at the nearest enemy in reach, led a little. It used to follow the flight, but the
+        /// horde chases from behind a flying Warden, so the breath missed (the Frost Seer's weak start, 2026-11-08).</summary>
         private void Breathe(int count)
         {
-            if (body == null) body = GetComponentInParent<Rigidbody>();
-            Vector3 ahead = body != null ? body.linearVelocity : Vector3.zero;
-            if (ahead.sqrMagnitude < 4f)
-            {
-                Enemies.EnemyBase target = EnemyQuery.Nearest(transform.position, shardSpeed * shardLifetime);
-                if (target == null) return;
-                ahead = target.transform.position - transform.position;
-            }
+            float reach = shardSpeed * shardLifetime;
+            Enemies.EnemyBase target = EnemyQuery.Nearest(transform.position, reach * 1.2f);
+            if (target == null) return;
+            float time = Vector3.Distance(transform.position, target.transform.position) / Mathf.Max(1f, shardSpeed);
+            Vector3 ahead = target.transform.position + target.Velocity * time - transform.position;
+            if (ahead.sqrMagnitude < 0.01f) ahead = transform.forward;
             Quaternion facing = Quaternion.LookRotation(ahead.normalized);
             for (int i = 0; i < count; i++)
             {

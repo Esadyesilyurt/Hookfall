@@ -68,6 +68,14 @@ namespace Hookfall.EditorTools
                 case SoundId.HookRelease: return (0.3f, 0.05f, 2);
                 case SoundId.WallJump: return (0.4f, 0.1f, 1);
                 case SoundId.Trick: return (0.3f, 0.4f, 1);
+                // The boss and the portal (2026-11-08): rare and big, but the roar is loud by nature.
+                case SoundId.BossRoar: return (0.7f, 0.5f, 1);
+                case SoundId.BossVolley: return (0.45f, 0.3f, 2);
+                case SoundId.BossSlam: return (0.7f, 0.3f, 1);
+                case SoundId.BossDeath: return (0.85f, 1f, 1);
+                case SoundId.PortalOpen: return (0.6f, 1f, 1);
+                case SoundId.PortalEnter: return (0.7f, 1f, 1);
+                case SoundId.StageStart: return (0.65f, 1f, 1);
                 default: return (0.55f, 0.1f, 2);   // rare events: chests, level-up, tower cache, elite wave, run end
             }
         }

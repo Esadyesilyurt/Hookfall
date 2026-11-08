@@ -61,9 +61,10 @@ namespace Hookfall.EditorTools
                     i => { }, Rarity.Legendary),
 
                 // Long-range attack items (2026-11-08): something to fight with from a safe distance.
-                Item<SkyboltCrossbow>("SkyboltCrossbow", "Elven Skybow", 14f, 1.1f,
+                // 2026-11-08 balance: 14 damage, one bolt every 1.1 s before; the Skyrunner fell far behind early.
+                Item<SkyboltCrossbow>("SkyboltCrossbow", "Elven Skybow", 13f, 1.0f,
                     "A Warden's crossbow strung with tether wire; it reaches farther than any wing.",
-                    i => SetRef(i, "projectilePrefab", shard), Rarity.Common),
+                    i => { SetRef(i, "projectilePrefab", shard); SetFloat(i, "homingTurnRate", 90f); SetInt(i, "baseBolts", 2); }, Rarity.Common),
                 Item<ChainLightning>("ChainLightning", "Stormcaller's Jar", 22f, 1.6f,
                     "A storm caught in a jar; uncork it and it runs from one wing to the next.",
                     i => SetRef(i, "boltMaterial", Mat("M_Beam")), Rarity.Rare),
@@ -72,13 +73,17 @@ namespace Hookfall.EditorTools
                     i => SetRef(i, "projectilePrefab", spark), Rarity.Epic),
 
                 // Build items (2026-11-08): one per element, so every school has an attack of its own.
-                Item<SkyboltCrossbow>("SalamanderFamiliar", "Salamander Familiar", 11f, 0.9f,
+                // 2026-11-08 balance: 11 damage every 0.9 s, 32 m/s straight shots at 30 m before; it missed fast bats and
+                // its kills dropped their loot far away, so the Ember Witch fell behind early.
+                Item<SkyboltCrossbow>("SalamanderFamiliar", "Salamander Familiar", 12f, 0.85f,
                     "A little fire lizard that rides on your shoulder and spits at whatever comes near.",
-                    i => { SetRef(i, "projectilePrefab", spark); SetFloat(i, "range", 30f); SetFloat(i, "boltSpeed", 32f); }, Rarity.Common),
-                Item<ShardBurst>("FrostWyrmBreath", "Frost Wyrm's Breath", 9f, 1.4f,
+                    i => { SetRef(i, "projectilePrefab", spark); SetFloat(i, "range", 24f); SetFloat(i, "boltSpeed", 46f);
+                           SetFloat(i, "homingTurnRate", 300f); SetFloat(i, "splashRadius", 2.8f); SetFloat(i, "splashShare", 0.5f); }, Rarity.Common),
+                // 2026-11-08 balance: 9 damage, 28 m/s for 0.45 s along the flight before; it aims at the nearest enemy now.
+                Item<ShardBurst>("FrostWyrmBreath", "Frost Wyrm's Breath", 10f, 1.3f,
                     "A frost wyrm's last breath, kept in a horn; blow it and winter rushes out ahead of you.",
                     i => { SetRef(i, "projectilePrefab", shard); SetInt(i, "baseShards", 5); SetInt(i, "shardsPerLevel", 1);
-                           SetFloat(i, "shardSpeed", 28f); SetFloat(i, "shardLifetime", 0.45f); SetFloat(i, "coneAngle", 50f); }, Rarity.Rare),
+                           SetFloat(i, "shardSpeed", 30f); SetFloat(i, "shardLifetime", 0.6f); SetFloat(i, "coneAngle", 50f); }, Rarity.Rare),
                 Item<RingPulse>("CrimsonSickle", "Crimson Reaper's Sickle", 34f, 2.6f,
                     "The reaper lent it out once and never got it back; it sweeps a red circle around you.",
                     i => Ring(i, 6.5f, 0.5f, 0.2f, new Color(1f, 0.15f, 0.2f)), Rarity.Epic),
@@ -392,7 +397,7 @@ namespace Hookfall.EditorTools
         }
 
         /// <summary>Unlit, see-through both ways, coloured by the mesh's vertex colours.</summary>
-        private static Material BeamMaterial()
+        public static Material BeamMaterial()
         {
             string path = MaterialsPath + "/M_LightBeam.mat";
             var m = AssetDatabase.LoadAssetAtPath<Material>(path);

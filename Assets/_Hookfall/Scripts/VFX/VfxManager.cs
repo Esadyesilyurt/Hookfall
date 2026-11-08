@@ -93,7 +93,12 @@ namespace Hookfall.VFX
             float speed = player.Speed;
             bool fx = GameSettings.SpeedEffects;
             if (speedLines != null)
-                speedEmission.rateOverTime = fx ? Mathf.InverseLerp(speedLinesFrom, speedLinesFull, speed) * maxSpeedLineRate : 0f;
+            {
+                // The lines ride on the camera: frozen in a cutscene they would hang in every shot.
+                bool cutscene = Hookfall.Feel.CutsceneDirector.Running;
+                if (cutscene && speedLines.particleCount > 0) speedLines.Clear();
+                speedEmission.rateOverTime = fx && !cutscene ? Mathf.InverseLerp(speedLinesFrom, speedLinesFull, speed) * maxSpeedLineRate : 0f;
+            }
             if (trail != null) trail.emitting = fx && speed > trailFrom;
         }
 

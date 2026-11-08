@@ -9,6 +9,10 @@ namespace Hookfall.Online
         public readonly float Seconds;
         public readonly string Character;
 
+        /// <summary>The stage the run reached (the score's 100000s) and its watch time (the rest), see Leaderboard.Score.</summary>
+        public int Stage => (int)(Seconds / 100000f) + 1;
+        public float RunSeconds => Seconds % 100000f;
+
         public LeaderboardRow(int rank, string name, float seconds, string character)
         {
             Rank = rank;

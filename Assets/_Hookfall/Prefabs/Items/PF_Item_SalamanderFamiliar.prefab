@@ -48,12 +48,16 @@ MonoBehaviour:
   lore: A little fire lizard that rides on your shoulder and spits at whatever comes
     near.
   summary: Spits fireballs at the nearest enemies; they burn.
-  baseDamage: 11
-  cooldown: 0.9
+  baseDamage: 12
+  cooldown: 0.85
   level: 1
   rarity: 0
   schools: 00000000
   projectilePrefab: {fileID: 8185890813964748861, guid: 8355de4b8246cd042a929b32ac153c95, type: 3}
-  range: 30
-  boltSpeed: 32
+  range: 24
+  boltSpeed: 46
   damagePerLevel: 0.15
+  baseBolts: 1
+  homingTurnRate: 300
+  splashRadius: 2.8
+  splashShare: 0.5
