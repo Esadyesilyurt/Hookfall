@@ -762,7 +762,11 @@ def main():
         "Bulwark": lambda: hookfall_characters.bulwark(out_dir, prev_dir),
         "Lumen": lambda: hookfall_characters.lumen(out_dir, prev_dir),
         "WardenPortrait": lambda: hookfall_characters.warden_portrait(out_dir, prev_dir),
+        "EmberWitch": lambda: hookfall_characters.ember_witch(out_dir, prev_dir),
+        "FrostSeer": lambda: hookfall_characters.frost_seer(out_dir, prev_dir),
+        "StormHerald": lambda: hookfall_characters.storm_herald(out_dir, prev_dir),
         "ItemIcons": lambda: hookfall_item_icons.item_icons(os.path.join(out_dir, "..", "UI", "Resources", "Icons"), prev_dir),
+        "BuildIcons": lambda: hookfall_item_icons.build_icons(os.path.join(out_dir, "..", "UI", "Resources", "Icons"), prev_dir),
         "Icons": lambda: icons(os.path.join(out_dir, "..", "UI", "Resources", "Icons"), prev_dir),
     }
     for name, job in jobs.items():

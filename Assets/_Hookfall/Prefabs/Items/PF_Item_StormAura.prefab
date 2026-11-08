@@ -52,6 +52,7 @@ MonoBehaviour:
   cooldown: 0.25
   level: 1
   rarity: 2
+  schools: 02000000
   baseRadius: 4
   radiusPerLevel: 0.5
   pulseSpeed: 4

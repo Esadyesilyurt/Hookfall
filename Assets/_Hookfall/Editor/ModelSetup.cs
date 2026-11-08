@@ -41,6 +41,9 @@ namespace Hookfall.EditorTools
             ("M_ScoutScarf", new Color(0.96f, 0.46f, 0.2f), false), ("M_BulwarkPlate", new Color(0.64f, 0.66f, 0.72f), false),
             ("M_BulwarkCloth", new Color(0.58f, 0.18f, 0.2f), false), ("M_LumenRobe", new Color(0.38f, 0.28f, 0.64f), false),
             ("M_LumenTrim", new Color(0.96f, 0.86f, 0.56f), false),
+            ("M_EmberRobe", new Color(0.78f, 0.2f, 0.12f), false), ("M_EmberTrim", new Color(1f, 0.62f, 0.15f), false),
+            ("M_FrostRobe", new Color(0.55f, 0.78f, 0.95f), false), ("M_FrostFur", new Color(0.95f, 0.97f, 1f), false),
+            ("M_StormArmor", new Color(0.22f, 0.28f, 0.5f), false), ("M_StormGold", new Color(1f, 0.82f, 0.25f), false),
         };
 
         /// <summary>Far scenery colours: pale and blue-shifted, so it reads as distant haze (SG_Backdrop has no fog).</summary>

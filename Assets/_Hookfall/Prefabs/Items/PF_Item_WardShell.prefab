@@ -51,6 +51,7 @@ MonoBehaviour:
   cooldown: 1
   level: 1
   rarity: 2
+  schools: 0500000001000000
   rechargeTime: 12
   rechargePerLevel: 1.5
   bubbleMaterial: {fileID: 2100000, guid: 04af2a945a7aaa641a8036bc2632b8c0, type: 2}

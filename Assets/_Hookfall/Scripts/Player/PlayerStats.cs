@@ -117,7 +117,13 @@ namespace Hookfall.Player
             if (!IsDead) CurrentHealth = Mathf.Min(maxHealth, CurrentHealth + amount);
         }
 
-        private void Awake() => CurrentHealth = maxHealth;
+        private Hookfall.Combat.SynergySystem synergy;
+
+        private void Awake()
+        {
+            CurrentHealth = maxHealth;
+            synergy = GetComponent<Hookfall.Combat.SynergySystem>();
+        }
 
         /// <summary>Share of all damage dealt that comes back as health (Lifesteal cards and items).</summary>
         public float Lifesteal => lifesteal;
@@ -127,7 +133,7 @@ namespace Hookfall.Player
 
         private void OnEnemyHit(EnemyBase enemy, float damage)
         {
-            if (lifesteal > 0f) Heal(damage * lifesteal);
+            if (lifesteal > 0f) Heal(damage * lifesteal * (synergy != null ? synergy.LifestealMultiplier : 1f));
         }
 
         private void Update()

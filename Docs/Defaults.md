@@ -130,6 +130,32 @@ Values the GDD does not give, picked by Claude on 2026-11-07 when building Weeks
 | Bulwark | 150 health, +2 armor, Orbit Blades and Ward Shell | 1,500 kills over all runs |
 | Lumen | 90 health, +10% damage, +8% attack speed, Homing Sparks and Mending Moss, 2 double jumps | Reach level 15 in one run |
 
+### Builds: schools and set bonuses (2026-11-08)
+Every item belongs to one or two schools; owning 2 and 4 items of a school unlocks its set bonuses, and a character's affinity counts as one more. Attack items leave their school's status on every enemy they hit.
+
+| School | Status on hit | 2 items | 4 items |
+| --- | --- | --- | --- |
+| Flame | Burn: 30% of the hit per second for 3 s | Burns +50% | Burning enemies spread their burn within 5 m when they die |
+| Frost | Chill: 30% slower for 2 s | Chill 50%; chilled take +15% damage | 12% chance on a hit to freeze a chilled enemy for 1.5 s |
+| Storm | Shock: +10% damage taken for 2 s | Shocked take +25% more | A shocked enemy's death bursts for 25 damage within 4 m and shocks them |
+| Blood | Bleed: 20% of the hit per second for 3 s | +4% lifesteal | Every hit bleeds; lifesteal doubles below half health |
+| Arcane | - | +1 projectile per volley (bolts, sparks, stars, shards, chain jumps) | Attack items recharge 20% faster |
+| Guardian | - | +3 armor | Getting hit in the air: a 6 m shockwave for 30 damage (2 s cooldown) |
+| Wild | - | +10% flight, +8% walk speed | +1.2% damage per m/s above 10 m/s, up to +40% |
+| Fortune | - | +20% XP, +20% luck | Chests offer 4 choices |
+
+| Character | Affinity | Starts with | Unlock |
+| --- | --- | --- | --- |
+| Warden | Guardian | Moonblade Halo | Always |
+| Skyrunner | Wild | Elven Skybow, Griffin Plume | Hold the watch 5:00 |
+| Bulwark | Guardian | Moonblade Halo, Turtle Spirit Shell | 1,500 kills over all runs |
+| Lumen | Arcane | Will-o'-Wisps, Owl Sage's Monocle | Reach level 15 |
+| Ember Witch | Flame | Salamander Familiar, Ember Brazier | Reach level 10 |
+| Frost Seer | Frost | Frost Wyrm's Breath, Frostbite Rune | Hold the watch 7:00 |
+| Storm Herald | Storm | Thundering Bell, Lightning Rod | 4,000 kills over all runs |
+
+School charms (Rare passives): Ember Brazier +25% burn, Frostbite Rune chilled take +6%, Lightning Rod shocked take +6%, Hemomancer's Knot +25% bleed, Arcane Focus +10% Arcane item damage, all per level. The full item-to-school table is ItemPrefabs.ItemSchools.
+
 ## Where the build differs from the GDD
 
 | GDD | What was built | Why |

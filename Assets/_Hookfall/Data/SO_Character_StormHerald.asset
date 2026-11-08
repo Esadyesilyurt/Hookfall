@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4a762caf975b3d34396293d095ea84ff, type: 3}
+  m_Name: SO_Character_StormHerald
+  m_EditorClassIdentifier: Assembly-CSharp::Hookfall.Player.CharacterDefinition
+  id: StormHerald
+  displayName: Storm Herald
+  description: 'A herald of the thunder giants: every bell toll shocks the sky, and
+    two dashes keep him moving.'
+  perks:
+  - +10% Max flight speed
+  - 2 dashes per flight
+  affinity: 2
+  maxHealthMultiplier: 1
+  statPicks: 05000000
+  startingItems:
+  - {fileID: 664267322630754233, guid: 040808a0fb9204a4d8545b4c73d119aa, type: 3}
+  - {fileID: 5072642748386669338, guid: 1f323c9fb40154c48a65dfc7ebc8cf66, type: 3}
+  airJumps: 1
+  airDashes: 2
+  unlock: 2
+  unlockTarget: 4000
+  unlockText: Defeat 4,000 enemies over all runs

@@ -52,6 +52,7 @@ MonoBehaviour:
   cooldown: 0.5
   level: 1
   rarity: 0
+  schools: 0100000005000000
   orbitRadius: 3
   orbitSpeed: 240
   bladeHitRadius: 0.9

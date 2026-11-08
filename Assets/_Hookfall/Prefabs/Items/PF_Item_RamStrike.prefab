@@ -51,6 +51,7 @@ MonoBehaviour:
   cooldown: 0.5
   level: 1
   rarity: 1
+  schools: 0600000005000000
   minSpeed: 20
   speedToDamage: 1.5
   damagePerLevel: 0.2

@@ -70,6 +70,29 @@ namespace Hookfall.EditorTools
                     "An old star chart of the Order; read aloud, its stars come down.",
                     i => SetRef(i, "projectilePrefab", spark), Rarity.Epic),
 
+                // Build items (2026-11-08): one per element, so every school has an attack of its own.
+                Item<SkyboltCrossbow>("SalamanderFamiliar", "Salamander Familiar", 11f, 0.9f,
+                    "A little fire lizard that rides on your shoulder and spits at whatever comes near.",
+                    i => { SetRef(i, "projectilePrefab", spark); SetFloat(i, "range", 30f); SetFloat(i, "boltSpeed", 32f); }, Rarity.Common),
+                Item<ShardBurst>("FrostWyrmBreath", "Frost Wyrm's Breath", 9f, 1.4f,
+                    "A frost wyrm's last breath, kept in a horn; blow it and winter rushes out ahead of you.",
+                    i => { SetRef(i, "projectilePrefab", shard); SetInt(i, "baseShards", 5); SetInt(i, "shardsPerLevel", 1);
+                           SetFloat(i, "shardSpeed", 28f); SetFloat(i, "shardLifetime", 0.45f); SetFloat(i, "coneAngle", 50f); }, Rarity.Rare),
+                Item<RingPulse>("CrimsonSickle", "Crimson Reaper's Sickle", 34f, 2.6f,
+                    "The reaper lent it out once and never got it back; it sweeps a red circle around you.",
+                    i => Ring(i, 6.5f, 0.5f, 0.2f, new Color(1f, 0.15f, 0.2f)), Rarity.Epic),
+                Item<RingPulse>("ThunderingBell", "Thundering Bell", 10f, 3f,
+                    "A storm giant's dinner bell; every ring rolls out as thunder.",
+                    i => Ring(i, 11f, 1f, 0.35f, new Color(1f, 0.9f, 0.3f)), Rarity.Common),
+
+                // School charms (2026-11-08): they make one school's effect stronger, the core of a build.
+                SchoolCharm("EmberBrazier", "Ember Brazier", School.Flame, 0.25f, "A brazier that never cools; every flame you light burns hotter."),
+                SchoolCharm("FrostbiteRune", "Frostbite Rune", School.Frost, 0.06f, "A rune carved from glacier ice; the cold bites deeper into whatever it slows."),
+                SchoolCharm("LightningRod", "Lightning Rod", School.Storm, 0.06f, "A copper rod from a storm giant's roof; shocked foes crackle with more pain."),
+                SchoolCharm("HemomancerKnot", "Hemomancer's Knot", School.Blood, 0.25f, "A blood mage's knotted cord; wounds you open stay open longer and deeper."),
+                SchoolCharm("ArcaneFocus", "Arcane Focus", School.Arcane, 0.1f, "A crystal that hums with spellwork; Arcane items strike harder through it."),
+                Charm("LuckyHorseshoe", "Unicorn Horseshoe", Rarity.Rare, "A horseshoe from a unicorn; luck and the wind follow its keeper.", StatType.Luck, StatType.FlightSpeed),
+
                 // Passive items (2026-11-08): rarer means more useful. Fantasy names later the same day (ids unchanged).
                 Charm("HeartLocket", "Dragonheart Ember", Rarity.Common, "An ember from a dragon's heart, still warm; it beats along with yours.", StatType.MaxHealth),
                 Charm("GiantsRing", "Giant's Toe Ring", Rarity.Common, "A hill giant's toe ring, worn as a belt; you feel as sturdy as its owner.", StatType.MaxHealth, StatType.Armor),
@@ -120,6 +143,69 @@ namespace Hookfall.EditorTools
                 serialized.ApplyModifiedPropertiesWithoutUndo();
             }, rarity);
 
+        /// <summary>The schools of every item: set bonuses, and the status its hits leave (SynergySystem).</summary>
+        private static readonly Dictionary<string, School[]> ItemSchools = new Dictionary<string, School[]>
+        {
+            { "OrbitBlades", new[] { School.Frost, School.Guardian } },
+            { "ShardBurst", new[] { School.Frost, School.Arcane } },
+            { "ArcLaser", new[] { School.Flame } },
+            { "RamStrike", new[] { School.Wild, School.Guardian } },
+            { "HomingSparks", new[] { School.Arcane, School.Flame } },
+            { "StormAura", new[] { School.Storm } },
+            { "TetherCoil", new[] { School.Wild, School.Storm } },
+            { "SkyboltCrossbow", new[] { School.Wild, School.Blood } },
+            { "ChainLightning", new[] { School.Storm, School.Arcane } },
+            { "Starfall", new[] { School.Arcane, School.Flame } },
+            { "SalamanderFamiliar", new[] { School.Flame } },
+            { "FrostWyrmBreath", new[] { School.Frost } },
+            { "CrimsonSickle", new[] { School.Blood } },
+            { "ThunderingBell", new[] { School.Storm } },
+            { "HeartLocket", new[] { School.Flame, School.Guardian } },
+            { "GiantsRing", new[] { School.Guardian } },
+            { "IronHide", new[] { School.Guardian, School.Wild } },
+            { "GaleFeather", new[] { School.Wild } },
+            { "Lodestone", new[] { School.Fortune } },
+            { "FairyDust", new[] { School.Fortune, School.Arcane } },
+            { "MendingMoss", new[] { School.Wild } },
+            { "SagesLens", new[] { School.Arcane, School.Fortune } },
+            { "KrakenTentacle", new[] { School.Frost, School.Wild } },
+            { "LeechJar", new[] { School.Blood } },
+            { "Whetstone", new[] { School.Flame } },
+            { "QuickDraw", new[] { School.Wild, School.Arcane } },
+            { "LuckyCoin", new[] { School.Fortune } },
+            { "WizardHourglass", new[] { School.Arcane } },
+            { "VampireFang", new[] { School.Blood } },
+            { "SoulHarvest", new[] { School.Blood, School.Arcane } },
+            { "HuntersEye", new[] { School.Wild } },
+            { "ThornMail", new[] { School.Guardian, School.Blood } },
+            { "WardShell", new[] { School.Guardian, School.Frost } },
+            { "WindSigil", new[] { School.Storm, School.Wild } },
+            { "BerserkerBlood", new[] { School.Blood } },
+            { "BloodMoonChalice", new[] { School.Blood } },
+            { "PhoenixFeather", new[] { School.Flame } },
+            { "HeartstoneCore", new[] { School.Arcane, School.Storm } },
+            { "EmberBrazier", new[] { School.Flame } },
+            { "FrostbiteRune", new[] { School.Frost } },
+            { "LightningRod", new[] { School.Storm } },
+            { "HemomancerKnot", new[] { School.Blood } },
+            { "ArcaneFocus", new[] { School.Arcane } },
+            { "LuckyHorseshoe", new[] { School.Fortune, School.Wild } },
+        };
+
+        private static SchoolCharm SchoolCharm(string id, string displayName, School school, float boost, string lore) =>
+            Item<SchoolCharm>(id, displayName, 0f, 1f, lore, charm => { SetEnum(charm, "school", (int)school); SetFloat(charm, "boostPerLevel", boost); }, Rarity.Rare);
+
+        private static void Ring(RingPulse pulse, float radius, float radiusPerLevel, float damagePerLevel, Color color)
+        {
+            SetFloat(pulse, "radius", radius);
+            SetFloat(pulse, "radiusPerLevel", radiusPerLevel);
+            SetFloat(pulse, "damagePerLevel", damagePerLevel);
+            SetRef(pulse, "ringMaterial", ToonSetup.ParticleMaterial());
+            var serialized = new SerializedObject(pulse);
+            serialized.FindProperty("ringColor").colorValue = color;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+        }
+
         /// <summary>What each item does, in one plain sentence (shown on the cards above its stat lines).</summary>
         private static readonly Dictionary<string, string> Summaries = new Dictionary<string, string>
         {
@@ -149,6 +235,16 @@ namespace Hookfall.EditorTools
             { "FairyDust", "Pick up from farther away and earn more experience." },
             { "WizardHourglass", "Your attack items and your Zip recharge faster." },
             { "KrakenTentacle", "Longer hook and Zip range." },
+            { "SalamanderFamiliar", "Spits fireballs at the nearest enemies; they burn." },
+            { "FrostWyrmBreath", "Breathes a fan of frost ahead of you that chills everything it hits." },
+            { "CrimsonSickle", "A wide sweep around you that makes everything in it bleed." },
+            { "ThunderingBell", "Thunder rolls out around you and shocks every enemy it reaches." },
+            { "EmberBrazier", "Burns deal more damage. Pairs with Flame items." },
+            { "FrostbiteRune", "Chilled enemies take more damage. Pairs with Frost items." },
+            { "LightningRod", "Shocked enemies take more damage. Pairs with Storm items." },
+            { "HemomancerKnot", "Bleeding deals more damage. Pairs with Blood items." },
+            { "ArcaneFocus", "Arcane items deal more damage." },
+            { "LuckyHorseshoe", "More luck and faster flight." },
             { "SoulHarvest", "Heal a little for every enemy you defeat." },
             { "HuntersEye", "A chance for any hit to deal double damage." },
             { "ThornMail", "When you are hit in the air, enemies close by take damage back." },
@@ -167,6 +263,14 @@ namespace Hookfall.EditorTools
             SetString(item, "displayName", displayName);
             SetEnum(item, "rarity", (int)rarity);
             SetString(item, "summary", Summaries.TryGetValue(id, out string summary) ? summary : "");
+            if (ItemSchools.TryGetValue(id, out School[] itemSchools))
+            {
+                var serialized = new SerializedObject(item);
+                SerializedProperty list = serialized.FindProperty("schools");
+                list.arraySize = itemSchools.Length;
+                for (int i = 0; i < itemSchools.Length; i++) list.GetArrayElementAtIndex(i).enumValueIndex = (int)itemSchools[i];
+                serialized.ApplyModifiedPropertiesWithoutUndo();
+            }
             SetString(item, "lore", lore);
             SetFloat(item, "baseDamage", damage);
             SetFloat(item, "cooldown", cooldown);

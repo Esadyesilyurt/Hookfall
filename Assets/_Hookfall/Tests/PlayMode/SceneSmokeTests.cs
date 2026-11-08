@@ -691,6 +691,61 @@ namespace Hookfall.Tests
             finally { locType.GetProperty("Turkish").SetValue(null, false); }
         }
 
+        /// <summary>Builds: the Warden's Guardian affinity plus his blades reach Guardian 2; burns hurt and chills slow;
+        /// with four Storm items a shocked enemy's death sets off a lightning burst.</summary>
+        [UnityTest]
+        public IEnumerator SynergiesAndStatusesWork()
+        {
+            PlayerPrefs.SetString("hf_character", "Warden");
+            SceneManager.LoadScene("Arena");
+            yield return null;
+            yield return null;
+            GameObject player = GameObject.Find("Player");
+            Type synergyType = Type.GetType("Hookfall.Combat.SynergySystem, Assembly-CSharp");
+            Type schoolType = Type.GetType("Hookfall.Combat.School, Assembly-CSharp");
+            Type statsType = Type.GetType("Hookfall.Player.PlayerStats, Assembly-CSharp");
+            Component synergy = player.GetComponent(synergyType);
+            Assert.IsNotNull(synergy, "The player needs a SynergySystem");
+            Func<string, int> count = school => (int)synergyType.GetMethod("Count").Invoke(synergy, new[] { Enum.Parse(schoolType, school) });
+            Assert.GreaterOrEqual(count("Guardian"), 2, "Guardian affinity + Moonblade Halo should make Guardian 2");
+            Assert.GreaterOrEqual((float)statsType.GetProperty("Armor").GetValue(player.GetComponent(statsType)), 3f, "Guardian 2 gives +3 armor");
+
+            // Statuses on a live enemy.
+            Type enemyType = Type.GetType("Hookfall.Enemies.EnemyBase, Assembly-CSharp");
+            var active = (IList)enemyType.GetField("Active").GetValue(null);
+            Component enemy = null;
+            float end = Time.realtimeSinceStartup + 8f;
+            while (enemy == null && Time.realtimeSinceStartup < end) { KeepAlive(player); if (active.Count > 0) enemy = (Component)active[0]; yield return null; }
+            Assert.IsNotNull(enemy, "Enemies should spawn");
+            float before = (float)enemyType.GetProperty("Health").GetValue(enemy);
+            enemyType.GetMethod("Burn").Invoke(enemy, new object[] { 4f, 3f });
+            enemyType.GetMethod("Chill").Invoke(enemy, new object[] { 0.5f, 3f });
+            for (float t = 0f; t < 1.2f; t += Time.deltaTime) { KeepAlive(player); yield return null; }
+            Assert.Less((float)enemyType.GetProperty("Health").GetValue(enemy), before, "A burn should deal damage over time");
+            Assert.IsTrue((bool)enemyType.GetProperty("Chilled").GetValue(enemy), "Chill should hold for its duration");
+
+            // Storm 4: claim four Storm items, shock an enemy and kill it: a lightning burst follows.
+            Type combatType = Type.GetType("Hookfall.Combat.CombatSystem, Assembly-CSharp");
+            Type rewardType = Type.GetType("Hookfall.Combat.ChestReward, Assembly-CSharp");
+            Type statType = Type.GetType("Hookfall.Player.StatType, Assembly-CSharp");
+            Component combat = player.GetComponent(combatType);
+            var flags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+            foreach (Component prefab in (IList)combatType.GetField("itemPrefabs", flags).GetValue(combat))
+                if (Array.IndexOf(new[] { "PF_Item_StormAura", "PF_Item_ChainLightning", "PF_Item_ThunderingBell", "PF_Item_LightningRod" }, prefab.name) >= 0)
+                    combatType.GetMethod("Claim").Invoke(combat, new[] { Activator.CreateInstance(rewardType, prefab.GetType().GetProperty("Rarity").GetValue(prefab), prefab, true, 1, Enum.ToObject(statType, 0)), player.GetComponent(statsType) });
+            Assert.GreaterOrEqual(count("Storm"), 4, "Four Storm items should make Storm 4");
+            int chainsBefore = (int)synergyType.GetProperty("ChainsFired").GetValue(synergy);
+            Component victim = null;
+            foreach (Component e in active) if (!(bool)enemyType.GetProperty("IsDead").GetValue(e)) { victim = e; break; }
+            Assert.IsNotNull(victim, "There should be an enemy to shock");
+            enemyType.GetMethod("Shock").Invoke(victim, new object[] { 3f });
+            enemyType.GetMethod("TakeDamage").Invoke(victim, new object[] { 100000f, false });
+            for (int i = 0; i < 5; i++) { KeepAlive(player); yield return null; }
+            bool chainFired = (int)synergyType.GetProperty("ChainsFired").GetValue(synergy) > chainsBefore;
+            Assert.IsTrue(chainFired, "A shocked enemy's death with Storm 4 should fire a lightning burst");
+            LogAssert.NoUnexpectedReceived();
+        }
+
         /// <summary>Jumps the run clock to 4:55 so wyverns, golems and the first elite wave all appear.</summary>
         [UnityTest]
         public IEnumerator LateRunSpawnsEveryEnemy()

@@ -22,7 +22,7 @@ namespace Hookfall.Combat.Items
         private readonly List<EnemyBase> inRange = new List<EnemyBase>();
         private readonly List<EnemyBase> near = new List<EnemyBase>();
 
-        private int Stars(int level) => baseStars + level - 1;
+        private int Stars(int level) => baseStars + level - 1 + ExtraProjectiles;
 
         protected override void Attack()
         {
@@ -44,7 +44,7 @@ namespace Hookfall.Combat.Items
             yield return new WaitForSeconds(delay);
             EnemyQuery.InRadius(point, splashRadius, near);
             float damage = Damage * splashShare;
-            foreach (EnemyBase enemy in near) enemy.TakeDamage(damage);
+            foreach (EnemyBase enemy in near) Strike(enemy, damage);
         }
 
         public override IEnumerable<string> StatLines()

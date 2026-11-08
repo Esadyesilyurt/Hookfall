@@ -14,17 +14,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Hookfall.Player.CharacterDefinition
   id: Lumen
   displayName: Lumen
-  description: 'A mystic of the Heartstone: hits harder and faster, and jumps twice
-    in the air.'
+  description: 'A mystic of the Heartstone: arcane volleys that hit harder and faster;
+    jumps twice.'
   perks:
   - +10% Damage
   - +8% Attack speed
   - 2 double jumps per flight
+  affinity: 4
   maxHealthMultiplier: 0.9
   statPicks: 0200000003000000
   startingItems:
   - {fileID: 1641890408364124208, guid: a7692509ec92168448279df012b4fc56, type: 3}
-  - {fileID: 7794369592233697726, guid: e3563245623f87543b4c69502b1053a7, type: 3}
+  - {fileID: 4823055812439767666, guid: 0c8432d081c93f74ebcb888f4b95056e, type: 3}
   airJumps: 2
   airDashes: 1
   unlock: 3

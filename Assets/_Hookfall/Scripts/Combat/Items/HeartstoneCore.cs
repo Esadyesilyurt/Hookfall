@@ -32,7 +32,7 @@ namespace Hookfall.Combat.Items
         {
             if (Player == null || !Player.IsAirborne) return;
             EnemyQuery.InRadius(transform.position, radius, near);
-            foreach (EnemyBase enemy in near) enemy.TakeDamage(Damage);
+            foreach (EnemyBase enemy in near) Strike(enemy, Damage);
             if (Stats != null) Stats.Heal(Stats.MaxHealth * healShare);
             Pulsed?.Invoke(transform.position, radius);
         }

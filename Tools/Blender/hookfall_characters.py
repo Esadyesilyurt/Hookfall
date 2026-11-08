@@ -197,3 +197,110 @@ def lumen(out_dir, prev_dir):
     cape.membrane("M_LumenRobe", [(-0.18, 0, 0), (0.18, 0, 0), (0.26, 0, -1.05), (0.0, 0, -1.15), (-0.26, 0, -1.05)], thickness=0.02)
     cape.build(location=(0, 0.2, 1.45))
     _finish("Lumen", out_dir, prev_dir)
+
+
+# ---------------------------------------------------------------- build characters (2026-11-08)
+
+PALETTE_CHARACTERS.update({
+    "M_EmberRobe": (0.78, 0.20, 0.12), "M_EmberTrim": (1.00, 0.62, 0.15),
+    "M_FrostRobe": (0.55, 0.78, 0.95), "M_FrostFur": (0.95, 0.97, 1.00),
+    "M_StormArmor": (0.22, 0.28, 0.50), "M_StormGold": (1.00, 0.82, 0.25),
+})
+
+
+def _figure(robe, trim, cloth, cape_mat, long_robe=True, width=1.0):
+    """The shared body: torso, belt, skirt or long robe, shoulders, arms, legs and cape, with the Warden's part names
+    and joints. Returns the head Builder (not built yet) so each character adds its own headwear."""
+    w = width
+    body = Builder("Body")
+    body.cone(robe, M((0, 0, 1.22)), 0.19 * w, 0.24 * w, 0.5, segments=14)
+    body.cone(trim, M((0, 0, 0.98)), 0.21 * w, 0.21 * w, 0.07, segments=14)
+    if long_robe:
+        body.cone(robe, M((0, 0, 0.6)), 0.36 * w, 0.2 * w, 0.72, segments=16)
+        body.cone(trim, M((0, 0, 0.25)), 0.365 * w, 0.36 * w, 0.04, segments=16)
+    else:
+        body.cone(cloth, M((0, 0, 0.74)), 0.3 * w, 0.2 * w, 0.44, segments=14)
+    for side in (-1, 1):
+        body.sphere(robe, M((side * 0.25 * w, 0, 1.43), (0.13 * w, 0.13 * w, 0.1)), u=10, v=6)
+    body.cone("M_PlayerGlow", M((0, -0.23 * w, 1.27), (1, 0.3, 1), (90, 0, 45)), 0.06, 0.06, 0.04, segments=4)
+    body.build()
+
+    for side, name in ((-1, "Arm_L"), (1, "Arm_R")):
+        arm = Builder(name)
+        arm.cone(robe, M((0, 0, -0.2)), 0.06 * w, 0.09 * w, 0.42, segments=8)
+        arm.cone(trim, M((0, 0, -0.42)), 0.09 * w, 0.09 * w, 0.03, segments=8)
+        arm.sphere("M_WardenSkin", M((0, 0, -0.55), (0.05, 0.05, 0.06)), u=8, v=5)
+        if side == 1:
+            for k in range(2):
+                arm.cone("M_PlayerGlow", M((0, 0, -0.32 - k * 0.07)), 0.075 * w, 0.075 * w, 0.02, segments=10)
+        arm.build(location=(side * 0.25 * w, 0, 1.4))
+
+    for side, name in ((-1, "Leg_L"), (1, "Leg_R")):
+        leg = Builder(name)
+        leg.cone(cloth, M((0, 0, -0.45)), 0.075 * w, 0.065 * w, 0.7, segments=8)
+        leg.cube(trim, M((0, -0.04, -0.85), (0.11 * w, 0.21, 0.09)))
+        leg.build(location=(side * 0.1 * w, 0, 0.9))
+
+    cape = Builder("Cape")
+    cape.membrane(cape_mat, [(-0.2 * w, 0, 0), (0.2 * w, 0, 0), (0.28 * w, 0, -1.0), (0.0, 0, -1.1), (-0.28 * w, 0, -1.0)], thickness=0.02)
+    cape.build(location=(0, 0.2 * w, 1.45))
+
+    head = Builder("Head")
+    head.sphere("M_WardenSkin", M((0, -0.02, 0.13), (0.1, 0.1, 0.12)), u=10, v=7)
+    return head
+
+
+def ember_witch(out_dir, prev_dir):
+    """Ember Witch: a red robe with gold trim, a tall crooked witch hat with a flame band, flame-orange hair, and a
+    salamander curled on her shoulder."""
+    reset()
+    head = _figure("M_EmberRobe", "M_EmberTrim", "M_EmberRobe", "M_EmberRobe")
+    for x in (-0.09, 0.0, 0.09):
+        head.sphere("M_EmberTrim", M((x, 0.07, 0.08), (0.07, 0.07, 0.12)), u=8, v=5)                  # hair
+    head.cone("M_TowerDark", M((0, 0.02, 0.22), (1, 1, 1)), 0.26, 0.24, 0.03, segments=16)          # hat brim
+    head.cone("M_TowerDark", M((0, 0.03, 0.42), r=(-12, 0, 0)), 0.14, 0.02, 0.45, segments=10)       # hat crown
+    head.cone("M_EmberTrim", M((0, 0.02, 0.27)), 0.145, 0.14, 0.05, segments=12)                      # flame band
+    head.build(location=(0, 0, 1.52))
+    scarf = Builder("Scarf")   # the salamander on her shoulder, moving like the Warden's scarf
+    scarf.sphere("M_EmberTrim", M((0.2, 0.02, 0.02), (0.07, 0.16, 0.06)), u=10, v=6)
+    scarf.sphere("M_EmberTrim", M((0.2, -0.12, 0.05), (0.05, 0.06, 0.05)), u=8, v=5)
+    scarf.cone("M_EmberTrim", M((0.2, 0.2, 0.0), r=(-90, 0, 0)), 0.04, 0.0, 0.25, segments=6)
+    scarf.build(location=(0, 0, 1.48))
+    _finish("EmberWitch", out_dir, prev_dir)
+
+
+def frost_seer(out_dir, prev_dir):
+    """Frost Seer: an ice-blue robe with a white fur collar and hood, and a crown of ice crystals."""
+    reset()
+    head = _figure("M_FrostRobe", "M_FrostFur", "M_FrostRobe", "M_FrostFur")
+    head.sphere("M_FrostRobe", M((0, 0.02, 0.16), (0.15, 0.15, 0.16)), u=12, v=8)                    # hood
+    for v in head.bm.verts:
+        if v.co.y < -0.06 and v.co.z > 0.05 and abs(v.co.x) < 0.1 and v.co.z < 0.24:
+            v.co.y = -0.06
+    for k in range(5):   # crown of ice
+        a = math.radians(-60 + k * 30)
+        head.cone("M_Crystal", M((math.sin(a) * 0.12, -0.02 + math.cos(a) * 0.04, 0.3), r=(0, math.degrees(a) * 0.4, 0)), 0.035, 0.0, 0.18 + (0.08 if k == 2 else 0), segments=5)
+    head.build(location=(0, 0, 1.52))
+    scarf = Builder("Scarf")   # fur collar
+    scarf.cone("M_FrostFur", M((0, 0, 0)), 0.17, 0.19, 0.1, segments=14)
+    scarf.build(location=(0, 0, 1.5))
+    _finish("FrostSeer", out_dir, prev_dir)
+
+
+def storm_herald(out_dir, prev_dir):
+    """Storm Herald: dark blue armour with gold, a horned helm with a lightning crest, a gold bell at the belt, and a
+    yellow cape."""
+    reset()
+    head = _figure("M_StormArmor", "M_StormGold", "M_StormArmor", "M_StormGold", long_robe=False, width=1.1)
+    head.sphere("M_StormArmor", M((0, 0, 0.14), (0.14, 0.14, 0.15)), u=12, v=8)                       # helm
+    head.cube("M_TowerDark", M((0, -0.13, 0.14), (0.15, 0.03, 0.025)))                                 # visor
+    for side in (-1, 1):
+        head.cone("M_StormGold", M((side * 0.14, 0, 0.24), r=(0, side * 50, 0)), 0.04, 0.0, 0.22, segments=6)   # horns
+    for (x1, z1), (x2, z2) in (((0.02, 0.45), (-0.04, 0.33)), ((-0.04, 0.33), (0.03, 0.31)), ((0.03, 0.31), (-0.02, 0.2))):
+        head.cube("M_StormGold", M(((x1 + x2) / 2, 0.01, (z1 + z2) / 2), (0.035, 0.03, abs(z1 - z2) + 0.04)))  # lightning crest
+    head.build(location=(0, 0, 1.54))
+    scarf = Builder("Scarf")   # the bell at his belt, swinging like a scarf
+    scarf.cone("M_StormGold", M((0.18, -0.18, -0.08), r=(0, 0, 0)), 0.03, 0.09, 0.12, segments=10)
+    scarf.sphere("M_StormGold", M((0.18, -0.18, -0.15), (0.03, 0.03, 0.03)), u=6, v=4)
+    scarf.build(location=(0, 0, 1.0))
+    _finish("StormHerald", out_dir, prev_dir)

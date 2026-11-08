@@ -52,6 +52,7 @@ MonoBehaviour:
   cooldown: 1.1
   level: 1
   rarity: 0
+  schools: 0600000003000000
   projectilePrefab: {fileID: 8481211734425419368, guid: 509bff0c6b3890742a6fd570bd16d743, type: 3}
   range: 40
   boltSpeed: 70

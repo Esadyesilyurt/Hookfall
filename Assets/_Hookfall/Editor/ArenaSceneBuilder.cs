@@ -113,6 +113,7 @@ namespace Hookfall.EditorTools
             var xp = player.AddComponent<XPSystem>();
             var gold = player.AddComponent<GoldWallet>();
             var combat = player.AddComponent<CombatSystem>();
+            player.AddComponent<SynergySystem>();   // set bonuses and school statuses (2026-11-08)
             var levelUp = player.AddComponent<LevelUpSystem>();
 
             var ropeGo = new GameObject("Rope") { layer = Layers.NoOutline };
@@ -417,7 +418,7 @@ namespace Hookfall.EditorTools
         {
             EnsureFolder(Root + "/Data");
             ItemBase Item(string id) => AssetDatabase.LoadAssetAtPath<ItemBase>($"{Root}/Prefabs/Items/PF_Item_{id}.prefab");
-            CharacterDefinition Make(string id, string name, string description, float health, StatType[] picks,
+            CharacterDefinition Make(string id, string name, string description, School affinity, float health, StatType[] picks,
                 ItemBase[] items, int jumps, int dashes, UnlockKind unlock, float target, string unlockText, params string[] perks)
             {
                 string path = $"{Root}/Data/SO_Character_{id}.asset";
@@ -439,27 +440,40 @@ namespace Hookfall.EditorTools
                 c.unlockTarget = target;
                 c.unlockText = unlockText;
                 c.perks = perks;
+                c.affinity = affinity;
                 EditorUtility.SetDirty(c);
                 return c;
             }
 
             var all = new[]
             {
-                Make("Warden", "Warden", "A Warden of the Order of the Tether: steady in every way.", 1f,
+                Make("Warden", "Warden", "A Warden of the Order of the Tether: steady in every way; frost-edged blades keep foes at bay.", School.Guardian, 1f,
                     new StatType[0], new[] { Item("OrbitBlades") }, 1, 1, UnlockKind.None, 0f, "",
                     "Balanced in everything", "1 double jump, 1 dash"),
-                Make("Skyrunner", "Skyrunner", "A scout of the storm roads: fastest in the air, with two dashes, but fragile.", 0.8f,
-                    new[] { StatType.FlightSpeed, StatType.FlightSpeed, StatType.WalkSpeed }, new[] { Item("ShardBurst"), Item("GaleFeather") },
+                Make("Skyrunner", "Skyrunner", "A scout of the storm roads: fastest in the air, two dashes, a bow that makes foes bleed; fragile.", School.Wild, 0.8f,
+                    new[] { StatType.FlightSpeed, StatType.FlightSpeed, StatType.WalkSpeed }, new[] { Item("SkyboltCrossbow"), Item("GaleFeather") },
                     1, 2, UnlockKind.SurviveSeconds, 300f, "Hold the watch for 5:00 in one run",
                     "+20% Max flight speed", "+8% Walk speed", "2 dashes per flight"),
-                Make("Bulwark", "Bulwark", "A knight of the vault gates: heavy plate, a ward shell, and the most health.", 1.5f,
+                Make("Bulwark", "Bulwark", "A knight of the vault gates: heavy plate, a turtle shell, and the most health.", School.Guardian, 1.5f,
                     new[] { StatType.Armor, StatType.Armor }, new[] { Item("OrbitBlades"), Item("WardShell") },
                     1, 1, UnlockKind.TotalKills, 1500f, "Defeat 1,500 enemies over all runs",
                     "+2 Armor", "Starts with a Turtle Spirit Shell"),
-                Make("Lumen", "Lumen", "A mystic of the Heartstone: hits harder and faster, and jumps twice in the air.", 0.9f,
-                    new[] { StatType.Damage, StatType.AttackSpeed }, new[] { Item("HomingSparks"), Item("MendingMoss") },
+                Make("Lumen", "Lumen", "A mystic of the Heartstone: arcane volleys that hit harder and faster; jumps twice.", School.Arcane, 0.9f,
+                    new[] { StatType.Damage, StatType.AttackSpeed }, new[] { Item("HomingSparks"), Item("SagesLens") },
                     2, 1, UnlockKind.ReachLevel, 15f, "Reach level 15 in one run",
                     "+10% Damage", "+8% Attack speed", "2 double jumps per flight"),
+                Make("EmberWitch", "Ember Witch", "A witch of the cinder peaks: her salamander sets the sky alight, and her fires burn hotter.", School.Flame, 0.9f,
+                    new[] { StatType.Damage }, new[] { Item("SalamanderFamiliar"), Item("EmberBrazier") },
+                    1, 1, UnlockKind.ReachLevel, 10f, "Reach level 10 in one run",
+                    "+10% Damage", "Burns 25% hotter from the start"),
+                Make("FrostSeer", "Frost Seer", "A seer of the frozen north: her breath slows the horde, and cold bites deeper.", School.Frost, 1.1f,
+                    new[] { StatType.Armor }, new[] { Item("FrostWyrmBreath"), Item("FrostbiteRune") },
+                    1, 1, UnlockKind.SurviveSeconds, 420f, "Hold the watch for 7:00 in one run",
+                    "+1 Armor", "Chilled foes take more damage"),
+                Make("StormHerald", "Storm Herald", "A herald of the thunder giants: every bell toll shocks the sky, and two dashes keep him moving.", School.Storm, 1f,
+                    new[] { StatType.FlightSpeed }, new[] { Item("ThunderingBell"), Item("LightningRod") },
+                    1, 2, UnlockKind.TotalKills, 4000f, "Defeat 4,000 enemies over all runs",
+                    "+10% Max flight speed", "2 dashes per flight"),
             };
             AssetDatabase.SaveAssets();
             return all;

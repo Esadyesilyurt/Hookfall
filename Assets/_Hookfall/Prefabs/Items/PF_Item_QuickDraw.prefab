@@ -52,4 +52,5 @@ MonoBehaviour:
   cooldown: 1
   level: 1
   rarity: 1
+  schools: 0600000004000000
   picksPerLevel: 0300000003000000

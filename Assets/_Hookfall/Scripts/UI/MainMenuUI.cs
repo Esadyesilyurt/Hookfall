@@ -119,27 +119,41 @@ namespace Hookfall.UI
         /// <summary>One card per character: portrait, what it does, or its unlock quest and progress while locked.</summary>
         private GameObject BuildSelect(Transform canvas)
         {
-            Image image = UIFactory.Panel(canvas, "Characters", new Vector2(1780f, 870f), UITheme.Panel);
-            UIFactory.Column(image, 18f, 40, TextAnchor.UpperCenter);
+            Image image = UIFactory.Panel(canvas, "Characters", new Vector2(1780f, 1040f), UITheme.Panel);
+            UIFactory.Column(image, 10f, 26, TextAnchor.UpperCenter);
             TextMeshProUGUI title = UIFactory.Sized(UIFactory.Text(image.transform, "Title", "CHOOSE YOUR WARDEN", 46f, UITheme.Player, TextAlignmentOptions.Center, true), -1f, 60f);
             title.characterSpacing = 10f;
-            RectTransform row = UIFactory.Rect(image.transform, "Cards", Vector2.zero, Vector2.zero, Vector2.zero, Vector2.zero);
-            UIFactory.Sized(row, -1f, 570f);
-            UIFactory.Row(row, 26f, 0);
+            // Two rows of four, each card at three quarters size.
+            RectTransform row = null;
             for (int i = 0; i < characters.Length; i++)
             {
+                if (i % 4 == 0)
+                {
+                    row = UIFactory.Rect(image.transform, "Cards", Vector2.zero, Vector2.zero, Vector2.zero, Vector2.zero);
+                    UIFactory.Sized(row, -1f, 430f);
+                    UIFactory.Row(row, 22f, 0);
+                }
+                RectTransform holder = UIFactory.Rect(row, "Slot", Vector2.zero, Vector2.zero, Vector2.zero, Vector2.zero);
+                UIFactory.Sized(holder, 300f, 420f);
+                RectTransform scaler = UIFactory.Centre(holder, "Scale", Vector2.zero, new Vector2(400f, 560f));
+                scaler.localScale = Vector3.one * 0.75f;
                 CharacterDefinition character = characters[i];
                 bool open = CharacterRoster.IsUnlocked(character);
                 string tag = !open ? Loc.F("LOCKED  ·  {0}", CharacterRoster.ProgressText(character))
                     : Loc.T(character.id == CharacterRoster.SelectedId ? "LAST PLAYED" : "UNLOCKED");
-                var lines = new System.Collections.Generic.List<string> { Loc.F("Health {0}", (100f * character.maxHealthMultiplier).ToString("0")) };
+                var lines = new System.Collections.Generic.List<string>
+                {
+                    Loc.F("Affinity: {0}", Hookfall.Combat.SchoolInfo.Colored(character.affinity)),
+                    Loc.F("Health {0}", (100f * character.maxHealthMultiplier).ToString("0")),
+                };
                 foreach (string perk in character.perks) lines.Add(Loc.T(perk));
                 var items = new System.Collections.Generic.List<string>();
                 foreach (var item in character.startingItems) if (item != null) items.Add(item.DisplayName);
                 string detail = open ? Loc.T(character.description) + "\n" + Loc.F("Starts with: {0}", string.Join(", ", items))
                     : Loc.T(character.unlockText);
-                RectTransform card = UIFactory.ChoiceCard(row, i, open ? UITheme.Player : UITheme.TextMuted,
+                RectTransform card = UIFactory.ChoiceCard(scaler, i, open ? UITheme.Player : UITheme.TextMuted,
                     UISkin.Icon(character.id), Loc.T(character.displayName), tag, string.Join("\n", lines), detail, () => Choose(character));
+                UIFactory.Stretch(card);   // no layout group in the scaler: fill it at full card size
                 if (!open)
                 {
                     // A dark veil over a locked card (UIPop owns the card's CanvasGroup alpha, so it cannot be used).

@@ -15,6 +15,7 @@ PALETTE_ICONS = {
 def install(ns):
     ns["PALETTE"].update(PALETTE_ICONS)
     g = globals()
+    ns["PALETTE"].update({"M_StormGold": (1.00, 0.82, 0.25)})
     for name in ("Builder", "M", "reset"):
         g[name] = ns[name]
     import hookfall_models_v2 as v2
@@ -252,6 +253,99 @@ def item_icons(out_dir, prev_dir):
         "SoulHarvest": soul_lantern, "HuntersEye": basilisk_eye, "ThornMail": bramble_mail, "WardShell": turtle_shell,
         "WindSigil": sylph_sigil, "BerserkerBlood": minotaur_blood, "BloodMoonChalice": blood_moon_chalice,
         "PhoenixFeather": phoenix_feather, "HeartstoneCore": heartstone_core, "Lifesteal": lifesteal,
+    }
+    for name, build in jobs.items():
+        make(name, build)
+
+
+def build_icons(out_dir, prev_dir):
+    """Icons for the build items and school charms (2026-11-08)."""
+    os.makedirs(out_dir, exist_ok=True)
+
+    def make(name, build):
+        reset()
+        b = Builder("Icon")
+        build(b)
+        b.build()
+        _render_icon(name, out_dir)
+
+    def salamander(b):
+        b.sphere("M_IconOrange", M((0, 0, 0), (0.45, 0.2, 0.22)), u=14, v=8)
+        b.sphere("M_IconOrange", M((0.5, 0, 0.12), (0.2, 0.16, 0.16)), u=12, v=7)
+        b.cone("M_IconOrange", M((-0.65, 0, -0.05), r=(0, 100, 0)), 0.12, 0.0, 0.55, segments=8)
+        for x in (-0.25, 0.25):
+            b.cone("M_IconOrange", M((x, 0, -0.25)), 0.06, 0.04, 0.25, segments=6)
+        b.sphere("M_IconDark", M((0.6, -0.14, 0.18), (0.04, 0.02, 0.04)), u=6, v=4)
+        for x, h in ((0.85, 0.3), (1.0, 0.2)):
+            b.sphere("M_Gold", M((x, -0.05, 0.12), (h * 0.5, 0.1, h * 0.5)), u=8, v=5)
+
+    def wyrm_breath(b):
+        b.cone("M_IconBone", M((-0.5, 0, -0.1), r=(0, 70, 0)), 0.1, 0.3, 0.75, segments=12)    # the horn
+        b.cone("M_Gold", M((-0.82, 0, -0.22), r=(0, 70, 0)), 0.11, 0.11, 0.08, segments=12)
+        for k in range(5):
+            a = math.radians(-30 + k * 15)
+            b.cone("M_Crystal", M((0.25 + math.cos(a) * 0.45, -0.05, 0.05 + math.sin(a) * 0.45), r=(0, 90 - math.degrees(a), 0)), 0.09, 0.0, 0.7, segments=6)
+        for x, z in ((0.75, 0.45), (0.85, -0.3), (0.55, 0.1)):
+            _star(b, "M_IconWhite", (x, -0.15, z), 0.2)
+
+    def sickle(b):
+        torus(b, "M_IconBlood", M((0.1, 0, 0.15), r=(0, 30, 0)), 0.55, 0.06, segments=24, sides=6, arc=math.pi * 1.1)
+        b.cube("M_Wood", M((-0.25, 0, -0.35), (0.1, 0.1, 0.9), (0, 30, 0)))
+        b.sphere("M_IconRed", M((0.55, -0.1, -0.25), (0.09, 0.07, 0.11)), u=8, v=5)
+
+    def bell(b):
+        b.cone("M_StormGold", M((0, 0, 0.05)), 0.48, 0.18, 0.75, segments=16)
+        b.cone("M_StormGold", M((0, 0, -0.33)), 0.5, 0.5, 0.06, segments=16)
+        b.sphere("M_IconDark", M((0, -0.05, -0.42), (0.1, 0.1, 0.1)), u=8, v=5)
+        torus(b, "M_StormGold", M((0, 0, 0.5)), 0.12, 0.035, segments=12, sides=4)
+        for side in (-1, 1):
+            b.cube("M_Gold", M((side * 0.7, -0.1, 0.2), (0.06, 0.04, 0.35), (0, side * 25, 0)))
+            b.cube("M_Gold", M((side * 0.68, -0.1, -0.12), (0.06, 0.04, 0.3), (0, side * -20, 0)))
+
+    def brazier(b):
+        b.cone("M_IconDark", M((0, 0, -0.2)), 0.5, 0.35, 0.35, segments=14)
+        b.cube("M_IconDark", M((0, 0, -0.55), (0.12, 0.12, 0.35)))
+        b.cone("M_IconDark", M((0, 0, -0.75)), 0.3, 0.3, 0.06, segments=12)
+        for x, h in ((-0.22, 0.45), (0.0, 0.65), (0.22, 0.5)):
+            b.cone("M_IconOrange", M((x, -0.05, 0.2)), 0.14, 0.0, h, segments=6)
+            b.cone("M_Gold", M((x, -0.12, 0.12)), 0.07, 0.0, h * 0.6, segments=6)
+
+    def frost_rune(b):
+        b.cube("M_Crystal", M((0, 0, 0), (0.8, 0.25, 1.0), (0, 0, 0)))
+        for (x1, z1), (x2, z2) in (((0, 0.35), (0, -0.35)), ((-0.25, 0.2), (0.25, -0.2)), ((0.25, 0.2), (-0.25, -0.2))):
+            d = Vector((x2 - x1, 0, z2 - z1))
+            b.cone("M_IconWhite", Matrix.Translation(Vector(((x1 + x2) / 2, -0.15, (z1 + z2) / 2))) @ d.to_track_quat('Z', 'Y').to_matrix().to_4x4(), 0.04, 0.04, d.length, segments=4)
+
+    def rod(b):
+        b.cone("M_ChestTrim", M((0, 0, -0.1), r=(0, 20, 0)), 0.06, 0.04, 1.3, segments=8)
+        b.sphere("M_ChestTrim", M((0.2, 0, 0.55), (0.12, 0.12, 0.12)), u=10, v=6)
+        _bolt(b, "M_Gold", [(0.45, 0.85), (0.3, 0.6), (0.45, 0.55), (0.3, 0.3)], 0.05, y=-0.1)
+        _bolt(b, "M_Gold", [(-0.1, 0.85), (0.05, 0.65), (-0.05, 0.6), (0.1, 0.45)], 0.04, y=-0.1)
+
+    def knot(b):
+        for k in range(3):
+            torus(b, "M_IconBlood", M((math.cos(k * 2.1) * 0.2, 0, math.sin(k * 2.1) * 0.2), r=(0, k * 60, 0)), 0.3, 0.06, segments=20, sides=5)
+        b.sphere("M_IconRed", M((0.2, -0.1, -0.55), (0.1, 0.08, 0.12)), u=8, v=5)
+        b.cone("M_IconRed", M((0.2, -0.1, -0.44)), 0.08, 0.0, 0.14, segments=8)
+
+    def focus(b):
+        b.ico("M_IconPurple", M((0, 0, 0.1), (0.35, 0.3, 0.55)), subdiv=1)
+        torus(b, "M_Gold", M((0, 0, -0.35), (1, 1, 0.35)), 0.4, 0.06, segments=20, sides=5)
+        for k in range(4):
+            a = math.radians(45 + k * 90)
+            _star(b, "M_PlayerGlow", (math.cos(a) * 0.7, -0.1, math.sin(a) * 0.6 + 0.1), 0.2)
+
+    def horseshoe(b):
+        torus(b, "M_IconSteel", M(r=(0, 180, 0)), 0.5, 0.11, segments=24, sides=6, arc=math.pi * 1.4)
+        for k in range(5):
+            a = math.radians(-20 + k * 55)
+            b.sphere("M_IconDark", M((math.cos(a) * 0.5, -0.1, -math.sin(a) * 0.5), (0.04, 0.03, 0.04)), u=6, v=4)
+        _star(b, "M_IconPink", (0, -0.15, 0.6), 0.3)
+
+    jobs = {
+        "SalamanderFamiliar": salamander, "FrostWyrmBreath": wyrm_breath, "CrimsonSickle": sickle, "ThunderingBell": bell,
+        "EmberBrazier": brazier, "FrostbiteRune": frost_rune, "LightningRod": rod, "HemomancerKnot": knot,
+        "ArcaneFocus": focus, "LuckyHorseshoe": horseshoe,
     }
     for name, build in jobs.items():
         make(name, build)

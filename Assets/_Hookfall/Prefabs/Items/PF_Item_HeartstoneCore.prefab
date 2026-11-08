@@ -52,6 +52,7 @@ MonoBehaviour:
   cooldown: 7
   level: 1
   rarity: 3
+  schools: 0400000002000000
   radius: 10
   healShare: 0.04
   cooldownPerLevel: 0.75

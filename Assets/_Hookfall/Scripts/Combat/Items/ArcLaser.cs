@@ -68,7 +68,7 @@ namespace Hookfall.Combat.Items
                 float bearing = Mathf.Repeat(Mathf.Atan2(offset.x, offset.z) * Mathf.Rad2Deg - startAngle, 360f);
                 if (bearing < previous || bearing > current) continue;
                 hitThisSweep.Add(enemy);
-                enemy.TakeDamage(Damage);
+                Strike(enemy, Damage);
             }
 
             if (current >= 360f) EndSweep();

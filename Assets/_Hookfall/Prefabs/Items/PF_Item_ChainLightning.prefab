@@ -51,6 +51,7 @@ MonoBehaviour:
   cooldown: 1.6
   level: 1
   rarity: 1
+  schools: 0200000004000000
   range: 30
   jumpRange: 9
   baseJumps: 2

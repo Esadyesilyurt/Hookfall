@@ -11,6 +11,7 @@ namespace Hookfall.Combat
         [SerializeField] private float hitRadius = 0.3f;
 
         private Action<Projectile> release;
+        private Action<EnemyBase, float> onHit;
         private Vector3 velocity;
         private float damage;
         private float lifetime;
@@ -22,8 +23,9 @@ namespace Hookfall.Combat
         private void Awake() => trail = GetComponentInChildren<TrailRenderer>();
 
         public void Launch(Vector3 position, Vector3 launchVelocity, float hitDamage, float life, Action<Projectile> onRelease,
-            EnemyBase homingTarget = null, float homingTurnRate = 0f)
+            EnemyBase homingTarget = null, float homingTurnRate = 0f, Action<EnemyBase, float> hit = null)
         {
+            onHit = hit;
             transform.SetPositionAndRotation(position, Quaternion.LookRotation(launchVelocity));
             velocity = launchVelocity;
             damage = hitDamage;
@@ -56,7 +58,8 @@ namespace Hookfall.Combat
 
             EnemyBase hit = EnemyQuery.At(transform.position, hitRadius);
             if (hit == null) return;
-            hit.TakeDamage(damage);
+            if (onHit != null) onHit(hit, damage);   // the item applies its schools' statuses
+            else hit.TakeDamage(damage);
             release(this);
         }
     }

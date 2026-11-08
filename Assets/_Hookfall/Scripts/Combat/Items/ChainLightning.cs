@@ -24,7 +24,7 @@ namespace Hookfall.Combat.Items
         private LineRenderer line;
         private float flash;
 
-        private int Jumps(int level) => baseJumps + level - 1;
+        private int Jumps(int level) => baseJumps + level - 1 + ExtraProjectiles;
 
         protected override void Awake()
         {
@@ -57,7 +57,7 @@ namespace Hookfall.Combat.Items
                 Vector3 at = target.transform.position;
                 points.Add(at);
                 hit.Add(target);
-                target.TakeDamage(damage);
+                Strike(target, damage);
                 damage *= falloff;
                 target = EnemyQuery.Nearest(at, jumpRange, hit);
             }
