@@ -76,6 +76,7 @@ namespace Hookfall.Player
         private float wobbleTimer;
         private float wobbleDuration = 1f;
         private float zipRecharge;
+        private bool buttonsDetached;   // set by a pause or menu: see Update
 
         public bool IsAttached => joint != null;
         public bool IsZipping { get; private set; }
@@ -123,12 +124,17 @@ namespace Hookfall.Player
             }
 
             Mouse mouse = Mouse.current;
-            if (mouse == null || Time.timeScale <= 0f) return;
+            if (mouse == null) return;
+            // Back from a level-up, chest or pause screen, the rope and the Zip go on: releasing the button that clicked a
+            // card must not drop them. They follow the buttons again from the next press.
+            if (Time.timeScale <= 0f) { buttonsDetached = true; return; }
+            if (mouse.leftButton.wasPressedThisFrame || mouse.rightButton.wasPressedThisFrame) buttonsDetached = false;
 
             if (mouse.leftButton.wasPressedThisFrame && Time.time - lastThrowTime >= rethrowCooldown)
                 TryThrow(false);
             if (mouse.rightButton.wasPressedThisFrame && zipCharges > 0)
                 TryThrow(true);
+            if (buttonsDetached) return;
             if (mouse.leftButton.wasReleasedThisFrame && !zipThrow && !IsZipping)
                 Release();
             if (IsZipping && !mouse.rightButton.isPressed)
