@@ -185,24 +185,28 @@ namespace Hookfall.Player
 
         private float SoftCap(float bonus) => bonus <= 1f ? bonus : 1f + (bonus - 1f) * movementSoftCapRate;
 
-        public void Apply(StatType stat)
+        /// <summary>Adds one pick of a stat; times -1 takes one back (a stat charm given up for another item).</summary>
+        public void Apply(StatType stat, int times = 1)
         {
             switch (stat)
             {
-                case StatType.MaxHealth: maxHealth += maxHealthPerPick; CurrentHealth += maxHealthPerPick; break;
-                case StatType.Armor: armor += armorPerPick; break;
-                case StatType.Damage: damageBonus += damagePercentPerPick / 100f; break;
-                case StatType.AttackSpeed: attackSpeedBonus += attackSpeedPercentPerPick / 100f; break;
-                case StatType.WalkSpeed: walkSpeedBonus += walkSpeedPercentPerPick / 100f; break;
-                case StatType.FlightSpeed: flightSpeedBonus += flightSpeedPercentPerPick / 100f; break;
-                case StatType.HookRange: hookRangeBonus += hookRangePerPick; break;
-                case StatType.PickupRadius: pickupRadiusBonus += pickupRadiusPercentPerPick / 100f; break;
-                case StatType.Regen: healthRegenPerSecond += regenPerPick; break;
-                case StatType.Lifesteal: lifesteal += lifestealPercentPerPick / 100f; break;
-                case StatType.XPGain: xpBonus += xpPercentPerPick / 100f; break;
-                case StatType.Luck: luckBonus += luckPercentPerPick / 100f; break;
-                case StatType.ZipCooldown: zipCooldownPicks++; break;
-                case StatType.ZipRange: zipRangeBonus += zipRangePerPick; break;
+                case StatType.MaxHealth:
+                    maxHealth += maxHealthPerPick * times;
+                    CurrentHealth = Mathf.Clamp(CurrentHealth + maxHealthPerPick * times, 1f, maxHealth);
+                    break;
+                case StatType.Armor: armor += armorPerPick * times; break;
+                case StatType.Damage: damageBonus += damagePercentPerPick / 100f * times; break;
+                case StatType.AttackSpeed: attackSpeedBonus += attackSpeedPercentPerPick / 100f * times; break;
+                case StatType.WalkSpeed: walkSpeedBonus += walkSpeedPercentPerPick / 100f * times; break;
+                case StatType.FlightSpeed: flightSpeedBonus += flightSpeedPercentPerPick / 100f * times; break;
+                case StatType.HookRange: hookRangeBonus += hookRangePerPick * times; break;
+                case StatType.PickupRadius: pickupRadiusBonus += pickupRadiusPercentPerPick / 100f * times; break;
+                case StatType.Regen: healthRegenPerSecond += regenPerPick * times; break;
+                case StatType.Lifesteal: lifesteal += lifestealPercentPerPick / 100f * times; break;
+                case StatType.XPGain: xpBonus += xpPercentPerPick / 100f * times; break;
+                case StatType.Luck: luckBonus += luckPercentPerPick / 100f * times; break;
+                case StatType.ZipCooldown: zipCooldownPicks += times; break;
+                case StatType.ZipRange: zipRangeBonus += zipRangePerPick * times; break;
             }
         }
 

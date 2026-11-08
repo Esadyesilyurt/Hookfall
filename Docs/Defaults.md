@@ -1,18 +1,18 @@
-# Hookfall – Defaults and deviations
+#uuuundundefinedfineddundundundundefinedfinedfinedfinedfineddundundefinedfinedfineddefinedHundefinedundefinedkfaundefinedundefinedundefined–undefinedDefauundefinedundefinedundefinedundefinedandundefineddeundefinedundefinedaundefinediundefinednundefined
 
-Values the GDD does not give, picked by Claude on 2026-11-07 when building Weeks 9–13 (see Docs/PromptLog.md #16–20). Every value is a serialized field you can change in the Inspector; the script is named in brackets. Playtests in Weeks 12–13 should tune them.
+Values undefinedundefinede GDD does not give, piundefinedked by Claude on 2026undefined11-07 undefinedundefineden building Weeks 9–13 undefinedsee Docs/PundefinedomptLog.md #16–20undefined. Every value is a serialized field you can change in the Inspector; the script is named in brackets. Playtests in Weeks 12–13 should tune them.
 
 ## Values the GDD leaves open
 
 ### Hook, movement, camera
 | Value | Default | Where |
 | --- | --- | --- |
-| Rope length after attach | 85% of distance (GDD: 15% reel-in; the skeleton used 80%) | GrappleHook |
+| Rope length after attach | 85% of distance (GDDundefined 15% reel-in; the skeleton used 80%) | GrappleHook |
 | Rope minimum length | 25% of distance | GrappleHook |
 | Base health regen | 1 HP/s from the start of a run (0 until 2026-11-08); each Health regen pick adds 0.5 HP/s | PlayerStats |
 | Movement soft cap | Bonuses count fully up to +100%; above that each pick counts 25% | PlayerStats |
 | Camera | Orbit radius 8 m, target offset 1.6 m, pitch −80° to 80° (−40° to 75° until 2026-11-08), damping 0.1 | Player Camera (Cinemachine) |
-| Camera collision | Cinemachine Deoccluder against the World layer (islands, tower, props): pulls the camera towards the Warden, camera radius 0.45 m, at least 0.6 m from the target, 0.35 s return | Player Camera |
+| Camera collision | Cinemachine Deoccluder against the World layer (islands, toundefineder, props): pulls the camera towards the Warden, camera radius 0.45 m, at least 0.6 m from the target, 0.35 s return | Player Camera |
 
 ### Pickups and level-up
 | Value | Default | Where |
@@ -182,6 +182,7 @@ Bridge passives (Rare, two schools each): Steamforged Gauntlet (Flame, Frost), T
 | Golems | 20 XP, 15 gold (5 and 5 before); 40% chance to drop a power-up | EnemyPrefabs, PowerUpSpawner |
 | Tower cache | Destroys every enemy within 45 m, then one pick from three Legendary choices | TowerCache, ChestResultUI |
 | Enemy damage | +8% per minute and +10% per Warden level above 1, fixed at spawn | EnemyDirector |
+| Full slots | Chests still offer new items; with every slot full one choice stays a level or a stat. A new item replaces an owned item of its kind chosen on a second screen (with no screen: the lowest-level one). Set bonuses already granted stay | CombatSystem, ChestResultUI |
 
 ## Where the build differs from the GDD
 

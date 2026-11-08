@@ -23,6 +23,14 @@ namespace Hookfall.Combat.Items
 
         protected override void OnLevelChanged() => CatchUp();
 
+        // Given up for another item (or replaced at run start): its stats go with it.
+        private void OnDestroy()
+        {
+            if (Stats == null) return;
+            for (; applied > 0; applied--)
+                foreach (StatType stat in picksPerLevel) Stats.Apply(stat, -1);
+        }
+
         private void CatchUp()
         {
             if (Stats == null) return;

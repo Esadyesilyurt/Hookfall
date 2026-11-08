@@ -1,8 +1,9 @@
 // Hookfall - chest screen: the game pauses and shows 3 choices in the chest's rarity colour, with turning light rays
 // behind them; pick one by click or 1, 2, 3, like the level-up screen (GDD 9.1). Choices are new items, levels for
-// owned items, or stats once every item is maxed.
+// owned items, or stats once every item is maxed. A new item picked with its slots full opens a second step: choose
+// the owned item it replaces (or go back).
 // AI disclosure: written with Claude (Anthropic) on 2026-11-07, restyled the same day with the UI skin, and turned
-// into a 3-choice screen on 2026-11-08. Prompts and changes are recorded in Docs/PromptLog.md.
+// into a 3-choice screen on 2026-11-08, with the replace step the same day. Prompts and changes are recorded in Docs/PromptLog.md.
 using System;
 using System.Collections.Generic;
 using Hookfall.Combat;
@@ -22,7 +23,13 @@ namespace Hookfall.UI
         private GameObject root;
         private RectTransform cardRow, rays;
         private Image raysImage;
-        private TextMeshProUGUI title;
+        private TextMeshProUGUI title, subtitle;
+        private GameObject backButton;
+        private CombatSystem combat;
+        private ChestReward? replacing;   // the new item waiting for a slot
+        private List<ItemBase> replaceOptions;
+        private Rarity shownRarity;
+        private string shownTitle;
         private readonly List<GameObject> cards = new List<GameObject>();
         private IReadOnlyList<ChestReward> choices;
         private Action<ChestReward> claim;
@@ -37,10 +44,11 @@ namespace Hookfall.UI
             for (int i = 0; i < count; i++)
             {
                 List<ChestReward> rolled = combat.RollChest(rarity);
+                if (Instance != null) Instance.combat = combat;
                 string title = seriesTitle == null ? null : count > 1 ? $"{seriesTitle}  ·  {i + 1}/{count}" : seriesTitle;
                 if (Instance == null || !Instance.Show(rarity, rolled, choice => combat.Claim(choice, stats), title))
                 {
-                    combat.Claim(rolled[0], stats);
+                    combat.Claim(rolled[0], stats, combat.WeakestIfFull(rolled[0]));
                     continue;
                 }
                 // The rest follow, one after each pick.
@@ -57,9 +65,10 @@ namespace Hookfall.UI
         {
             int index = count - pending;
             pending--;
+            this.combat = combat;
             List<ChestReward> rolled = combat.RollChest(rarity);
             string title = $"{seriesTitle}  ·  {index + 1}/{count}";
-            if (!Show(rarity, rolled, choice => combat.Claim(choice, stats), title)) combat.Claim(rolled[0], stats);
+            if (!Show(rarity, rolled, choice => combat.Claim(choice, stats), title)) combat.Claim(rolled[0], stats, combat.WeakestIfFull(rolled[0]));
         }
 
         private void Awake()
@@ -75,10 +84,13 @@ namespace Hookfall.UI
             title.fontStyle = FontStyles.Bold;
             title.characterSpacing = 12f;
             UIPop.Add(title, 0f, 1.4f);
-            UIFactory.Text(UIFactory.Centre(canvas.transform, "Subtitle", new Vector2(0f, 270f), new Vector2(900f, 40f)),
+            subtitle = UIFactory.Text(UIFactory.Centre(canvas.transform, "Subtitle", new Vector2(0f, 270f), new Vector2(1200f, 40f)),
                 "Choose one", 26f, UITheme.TextMuted, TextAlignmentOptions.Center, true);
             cardRow = UIFactory.Centre(canvas.transform, "Cards", new Vector2(0f, -60f), new Vector2(1780f, 560f));   // room for 4 (Fortune set)
             UIFactory.Row(cardRow, 44f, 0);
+            RectTransform back = UIFactory.Centre(canvas.transform, "Back", new Vector2(0f, -420f), new Vector2(360f, 64f));
+            backButton = UIFactory.Button(back, "Back", BackToChoices).gameObject;
+            backButton.SetActive(false);
             root.SetActive(false);
         }
 
@@ -95,21 +107,66 @@ namespace Hookfall.UI
 
             choices = options;
             claim = onClaim;
-            foreach (GameObject card in cards) Destroy(card);
-            cards.Clear();
-
-            Color color = UITheme.ForRarity(rarity);
-            raysImage.color = new Color(color.r, color.g, color.b, 0.3f);
-            title.text = titleText ?? Loc.T(rarity.ToString().ToUpperInvariant() + " CHEST");
-            title.color = color;
-            for (int i = 0; i < options.Count; i++)
-                cards.Add(BuildCard(i, options[i], options[i].Item != null ? UITheme.ForRarity(options[i].Item.Rarity) : color));
+            shownRarity = rarity;
+            shownTitle = titleText;
+            ShowChoices();
 
             shownAt = Time.unscaledTime;
             root.SetActive(true);
             title.gameObject.SetActive(false);
             title.gameObject.SetActive(true);   // replays the title pop
             return true;
+        }
+
+        private void ClearCards()
+        {
+            foreach (GameObject card in cards) Destroy(card);
+            cards.Clear();
+        }
+
+        private void ShowChoices()
+        {
+            ClearCards();
+            replacing = null;
+            replaceOptions = null;
+            backButton.SetActive(false);
+            cardRow.localScale = Vector3.one;
+            Color color = UITheme.ForRarity(shownRarity);
+            raysImage.color = new Color(color.r, color.g, color.b, 0.3f);
+            title.text = shownTitle ?? Loc.T(shownRarity.ToString().ToUpperInvariant() + " CHEST");
+            title.color = color;
+            subtitle.text = Loc.T("Choose one");
+            for (int i = 0; i < choices.Count; i++)
+                cards.Add(BuildCard(i, choices[i], choices[i].Item != null ? UITheme.ForRarity(choices[i].Item.Rarity) : color));
+        }
+
+        /// <summary>The slots are full: the owned items of the new one's kind, to pick the one it replaces.</summary>
+        private void ShowReplace(ChestReward choice)
+        {
+            ClearCards();
+            replacing = choice;
+            replaceOptions = combat.ItemsOfKind(choice.Item.IsPassive);
+            backButton.SetActive(true);
+            cardRow.localScale = Vector3.one * Mathf.Min(1f, 1780f / (replaceOptions.Count * 444f));   // six cards fit the row
+            title.text = Loc.T("REPLACE AN ITEM");
+            title.color = UITheme.Gold;
+            subtitle.text = Loc.F("Choose the item {0} replaces", choice.Item.DisplayName);
+            for (int i = 0; i < replaceOptions.Count; i++)
+            {
+                ItemBase item = replaceOptions[i];
+                int captured = i;
+                string value = SchoolInfo.Line(item.Schools) + "\n" + string.Join("\n", item.StatLines());
+                cards.Add(UIFactory.ChoiceCard(cardRow, i, UITheme.ForRarity(item.Rarity), UISkin.Icon(item), item.DisplayName,
+                    Loc.F("LEVEL {0}", item.Level), value, item.Summary, () => Pick(captured)).gameObject);
+            }
+            shownAt = Time.unscaledTime;
+        }
+
+        private void BackToChoices()
+        {
+            if (replacing == null) return;
+            ShowChoices();
+            shownAt = Time.unscaledTime;
         }
 
         private GameObject BuildCard(int index, ChestReward choice, Color color)
@@ -152,19 +209,38 @@ namespace Hookfall.UI
             rays.Rotate(0f, 0f, -18f * Time.unscaledDeltaTime);
             Keyboard k = Keyboard.current;
             if (k == null) return;
-            if (k.digit1Key.wasPressedThisFrame || k.numpad1Key.wasPressedThisFrame) Pick(0);
-            else if (k.digit2Key.wasPressedThisFrame || k.numpad2Key.wasPressedThisFrame) Pick(1);
-            else if (k.digit3Key.wasPressedThisFrame || k.numpad3Key.wasPressedThisFrame) Pick(2);
+            for (int i = 0; i < 6; i++)
+                if (k[(Key)((int)Key.Digit1 + i)].wasPressedThisFrame || k[(Key)((int)Key.Numpad1 + i)].wasPressedThisFrame) { Pick(i); return; }
+            if (k.backspaceKey.wasPressedThisFrame) BackToChoices();
         }
 
         private void Pick(int index)
         {
             // A short guard so a click or key held from before the chest opened does not pick for the player.
-            if (!root.activeSelf || choices == null || index >= choices.Count || Time.unscaledTime - shownAt < 0.3f) return;
+            if (!root.activeSelf || choices == null || Time.unscaledTime - shownAt < 0.3f) return;
+            ItemBase replaced = null;
+            ChestReward choice;
+            if (replacing != null)
+            {
+                if (index >= replaceOptions.Count) return;
+                choice = replacing.Value;
+                replaced = replaceOptions[index];
+            }
+            else
+            {
+                if (index >= choices.Count) return;
+                choice = choices[index];
+                if (choice.IsNewItem && combat != null && !combat.HasFreeSlot(choice.Item.IsPassive))
+                {
+                    ShowReplace(choice);
+                    return;
+                }
+            }
             root.SetActive(false);
-            ChestReward choice = choices[index];
             choices = null;
-            claim?.Invoke(choice);
+            replacing = null;
+            if (replaced != null) combat.Claim(choice, FindAnyObjectByType<PlayerStats>(), replaced);
+            else claim?.Invoke(choice);
             GameManager.Instance?.CloseModal();
             if (pending > 0 && next != null) next();
             else next = null;

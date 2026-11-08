@@ -1,6 +1,6 @@
 // Hookfall - the core rule: items attack only while the player is airborne (GDD 4.4); also gives chest items (GDD 4.5, 4.7).
 // AI disclosure: written with Claude (Anthropic) on 2026-11-04 as part of the midterm project skeleton,
-// extended on 2026-11-07 with chest rewards and on 2026-11-08 with the 3-choice chest, item rarity and passive slots. Prompts and changes are recorded in Docs/PromptLog.md.
+// extended on 2026-11-07 with chest rewards and on 2026-11-08 with the 3-choice chest, item rarity, passive slots and replacing items when the slots are full. Prompts and changes are recorded in Docs/PromptLog.md.
 using System;
 using System.Collections.Generic;
 using Hookfall.Player;
@@ -78,24 +78,30 @@ namespace Hookfall.Combat
         public bool Owns(ItemBase prefab) => Find(prefab) != null;
 
         /// <summary>Opens a chest with no choice: the first of its rolled choices.</summary>
-        public ChestReward Grant(Rarity rarity, PlayerStats stats) => Claim(RollChest(rarity)[0], stats);
+        public ChestReward Grant(Rarity rarity, PlayerStats stats)
+        {
+            ChestReward choice = RollChest(rarity)[0];
+            return Claim(choice, stats, WeakestIfFull(choice));
+        }
 
         /// <summary>
         /// A chest's different choices, nothing given yet. A rarer chest offers rarer items, never more levels: new items
         /// of the chest's own rarity first, then of the rarities below it; then one more level for owned items that are not
-        /// maxed; stats only fill what is left. Never empty.
+        /// maxed; stats only fill what is left. Never empty. With every slot full, new items still come (one replaces an
+        /// owned item) but one choice is kept for a level or a stat.
         /// </summary>
         public List<ChestReward> RollChest(Rarity rarity)
         {
             var offer = new List<ChestReward>();
             var pool = new List<ChestReward>();
-            for (int tier = (int)rarity; tier >= 0 && offer.Count < chestChoices; tier--)
+            int newLimit = HasFreeSlot(false) || HasFreeSlot(true) ? chestChoices : chestChoices - 1;
+            for (int tier = (int)rarity; tier >= 0 && offer.Count < newLimit; tier--)
             {
                 pool.Clear();
                 foreach (ItemBase prefab in itemPrefabs)
-                    if ((int)prefab.Rarity == tier && Find(prefab) == null && HasFreeSlot(prefab.IsPassive))
+                    if ((int)prefab.Rarity == tier && Find(prefab) == null)
                         pool.Add(new ChestReward(prefab.Rarity, prefab, true, 1));
-                TakeRandom(pool, offer);
+                TakeRandom(pool, offer, newLimit);
             }
             pool.Clear();
             foreach (ItemBase item in items)
@@ -124,9 +130,9 @@ namespace Hookfall.Combat
             return used < (passive ? MaxPassives : MaxItems);
         }
 
-        private void TakeRandom(List<ChestReward> pool, List<ChestReward> offer)
+        private void TakeRandom(List<ChestReward> pool, List<ChestReward> offer, int limit = int.MaxValue)
         {
-            while (offer.Count < chestChoices && pool.Count > 0)
+            while (offer.Count < Mathf.Min(chestChoices, limit) && pool.Count > 0)
             {
                 int i = UnityEngine.Random.Range(0, pool.Count);
                 offer.Add(pool[i]);
@@ -134,15 +140,38 @@ namespace Hookfall.Combat
             }
         }
 
-        /// <summary>Gives one choice from RollChest and returns what it became (the new item's instance, the levels really gained).</summary>
-        public ChestReward Claim(ChestReward choice, PlayerStats stats)
+        /// <summary>Owned items of one kind (attack items or passives), in slot order: what a new item can replace.</summary>
+        public List<ItemBase> ItemsOfKind(bool passive) => items.FindAll(i => i.IsPassive == passive);
+
+        /// <summary>For a new item with its slots full and no screen to choose on: the lowest-level item of its kind.</summary>
+        public ItemBase WeakestIfFull(ChestReward choice)
+        {
+            if (!choice.IsNewItem || HasFreeSlot(choice.Item.IsPassive)) return null;
+            ItemBase weakest = null;
+            foreach (ItemBase owned in items)
+                if (owned.IsPassive == choice.Item.IsPassive && (weakest == null || owned.Level < weakest.Level)) weakest = owned;
+            return weakest;
+        }
+
+        /// <summary>
+        /// Gives one choice from RollChest and returns what it became (the new item's instance, the levels really gained).
+        /// A new item given with replace takes that item's slot (picked on the chest screen); without it, it is added.
+        /// </summary>
+        public ChestReward Claim(ChestReward choice, PlayerStats stats, ItemBase replace = null)
         {
             if (choice.IsNewItem)
             {
+                int slot = items.Count;
+                if (replace != null && items.Contains(replace))
+                {
+                    slot = items.IndexOf(replace);
+                    items.RemoveAt(slot);
+                    Destroy(replace.gameObject);
+                }
                 ItemBase item = Instantiate(choice.Item, itemsRoot);
                 item.name = choice.Item.name;
                 item.SetLevel(choice.LevelsGained);
-                items.Add(item);
+                items.Insert(slot, item);   // in the given-up item's slot
                 item.SetActiveVisuals(AttacksActive);
                 ItemsChanged?.Invoke();
                 return new ChestReward(choice.Rarity, item, true, choice.LevelsGained);
