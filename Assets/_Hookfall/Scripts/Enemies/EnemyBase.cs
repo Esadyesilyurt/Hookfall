@@ -1,7 +1,8 @@
 // Hookfall - shared enemy logic: health, rewards, steering (pursuit, separation, island avoidance), think rate,
 // pooling, hit flash, elites and the fallbacks in GDD 5.7.
 // AI disclosure: written with Claude (Anthropic) on 2026-11-04 as part of the midterm project skeleton,
-// rewritten on 2026-11-07 for steering, think LOD, pooling and elites, and given catch-up speed on 2026-11-08. Prompts and changes are recorded in Docs/PromptLog.md.
+// rewritten on 2026-11-07 for steering, think LOD, pooling and elites, and given catch-up speed and the school statuses
+// (burn, chill, freeze, shock, bleed) on 2026-11-08. Prompts and changes are recorded in Docs/PromptLog.md.
 using System.Collections.Generic;
 using Hookfall.Core;
 using Hookfall.Player;
@@ -82,6 +83,10 @@ namespace Hookfall.Enemies
         private bool built;
         private Transform visual;
         private float punch;
+        // School statuses (SynergySystem applies them): timers in seconds, damage per second.
+        private float burnTimer, burnDps, bleedTimer, bleedDps, chillTimer, chillSlow, shockTimer, freezeTimer, dotTimer;
+        private Hookfall.Combat.SynergySystem synergy;
+        private Color statusGlow = Color.black;
 
         public string DisplayName => displayName;
         public float Health { get; private set; }
@@ -89,6 +94,14 @@ namespace Hookfall.Enemies
         public bool IsDead { get; private set; }
         public bool IsElite { get; private set; }
         public float MoveSpeed => moveSpeed;
+        public bool Burning => burnTimer > 0f;
+        public bool Bleeding => bleedTimer > 0f;
+        public bool Frozen => freezeTimer > 0f;
+        public bool Chilled => chillTimer > 0f || Frozen;
+        public bool Shocked => shockTimer > 0f;
+        public float BurnDps => burnDps;
+        private bool AnyStatus => Burning || Bleeding || Chilled || Shocked;
+        private float SpeedFactor => Frozen ? 0f : chillTimer > 0f ? 1f - chillSlow : 1f;
         public float Damage => contactDamage * damageMultiplier;
         /// <summary>Time and elite scaling for damage that is not contact damage (boulders, slams).</summary>
         public float DamageScale => damageMultiplier;
@@ -117,6 +130,9 @@ namespace Hookfall.Enemies
             Director = director;
             Player = player;
             PlayerStats = player.GetComponent<PlayerStats>();
+            synergy = player.GetComponent<Hookfall.Combat.SynergySystem>();
+            burnTimer = bleedTimer = chillTimer = shockTimer = freezeTimer = dotTimer = 0f;
+            statusGlow = Color.black;
 
             healthMultiplier = healthMult;
             damageMultiplier = damageMult;
@@ -191,8 +207,11 @@ namespace Hookfall.Enemies
                 if (IsDead) return;
             }
 
+            if (AnyStatus) TickStatuses(dt);
+            if (IsDead) return;
+
             Velocity = Vector3.MoveTowards(Velocity, desiredVelocity, acceleration * dt);
-            transform.position += Velocity * dt;
+            transform.position += Velocity * (dt * SpeedFactor);
             if (Velocity.sqrMagnitude > 0.5f) transform.rotation = Quaternion.LookRotation(Velocity);
 
             FrameUpdate(dt);
@@ -201,21 +220,97 @@ namespace Hookfall.Enemies
 
         // ---------- Health and rewards ----------
 
-        public void TakeDamage(float amount)
+        /// <param name="dot">A burn or bleed tick: no crit, flash or knockback.</param>
+        public void TakeDamage(float amount, bool dot = false)
         {
             if (IsDead) return;
-            if (PlayerStats != null && PlayerStats.CritChance > 0f && Random.value < PlayerStats.CritChance) amount *= 2f;   // Hunter's Eye
+            if (!dot && PlayerStats != null && PlayerStats.CritChance > 0f && Random.value < PlayerStats.CritChance) amount *= 2f;   // Hunter's Eye
+            if (synergy != null) amount *= 1f + (Shocked ? synergy.ShockAmp : 0f) + (Chilled ? synergy.ChillAmp : 0f);
             Health -= amount;
-            flashTimer = flashDuration;
-            punch = hitPunch;
-            if (knockback > 0f && Player != null)
+            if (!dot)
             {
-                Vector3 away = transform.position - Player.transform.position;
-                if (away.sqrMagnitude > 0.01f) Velocity += away.normalized * knockback;
+                flashTimer = flashDuration;
+                punch = hitPunch;
+                if (knockback > 0f && Player != null)
+                {
+                    Vector3 away = transform.position - Player.transform.position;
+                    if (away.sqrMagnitude > 0.01f) Velocity += away.normalized * knockback;
+                }
+                ApplyGlow();
             }
-            ApplyGlow();
             EnemyDirector.RaiseHit(this, amount);
             if (Health <= 0f) Die(true);
+        }
+
+        // ---------- School statuses ----------
+
+        public void Burn(float dps, float duration)
+        {
+            if (IsDead || dps <= 0f) return;
+            burnDps = Burning ? Mathf.Max(burnDps, dps) : dps;
+            burnTimer = Mathf.Max(burnTimer, duration);
+            RefreshStatusGlow();
+        }
+
+        public void Bleed(float dps, float duration)
+        {
+            if (IsDead || dps <= 0f) return;
+            bleedDps = Bleeding ? Mathf.Max(bleedDps, dps) : dps;
+            bleedTimer = Mathf.Max(bleedTimer, duration);
+            RefreshStatusGlow();
+        }
+
+        public void Chill(float slow, float duration)
+        {
+            if (IsDead) return;
+            chillSlow = chillTimer > 0f ? Mathf.Max(chillSlow, slow) : slow;
+            chillTimer = Mathf.Max(chillTimer, duration);
+            RefreshStatusGlow();
+        }
+
+        public void Freeze(float duration)
+        {
+            if (IsDead) return;
+            freezeTimer = Mathf.Max(freezeTimer, duration);
+            RefreshStatusGlow();
+        }
+
+        public void Shock(float duration)
+        {
+            if (IsDead) return;
+            shockTimer = Mathf.Max(shockTimer, duration);
+            RefreshStatusGlow();
+        }
+
+        private void TickStatuses(float dt)
+        {
+            burnTimer -= dt;
+            bleedTimer -= dt;
+            chillTimer -= dt;
+            shockTimer -= dt;
+            freezeTimer -= dt;
+            if (Burning || Bleeding)
+            {
+                dotTimer -= dt;
+                if (dotTimer <= 0f)
+                {
+                    dotTimer = 0.5f;
+                    TakeDamage(((Burning ? burnDps : 0f) + (Bleeding ? bleedDps : 0f)) * 0.5f, true);
+                    if (IsDead) return;
+                }
+            }
+            RefreshStatusGlow();
+        }
+
+        /// <summary>The strongest status tints the enemy (frozen, shocked, burning, chilled, bleeding).</summary>
+        private void RefreshStatusGlow()
+        {
+            Color glow = Frozen ? new Color(0.6f, 0.95f, 1.4f) : Shocked ? new Color(1.2f, 1.05f, 0.25f)
+                : Burning ? new Color(1.4f, 0.45f, 0.08f) : Chilled ? new Color(0.25f, 0.6f, 1.1f)
+                : Bleeding ? new Color(1f, 0.05f, 0.12f) : Color.black;
+            if (glow == statusGlow) return;
+            statusGlow = glow;
+            ApplyGlow();
         }
 
         public void Die(bool giveReward)
@@ -326,7 +421,7 @@ namespace Hookfall.Enemies
         private void ApplyGlow()
         {
             if (renderers == null) return;
-            Color glow = flashTimer > 0f ? Color.white : warning ? new Color(1.2f, 0.1f, 0.05f) : baseGlow;
+            Color glow = flashTimer > 0f ? Color.white : warning ? new Color(1.2f, 0.1f, 0.05f) : statusGlow != Color.black ? statusGlow : baseGlow;
             foreach (Renderer r in renderers)
             {
                 if (r == null || r is LineRenderer) continue;

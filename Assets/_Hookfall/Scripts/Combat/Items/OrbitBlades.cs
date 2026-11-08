@@ -43,7 +43,7 @@ namespace Hookfall.Combat.Items
             // (found in the first Unity test, see Docs/PromptLog.md #14).
             // Each attack hits every enemy in the ring once, so an enemy is hit at most every cooldown (0.5 s).
             EnemyQuery.InRadius(transform.position, orbitRadius + bladeHitRadius, hits);
-            foreach (EnemyBase enemy in hits) enemy.TakeDamage(Damage);
+            foreach (EnemyBase enemy in hits) Strike(enemy, Damage);
         }
 
         public override void SetActiveVisuals(bool active)

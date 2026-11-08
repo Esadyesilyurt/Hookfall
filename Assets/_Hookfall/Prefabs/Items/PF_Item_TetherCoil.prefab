@@ -52,6 +52,7 @@ MonoBehaviour:
   cooldown: 1
   level: 1
   rarity: 3
+  schools: 0600000002000000
   cooldownMultiplier:
   - 0.9
   - 0.85

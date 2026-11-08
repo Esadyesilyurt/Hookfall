@@ -16,6 +16,9 @@ namespace Hookfall.Player
         [Tooltip("What sets the character apart, one line each, shown at a glance on its card (e.g. \"+20% Damage\").")]
         public string[] perks = new string[0];
 
+        [Tooltip("The school this character leans to: it counts as one more item of that school for set bonuses.")]
+        public School affinity = School.Guardian;
+
         [Header("Start of a run")]
         [Tooltip("Max health is multiplied by this.")]
         public float maxHealthMultiplier = 1f;

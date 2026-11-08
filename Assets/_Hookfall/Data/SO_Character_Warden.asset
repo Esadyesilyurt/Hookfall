@@ -14,10 +14,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Hookfall.Player.CharacterDefinition
   id: Warden
   displayName: Warden
-  description: 'A Warden of the Order of the Tether: steady in every way.'
+  description: 'A Warden of the Order of the Tether: steady in every way; frost-edged
+    blades keep foes at bay.'
   perks:
   - Balanced in everything
   - 1 double jump, 1 dash
+  affinity: 5
   maxHealthMultiplier: 1
   statPicks: 
   startingItems:

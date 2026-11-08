@@ -17,7 +17,7 @@ namespace Hookfall.Combat.Items
 
         private readonly HashSet<EnemyBase> targeted = new HashSet<EnemyBase>();
 
-        private int MissileCount => baseMissiles + Level - 1;
+        private int MissileCount => baseMissiles + Level - 1 + ExtraProjectiles;
 
         protected override void Attack()
         {

@@ -52,6 +52,7 @@ MonoBehaviour:
   cooldown: 2
   level: 1
   rarity: 2
+  schools: 00000000
   range: 8
   verticalReach: 4
   sweepDuration: 0.4

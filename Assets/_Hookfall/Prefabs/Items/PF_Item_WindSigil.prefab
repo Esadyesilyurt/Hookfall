@@ -51,5 +51,6 @@ MonoBehaviour:
   cooldown: 1
   level: 1
   rarity: 2
+  schools: 0200000006000000
   rechargeTime: 10
   rechargePerLevel: 1.25

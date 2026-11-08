@@ -66,7 +66,7 @@ namespace Hookfall.Combat.Items
             if (hook == null || !hook.IsZipping) return;
             EnemyQuery.InRadius(transform.position, contactRadius, touching);
             foreach (EnemyBase enemy in touching)
-                if (hitThisZip.Add(enemy)) enemy.TakeDamage(Damage);
+                if (hitThisZip.Add(enemy)) Strike(enemy, Damage);
         }
 
         private void OnZipStarted() => hitThisZip.Clear();
@@ -76,7 +76,7 @@ namespace Hookfall.Combat.Items
             if (Level < shockwaveFromLevel) return;
             EnemyQuery.InRadius(transform.position, shockwaveRadius, touching);
             float damage = shockwaveDamage * (Stats != null ? Stats.DamageMultiplier : 1f);
-            foreach (EnemyBase enemy in touching) enemy.TakeDamage(damage);
+            foreach (EnemyBase enemy in touching) Strike(enemy, damage);
             ShockwaveFired?.Invoke(transform.position, shockwaveRadius);
         }
 

@@ -14,11 +14,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Hookfall.Player.CharacterDefinition
   id: Bulwark
   displayName: Bulwark
-  description: 'A knight of the vault gates: heavy plate, a ward shell, and the most
-    health.'
+  description: 'A knight of the vault gates: heavy plate, a turtle shell, and the
+    most health.'
   perks:
   - +2 Armor
   - Starts with a Turtle Spirit Shell
+  affinity: 5
   maxHealthMultiplier: 1.5
   statPicks: 0100000001000000
   startingItems:

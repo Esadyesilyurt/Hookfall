@@ -85,6 +85,7 @@ namespace Hookfall.Feel
             EnemyDirector.Slammed += OnSlam;
             TetherCoil.ShockwaveFired += OnShockwave;
             HeartstoneCore.Pulsed += OnShockwave;
+            SynergySystem.ChainFired += OnChain;
             if (stats != null) { stats.ShieldBlocked += OnShieldBlocked; stats.Revived += OnRevived; }
         }
 
@@ -105,6 +106,7 @@ namespace Hookfall.Feel
             EnemyDirector.Slammed -= OnSlam;
             TetherCoil.ShockwaveFired -= OnShockwave;
             HeartstoneCore.Pulsed -= OnShockwave;
+            SynergySystem.ChainFired -= OnChain;
             if (stats != null) { stats.ShieldBlocked -= OnShieldBlocked; stats.Revived -= OnRevived; }
             if (Time.timeScale > 0f && Time.timeScale < 1f) Time.timeScale = 1f;
         }
@@ -196,6 +198,11 @@ namespace Hookfall.Feel
         {
             Shake(0.5f);
             if (vfx != null) vfx.Ring(position, 32, new Color(0.4f, 0.95f, 1f), radius * 3f);
+        }
+
+        private void OnChain(Vector3 position, float radius, School school)
+        {
+            if (vfx != null) vfx.Ring(position, 24, SchoolInfo.Color(school), radius * 2.5f);
         }
 
         private void OnShieldBlocked()

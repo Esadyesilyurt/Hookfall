@@ -52,4 +52,5 @@ MonoBehaviour:
   cooldown: 1
   level: 1
   rarity: 1
+  schools: 0300000004000000
   healPerKillPerLevel: 0.6

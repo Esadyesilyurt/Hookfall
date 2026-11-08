@@ -14,16 +14,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Hookfall.Player.CharacterDefinition
   id: Skyrunner
   displayName: Skyrunner
-  description: 'A scout of the storm roads: fastest in the air, with two dashes,
-    but fragile.'
+  description: 'A scout of the storm roads: fastest in the air, two dashes, a bow
+    that makes foes bleed; fragile.'
   perks:
   - +20% Max flight speed
   - +8% Walk speed
   - 2 dashes per flight
+  affinity: 6
   maxHealthMultiplier: 0.8
   statPicks: 050000000500000004000000
   startingItems:
-  - {fileID: 7301829150397582880, guid: fd48b6749150f3b40986bf3defffcab3, type: 3}
+  - {fileID: 2463205897578731351, guid: 26bbc7bc4f58f304da53c042b0395d9e, type: 3}
   - {fileID: 5739816383329832732, guid: 81a81bfa7b54b2d4093bcd1a92c14d13, type: 3}
   airJumps: 1
   airDashes: 2

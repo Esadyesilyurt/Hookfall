@@ -58,7 +58,7 @@ namespace Hookfall.Combat.Items
             {
                 if (lastHit.TryGetValue(enemy, out float t) && Time.time - t < rehitDelay) continue;
                 lastHit[enemy] = Time.time;
-                enemy.TakeDamage(damage);
+                Strike(enemy, damage);
             }
             if (lastHit.Count > 400) lastHit.Clear();   // pooled enemies come back; keep the table small
         }

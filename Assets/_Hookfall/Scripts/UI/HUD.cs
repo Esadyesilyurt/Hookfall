@@ -31,6 +31,9 @@ namespace Hookfall.UI
 
         private GameObject root;
         private RectTransform xpFill, healthFill, trailFill, cacheMarker, cacheArrow, cacheProgressFill, levelBadge, attackRect;
+        private TextMeshProUGUI synergyText;
+        private SynergySystem synergy;
+        private int synergyHash = -1;
         private TextMeshProUGUI levelText, healthText, timeText, goldText, killsText, attackText, promptText, stormText;
         private Image crosshair, zipRing, attackBack, xpGlow;
         private RectTransform promptRow;
@@ -98,6 +101,10 @@ namespace Hookfall.UI
                 "The storm pushes you back", 28f, new Color(0.7f, 0.82f, 1f), TextAlignmentOptions.Center, true);
 
             // Top right: gold and kills.
+            // Under the counters: the schools the build is made of, and how far each set is.
+            synergyText = UIFactory.Text(UIFactory.Rect(c, "Synergies", new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-24f, -170f), new Vector2(360f, 260f), new Vector2(1f, 1f)),
+                "", 22f, UITheme.Text, TextAlignmentOptions.TopRight, true);
+
             Image counters = UIFactory.Panel(c, "Counters", new Vector2(250f, 110f), UITheme.Panel);
             var countersRect = (RectTransform)counters.transform;
             countersRect.anchorMin = countersRect.anchorMax = new Vector2(1f, 1f);
@@ -258,8 +265,28 @@ namespace Hookfall.UI
             attackBack.color = attacks ? UITheme.Player : new Color(0.12f, 0.15f, 0.2f, 0.85f);
         }
 
+        private void DrawSynergies()
+        {
+            if (synergy == null && combat != null) synergy = combat.GetComponent<SynergySystem>();
+            if (synergy == null) return;
+            int hash = 0;
+            foreach (School school in SchoolInfo.All) hash = hash * 7 + synergy.Count(school);
+            if (hash == synergyHash) return;   // rebuild the text only when a count changes
+            synergyHash = hash;
+            var text = new System.Text.StringBuilder();
+            foreach (School school in SchoolInfo.All)
+            {
+                int count = synergy.Count(school);
+                if (count == 0) continue;
+                string next = count < SynergySystem.FirstTier ? "/2" : count < SynergySystem.SecondTier ? "/4" : "  " + Hookfall.Core.Loc.T("MAX");
+                text.Append($"{SchoolInfo.Colored(school)}  <b>{count}</b>{next}\n");
+            }
+            synergyText.text = text.ToString();
+        }
+
         private void DrawSlots()
         {
+            DrawSynergies();
             for (int i = 0; i < SlotCount; i++)
             {
                 ItemBase item = SlotItem(i);

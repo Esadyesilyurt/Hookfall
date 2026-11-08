@@ -35,6 +35,11 @@ namespace Hookfall.Combat
         public IReadOnlyList<ItemBase> Items => items;
 
         public event Action<bool> AttacksChanged;
+        /// <summary>An item was gained or the starting items were set (SynergySystem recounts).</summary>
+        public event Action ItemsChanged;
+
+        /// <summary>How many choices a chest offers (the Fortune set raises it to 4).</summary>
+        public void SetChestChoices(int count) => chestChoices = Mathf.Max(chestChoices, count);
 
         private void Awake()
         {
@@ -109,6 +114,7 @@ namespace Hookfall.Combat
             items.Clear();
             foreach (ItemBase prefab in prefabs)
                 if (prefab != null) Claim(new ChestReward(prefab.Rarity, prefab, true, 1), null);
+            ItemsChanged?.Invoke();
         }
 
         public bool HasFreeSlot(bool passive)
@@ -138,6 +144,7 @@ namespace Hookfall.Combat
                 item.SetLevel(choice.LevelsGained);
                 items.Add(item);
                 item.SetActiveVisuals(AttacksActive);
+                ItemsChanged?.Invoke();
                 return new ChestReward(choice.Rarity, item, true, choice.LevelsGained);
             }
             if (choice.Item != null)

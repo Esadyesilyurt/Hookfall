@@ -61,8 +61,9 @@ namespace Hookfall.UI
             grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
             grid.constraintCount = 2;
             UIFactory.Sized(statGrid, -1f, 7 * 44f);
-            Header(infoPanel.transform, "BESTIARY");
-            bestiary = UIFactory.Sized(UIFactory.Text(infoPanel.transform, "Bestiary", "", 20f, UITheme.TextMuted, TextAlignmentOptions.TopLeft), -1f, 110f);
+            // The bestiary made way for the set bonuses on 2026-11-08: builds are what the player needs here.
+            Header(infoPanel.transform, "SYNERGIES");
+            bestiary = UIFactory.Sized(UIFactory.Text(infoPanel.transform, "Synergies", "", 18f, UITheme.TextMuted, TextAlignmentOptions.TopLeft), -1f, 300f);
             info = infoPanel.gameObject;
 
             settings = SettingsPanel.Build(canvas.transform, () => ShowSettings(false));
@@ -134,8 +135,25 @@ namespace Hookfall.UI
                     UIFactory.Sized(UIFactory.Text(cell, "Value", Value(stat), 22f, UITheme.Text, TextAlignmentOptions.Right), 150f, 40f).fontStyle = FontStyles.Bold;
                 }
 
-            bestiary.text = string.Join("\n", System.Array.ConvertAll(enemyLore, Hookfall.Core.Loc.T));
+            bestiary.text = SynergyText();
         }
+
+        /// <summary>Every school: owned count, and its two set bonuses (white once reached).</summary>
+        private string SynergyText()
+        {
+            var synergy = combat != null ? combat.GetComponent<SynergySystem>() : null;
+            var text = new System.Text.StringBuilder();
+            foreach (School school in SchoolInfo.All)
+            {
+                int count = synergy != null ? synergy.Count(school) : 0;
+                string first = Tier(count >= SynergySystem.FirstTier, "2: " + SchoolInfo.Bonus(school, 1));
+                string second = Tier(count >= SynergySystem.SecondTier, "4: " + SchoolInfo.Bonus(school, 2));
+                text.Append($"{SchoolInfo.Colored(school)} <b>{count}</b>   {first}   ·   {second}\n");
+            }
+            return text.ToString();
+        }
+
+        private static string Tier(bool reached, string text) => reached ? $"<color=#F2F5FA>{text}</color>" : text;
 
         private string Value(StatType stat)
         {
@@ -153,6 +171,7 @@ namespace Hookfall.UI
                 case StatType.XPGain: return $"×{stats.XPMultiplier:0.00}";
                 case StatType.Luck: return $"×{stats.LuckMultiplier:0.00}";
                 case StatType.ZipCooldown: return $"{stats.ZipCooldown:0.0} s · {stats.ZipCharges}×";
+                case StatType.Lifesteal: return $"{stats.Lifesteal * 100f:0}%";
                 default: return $"{stats.ZipRange:0} m";
             }
         }

@@ -1,4 +1,4 @@
-// Hookfall - Skybolt Crossbow (Common, added 2026-11-08): a long-range attack for safe play: fast bolts at the nearest
+// Hookfall - Skybolt Crossbow (Common, added 2026-11-08; also the Salamander Familiar's fireballs): a long-range attack for safe play: shots at the nearest
 // enemies up to 40 m away. Damage grows each level; levels 3 and 5 add a bolt.
 // AI disclosure: written with Claude (Anthropic) on 2026-11-08. Prompts and changes are recorded in Docs/PromptLog.md.
 using System.Collections.Generic;
@@ -16,7 +16,7 @@ namespace Hookfall.Combat.Items
 
         private readonly HashSet<EnemyBase> targeted = new HashSet<EnemyBase>();
 
-        private int Bolts(int level) => 1 + (level >= 3 ? 1 : 0) + (level >= 5 ? 1 : 0);
+        private int Bolts(int level) => 1 + (level >= 3 ? 1 : 0) + (level >= 5 ? 1 : 0) + ExtraProjectiles;
         public override float Damage => base.Damage * (1f + damagePerLevel * (Level - 1));
 
         protected override void Attack()

@@ -84,7 +84,7 @@ namespace Hookfall.UI
             Color accent = option.IsItem ? UITheme.Gold : UITheme.Player;
             string name = option.IsItem ? option.Item.DisplayName : Loc.T(PlayerStats.NameOf(option.Stat));
             string tag = option.IsItem ? Loc.F("ITEM  ·  LEVEL {0} → {1}", option.Item.Level, option.Item.Level + 1) : Loc.T("STAT");
-            string value = option.IsItem ? option.Item.DescribeNextLevel() : stats.PickText(option.Stat);
+            string value = option.IsItem ? Hookfall.Combat.SchoolInfo.Line(option.Item.Schools) + "\n" + option.Item.DescribeNextLevel() : stats.PickText(option.Stat);
             string detail = option.IsItem ? option.Item.Summary : Loc.F("Now {0}", stats.Describe(option.Stat));
             Sprite icon = option.IsItem ? UISkin.Icon(option.Item) : UISkin.Icon(option.Stat);
             return UIFactory.ChoiceCard(cardRow, index, accent, icon, name, tag, value, detail, () => Pick(captured)).gameObject;

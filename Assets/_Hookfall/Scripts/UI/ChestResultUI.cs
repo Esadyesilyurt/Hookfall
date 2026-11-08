@@ -51,7 +51,7 @@ namespace Hookfall.UI
             UIPop.Add(title, 0f, 1.4f);
             UIFactory.Text(UIFactory.Centre(canvas.transform, "Subtitle", new Vector2(0f, 270f), new Vector2(900f, 40f)),
                 "Choose one", 26f, UITheme.TextMuted, TextAlignmentOptions.Center, true);
-            cardRow = UIFactory.Centre(canvas.transform, "Cards", new Vector2(0f, -60f), new Vector2(1320f, 560f));
+            cardRow = UIFactory.Centre(canvas.transform, "Cards", new Vector2(0f, -60f), new Vector2(1780f, 560f));   // room for 4 (Fortune set)
             UIFactory.Row(cardRow, 44f, 0);
             root.SetActive(false);
         }
@@ -108,12 +108,12 @@ namespace Hookfall.UI
                 if (choice.IsNewItem)
                 {
                     tag = Loc.F("NEW  ·  {0}", kind);
-                    value = string.Join("\n", choice.Item.StatLines());
+                    value = SchoolInfo.Line(choice.Item.Schools) + "\n" + string.Join("\n", choice.Item.StatLines());
                 }
                 else
                 {
                     tag = Loc.F("LEVEL {0} → {1}", choice.Item.Level, Mathf.Min(choice.Item.Level + choice.LevelsGained, ItemBase.MaxLevel));
-                    value = choice.Item.DescribeNextLevel();
+                    value = SchoolInfo.Line(choice.Item.Schools) + "\n" + choice.Item.DescribeNextLevel();
                 }
             }
             int captured = index;

@@ -1,0 +1,59 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &9189003943674888491
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7525539248280985384}
+  - component: {fileID: 6190830155393712694}
+  m_Layer: 0
+  m_Name: PF_Item_SalamanderFamiliar
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7525539248280985384
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9189003943674888491}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &6190830155393712694
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9189003943674888491}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 83b3ef956432b384ebe11f6c49a94350, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Hookfall.Combat.Items.SkyboltCrossbow
+  displayName: Salamander Familiar
+  lore: A little fire lizard that rides on your shoulder and spits at whatever comes
+    near.
+  summary: Spits fireballs at the nearest enemies; they burn.
+  baseDamage: 11
+  cooldown: 0.9
+  level: 1
+  rarity: 0
+  schools: 00000000
+  projectilePrefab: {fileID: 8185890813964748861, guid: 8355de4b8246cd042a929b32ac153c95, type: 3}
+  range: 30
+  boltSpeed: 32
+  damagePerLevel: 0.15

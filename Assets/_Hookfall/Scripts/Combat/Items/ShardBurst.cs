@@ -14,12 +14,16 @@ namespace Hookfall.Combat.Items
         [SerializeField] private float shardLifetime = 1f;
         [Tooltip("0 = shards spread over a full sphere, 1 = a flat ring around the player.")]
         [SerializeField, Range(0f, 1f)] private float flatten = 0.6f;
+        [Tooltip("Below 360: shards fan out in a cone of this angle ahead of the Warden instead (Frost Wyrm Breath).")]
+        [SerializeField] private float coneAngle = 360f;
 
-        private int ShardCount => baseShards + shardsPerLevel * (Level - 1);
+        private int ShardCount => baseShards + shardsPerLevel * (Level - 1) + ExtraProjectiles * (coneAngle < 360f ? 1 : 2);
+        private Rigidbody body;
 
         protected override void Attack()
         {
             int count = ShardCount;
+            if (coneAngle < 360f) { Breathe(count); return; }
             float spin = Random.value * 360f;
             for (int i = 0; i < count; i++)
             {
@@ -28,6 +32,26 @@ namespace Hookfall.Combat.Items
                 float r = Mathf.Sqrt(1f - y * y);
                 float theta = i * 2.39996f + spin * Mathf.Deg2Rad;
                 Vector3 dir = new Vector3(Mathf.Cos(theta) * r, y * (1f - flatten), Mathf.Sin(theta) * r).normalized;
+                Fire(transform.position, dir * shardSpeed, shardLifetime);
+            }
+        }
+
+        /// <summary>A fan of shards ahead: along the flight, or at the nearest enemy when slow.</summary>
+        private void Breathe(int count)
+        {
+            if (body == null) body = GetComponentInParent<Rigidbody>();
+            Vector3 ahead = body != null ? body.linearVelocity : Vector3.zero;
+            if (ahead.sqrMagnitude < 4f)
+            {
+                Enemies.EnemyBase target = EnemyQuery.Nearest(transform.position, shardSpeed * shardLifetime);
+                if (target == null) return;
+                ahead = target.transform.position - transform.position;
+            }
+            Quaternion facing = Quaternion.LookRotation(ahead.normalized);
+            for (int i = 0; i < count; i++)
+            {
+                float t = count == 1 ? 0.5f : i / (count - 1f);
+                Vector3 dir = facing * Quaternion.Euler(Random.Range(-6f, 6f), Mathf.Lerp(-coneAngle, coneAngle, t) * 0.5f, 0f) * Vector3.forward;
                 Fire(transform.position, dir * shardSpeed, shardLifetime);
             }
         }

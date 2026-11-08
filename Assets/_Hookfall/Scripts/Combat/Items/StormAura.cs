@@ -37,7 +37,7 @@ namespace Hookfall.Combat.Items
         protected override void Attack()
         {
             EnemyQuery.InRadius(transform.position, Radius, inside);
-            foreach (EnemyBase enemy in inside) enemy.TakeDamage(Damage);
+            foreach (EnemyBase enemy in inside) Strike(enemy, Damage);
         }
 
         protected override void OnActiveTick(float deltaTime)

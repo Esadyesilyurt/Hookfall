@@ -31,7 +31,7 @@ namespace Hookfall.Combat.Items
         {
             if (Player == null || !Player.IsAirborne) return;
             EnemyQuery.InRadius(transform.position, radius, near);
-            foreach (EnemyBase enemy in near) enemy.TakeDamage(Damage);
+            foreach (EnemyBase enemy in near) Strike(enemy, Damage);
         }
 
         public override IEnumerable<string> StatLines()

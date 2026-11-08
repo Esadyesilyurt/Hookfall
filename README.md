@@ -35,7 +35,9 @@ Attacks are automatic and only fire while you are in the air.
 - Four characters (Warden, Skyrunner, Bulwark, Lumen) with their own models, stats and starting items; three unlock through quests
 - A global leaderboard of best watches (Unity Gaming Services for now, Steam later; setup in Docs/Leaderboard.md)
 - English and Turkish (Settings > Language)
-- Ten attack items (three long-range: Skybolt Crossbow, Chain Lightning, Starfall) and twenty-four passives, with lifesteal (lifesteal, shield, revive, crits and more) in four rarities; rarer chests offer rarer items
+- Builds: every item belongs to schools (Flame, Frost, Storm, Blood, Arcane, Guardian, Wild, Fortune) with 2- and 4-item set bonuses; hits burn, chill, shock or bleed
+- Seven characters with their own models and school affinities
+- Fourteen attack items (three long-range: Skybolt Crossbow, Chain Lightning, Starfall) and twenty-four passives, with lifesteal (lifesteal, shield, revive, crits and more) in four rarities; rarer chests offer rarer items
 - Updrafts, air channels between islands, refill crystals for the double jump and dash, and floating hook anchors in the open sky
 - Wall jumps off island sides, an automatic ledge climb onto islands, a double jump and a dash per flight, and flips and barrel rolls when flying fast
 - Airborne-only combat with all six attack items (Orbit Blades, Shard Burst, Arc Laser, Ram Strike, Homing Sparks, Storm Aura) and the Tether Coil
