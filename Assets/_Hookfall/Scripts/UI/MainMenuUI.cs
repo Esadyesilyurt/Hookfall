@@ -1,4 +1,4 @@
-// Hookfall - main menu (Play, Settings, Credits, Quit, best run) and the intro shown on the first Play of a session (GDD 6, 9.1).
+// Hookfall - main menu (Play, Leaderboard, Settings, Credits, Quit, best run) and the intro shown on the first Play of a session (GDD 6, 9.1).
 // AI disclosure: written with Claude (Anthropic) on 2026-11-07. Prompts and changes are recorded in Docs/PromptLog.md.
 using Hookfall.Core;
 using TMPro;
@@ -23,7 +23,7 @@ namespace Hookfall.UI
             "Sound and music: licensed files listed in Docs/Credits.md.";
 
         private static bool introShown;
-        private GameObject main, settings, creditsPanel, intro;
+        private GameObject main, settings, creditsPanel, intro, leaderboard;
 
         private void Awake()
         {
@@ -46,12 +46,13 @@ namespace Hookfall.UI
             tagline.characterSpacing = 6f;
             UIPop.Add(tagline, 0.15f, 1f, new Vector2(-60f, 0f));
 
-            Image panel = UIFactory.Panel(c, "Main", new Vector2(460f, 560f), UITheme.Panel);
+            Image panel = UIFactory.Panel(c, "Main", new Vector2(460f, 640f), UITheme.Panel);
             var panelRect = (RectTransform)panel.transform;
             panelRect.anchorMin = panelRect.anchorMax = new Vector2(0f, 0.5f);
             panelRect.anchoredPosition = new Vector2(340f, -110f);
             UIFactory.Column(panel, 18f, 40, TextAnchor.UpperCenter);
             UIFactory.Button(panel.transform, "Play", OnPlay, 380f, 76f, new Color(0.2f, 0.55f, 0.62f));
+            UIFactory.Button(panel.transform, "Leaderboard", () => Show(leaderboard));
             UIFactory.Button(panel.transform, "Settings", () => Show(settings));
             UIFactory.Button(panel.transform, "Credits", () => Show(creditsPanel));
             UIFactory.Button(panel.transform, "Quit", Quit, tint: new Color(0.45f, 0.25f, 0.28f));
@@ -67,6 +68,7 @@ namespace Hookfall.UI
             main = panel.gameObject;
 
             settings = SettingsPanel.Build(c, () => Show(main));
+            leaderboard = LeaderboardPanel.Build(c, () => Show(main));
 
             Image creditsImage = UIFactory.Panel(c, "Credits", new Vector2(940f, 600f), UITheme.Panel);
             UIFactory.Column(creditsImage, 20f, 44, TextAnchor.UpperCenter);
@@ -100,6 +102,7 @@ namespace Hookfall.UI
         {
             main.SetActive(panel == main);
             settings.SetActive(panel == settings);
+            leaderboard.SetActive(panel == leaderboard);
             creditsPanel.SetActive(panel == creditsPanel);
             intro.SetActive(panel == intro);
         }
