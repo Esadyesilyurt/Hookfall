@@ -349,3 +349,56 @@ def build_icons(out_dir, prev_dir):
     }
     for name, build in jobs.items():
         make(name, build)
+
+
+def bridge_icons(out_dir, prev_dir):
+    """Icons for the bridge passives, two schools each (2026-11-08)."""
+    os.makedirs(out_dir, exist_ok=True)
+
+    def make(name, build):
+        reset()
+        b = Builder("Icon")
+        build(b)
+        b.build()
+        _render_icon(name, out_dir)
+
+    def gauntlet(b):
+        b.cube("M_IconSteel", M((0, 0, -0.1), (0.6, 0.35, 0.7)))
+        for k in range(4):
+            b.cube("M_IconSteel", M((-0.22 + k * 0.15, 0, 0.42), (0.12, 0.3, 0.35)))
+        b.cone("M_IconOrange", M((-0.25, -0.2, 0.75)), 0.1, 0.0, 0.35, segments=6)
+        b.cone("M_Crystal", M((0.25, -0.2, 0.75)), 0.1, 0.0, 0.35, segments=6)
+        b.cube("M_IconOrange", M((-0.15, -0.2, -0.1), (0.15, 0.05, 0.5)))
+        b.cube("M_Crystal", M((0.15, -0.2, -0.1), (0.15, 0.05, 0.5)))
+
+    def totem(b):
+        for k, mat in enumerate(("M_Wood", "M_IconBlood", "M_Wood")):
+            b.cube(mat, M((0, 0, -0.55 + k * 0.42), (0.45, 0.4, 0.38)))
+        b.sphere("M_Gold", M((-0.1, -0.22, 0.32), (0.05, 0.03, 0.05)), u=6, v=4)
+        b.sphere("M_Gold", M((0.1, -0.22, 0.32), (0.05, 0.03, 0.05)), u=6, v=4)
+        _bolt(b, "M_Gold", [(0.45, 0.85), (0.3, 0.55), (0.45, 0.5), (0.3, 0.2)], 0.05, y=-0.3)
+
+    def glacier_heart(b):
+        _heart(b, "M_Crystal", (0, 0, 0), 1.0)
+        for x, z in ((-0.35, 0.45), (0.35, 0.45), (0, -0.55)):
+            b.cone("M_IconWhite", M((x, -0.25, z)), 0.08, 0.0, 0.25, segments=5)
+
+    def torch(b):
+        b.cube("M_Wood", M((0, 0, -0.3), (0.14, 0.14, 0.9), (0, 15, 0)))
+        for x, h, m in ((-0.15, 0.5, "M_IconOrange"), (0.05, 0.75, "M_Gold"), (0.2, 0.45, "M_IconLeaf")):
+            b.cone(m, M((x + 0.12, -0.05, 0.35)), 0.14, 0.0, h, segments=6)
+
+    def stormglass(b):
+        b.sphere("M_IconGlass", M((0, 0, 0.1), (0.55, 0.45, 0.55)), u=18, v=10)
+        _bolt(b, "M_Gold", [(0.1, 0.4), (-0.12, 0.12), (0.1, 0.08), (-0.08, -0.25)], 0.06, y=-0.5)
+        b.cone("M_IconPurple", M((0, 0, -0.55)), 0.4, 0.3, 0.15, segments=14)
+
+    def midas_leech(b):
+        b.sphere("M_Gold", M((0, 0, 0), (0.6, 0.3, 0.25), (0, 20, 0)), u=16, v=8)
+        b.sphere("M_IconBlood", M((0.55, -0.1, 0.2), (0.1, 0.08, 0.1)), u=8, v=5)
+        _coin(b, "M_Gold", (-0.5, -0.3, -0.45), 0.4)
+
+    jobs = {"SteamGauntlet": gauntlet, "ThunderTotem": totem, "GlacierHeart": glacier_heart,
+            "WildfireTorch": torch, "StormglassOrb": stormglass, "MidasLeech": midas_leech}
+    for name, build in jobs.items():
+        make(name, build)

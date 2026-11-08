@@ -22,6 +22,9 @@ namespace Hookfall.Progression
 
         public PickupKind Kind => kind;
 
+        /// <summary>Starts flying to the Warden from wherever it is (Treasure Gale).</summary>
+        public void Magnetise() => magnetised = true;
+
         public void Init(PickupSpawner owner, Transform target, float amount)
         {
             spawner = owner;

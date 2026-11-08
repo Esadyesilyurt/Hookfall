@@ -156,6 +156,32 @@ Every item belongs to one or two schools; owning 2 and 4 items of a school unloc
 
 School charms (Rare passives): Ember Brazier +25% burn, Frostbite Rune chilled take +6%, Lightning Rod shocked take +6%, Hemomancer's Knot +25% bleed, Arcane Focus +10% Arcane item damage, all per level. The full item-to-school table is ItemPrefabs.ItemSchools.
 
+### Duo synergies (two schools at 2 items each)
+| Duo | Schools | Effect |
+| --- | --- | --- |
+| Thermal Shock | Flame + Frost | Chilling a burning enemy (or burning a chilled one) bursts steam: 80% of the hit within 3.5 m |
+| Plasma | Flame + Storm | Shocked enemies burn twice as hard |
+| Superconductor | Frost + Storm | Storm hits on frozen enemies arc for half the hit within 4 m |
+| Boiling Blood | Blood + Flame | Burning and bleeding at once: +50% from both |
+| Frostbitten Wounds | Blood + Frost | Hits on chilled enemies bleed |
+| Iron Will | Blood + Guardian | Overhealing raises a one-hit shield (every 6 s at most) |
+| Tailwind Thunder | Storm + Wild | Above 25 m/s in flight: lightning on the nearest enemy within 18 m every 0.6 s (20 damage, shock) |
+| Spellstorm | Arcane + Storm | Every projectile hit shocks |
+| Golden Touch | Arcane + Fortune | 35% of kills drop 2 extra gold |
+| Glacier Wall | Guardian + Frost | Getting hit chills every enemy within 7 m (also on islands) |
+| Wildfire | Wild + Flame | Wild items burn |
+
+Bridge passives (Rare, two schools each): Steamforged Gauntlet (Flame, Frost), Thunderblood Totem (Storm, Blood), Glacier Heart (Frost, Guardian), Wildfire Torch (Flame, Wild), Stormglass Orb (Storm, Arcane), Midas Leech (Blood, Fortune).
+
+### Power-ups (2026-11-08)
+| Value | Default | Where |
+| --- | --- | --- |
+| Spawning | Every 18-30 s, 20-40 m from the Warden, at most 3, gone after 45 s; touch within 3 m | PowerUpSpawner |
+| Weights | Treasure Gale 28, Healing Dew 24, Berserk Rage 22, Timefrost 20, Heartstone Nova 4 | PowerUpSpawner |
+| Effects | Gale: every gem and coin flies to you; Dew: heals 60%; Rage: +60% damage and 35% faster attacks for 10 s; Timefrost: every enemy frozen 5 s; Nova: every enemy destroyed | PowerUpSpawner, SynergySystem |
+| Golems | 20 XP, 15 gold (5 and 5 before); 40% chance to drop a power-up | EnemyPrefabs, PowerUpSpawner |
+| Tower cache | Destroys every enemy within 45 m, then three Legendary picks in a row | TowerCache, ChestResultUI |
+
 ## Where the build differs from the GDD
 
 | GDD | What was built | Why |

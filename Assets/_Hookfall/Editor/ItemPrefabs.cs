@@ -26,6 +26,7 @@ namespace Hookfall.EditorTools
             GetOrCreateMaterial("M_ChestWood", new Color(0.45f, 0.28f, 0.15f), false);
             GetOrCreateMaterial("M_ChestTrim", new Color(1f, 0.72f, 0.2f), false);
             GetOrCreateMaterial("M_CacheGlow", new Color(1f, 0.85f, 0.4f), true);
+            GetOrCreateMaterial("M_HealGlow", new Color(0.45f, 1f, 0.5f), true);
             Transparent(GetOrCreateMaterial("M_CacheBeam", new Color(1f, 0.85f, 0.4f, 0.35f), true));
         }
 
@@ -91,6 +92,13 @@ namespace Hookfall.EditorTools
                 SchoolCharm("LightningRod", "Lightning Rod", School.Storm, 0.06f, "A copper rod from a storm giant's roof; shocked foes crackle with more pain."),
                 SchoolCharm("HemomancerKnot", "Hemomancer's Knot", School.Blood, 0.25f, "A blood mage's knotted cord; wounds you open stay open longer and deeper."),
                 SchoolCharm("ArcaneFocus", "Arcane Focus", School.Arcane, 0.1f, "A crystal that hums with spellwork; Arcane items strike harder through it."),
+                // Bridge passives (2026-11-08): two schools each, the easy way into a duo.
+                Charm("SteamGauntlet", "Steamforged Gauntlet", Rarity.Rare, "A dwarven gauntlet that hisses: fire inside, frost outside.", StatType.Damage),
+                Charm("ThunderTotem", "Thunderblood Totem", Rarity.Rare, "A totem painted with storm blood; it drinks from every thunderclap.", StatType.Lifesteal),
+                Charm("GlacierHeart", "Glacier Heart", Rarity.Rare, "The frozen heart of a glacier giant, slow and unbreakable.", StatType.MaxHealth, StatType.Armor),
+                Charm("WildfireTorch", "Wildfire Torch", Rarity.Rare, "A torch lit from a forest fire that never stopped running.", StatType.FlightSpeed),
+                Charm("StormglassOrb", "Stormglass Orb", Rarity.Rare, "A glass orb with a tiny storm inside, humming with spells.", StatType.AttackSpeed),
+                Charm("MidasLeech", "Midas Leech", Rarity.Rare, "A golden leech: whatever it drinks turns to coin.", StatType.Lifesteal, StatType.Luck),
                 Charm("LuckyHorseshoe", "Unicorn Horseshoe", Rarity.Rare, "A horseshoe from a unicorn; luck and the wind follow its keeper.", StatType.Luck, StatType.FlightSpeed),
 
                 // Passive items (2026-11-08): rarer means more useful. Fantasy names later the same day (ids unchanged).
@@ -190,6 +198,12 @@ namespace Hookfall.EditorTools
             { "HemomancerKnot", new[] { School.Blood } },
             { "ArcaneFocus", new[] { School.Arcane } },
             { "LuckyHorseshoe", new[] { School.Fortune, School.Wild } },
+            { "SteamGauntlet", new[] { School.Flame, School.Frost } },
+            { "ThunderTotem", new[] { School.Storm, School.Blood } },
+            { "GlacierHeart", new[] { School.Frost, School.Guardian } },
+            { "WildfireTorch", new[] { School.Flame, School.Wild } },
+            { "StormglassOrb", new[] { School.Storm, School.Arcane } },
+            { "MidasLeech", new[] { School.Blood, School.Fortune } },
         };
 
         private static SchoolCharm SchoolCharm(string id, string displayName, School school, float boost, string lore) =>
@@ -245,6 +259,12 @@ namespace Hookfall.EditorTools
             { "HemomancerKnot", "Bleeding deals more damage. Pairs with Blood items." },
             { "ArcaneFocus", "Arcane items deal more damage." },
             { "LuckyHorseshoe", "More luck and faster flight." },
+            { "SteamGauntlet", "More damage. Counts for Flame and Frost." },
+            { "ThunderTotem", "Lifesteal. Counts for Storm and Blood." },
+            { "GlacierHeart", "Health and armor. Counts for Frost and Guardian." },
+            { "WildfireTorch", "Faster flight. Counts for Flame and Wild." },
+            { "StormglassOrb", "Faster attacks. Counts for Storm and Arcane." },
+            { "MidasLeech", "Lifesteal and luck. Counts for Blood and Fortune." },
             { "SoulHarvest", "Heal a little for every enemy you defeat." },
             { "HuntersEye", "A chance for any hit to deal double damage." },
             { "ThornMail", "When you are hit in the air, enemies close by take damage back." },

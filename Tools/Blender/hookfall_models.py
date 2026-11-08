@@ -767,6 +767,7 @@ def main():
         "StormHerald": lambda: hookfall_characters.storm_herald(out_dir, prev_dir),
         "ItemIcons": lambda: hookfall_item_icons.item_icons(os.path.join(out_dir, "..", "UI", "Resources", "Icons"), prev_dir),
         "BuildIcons": lambda: hookfall_item_icons.build_icons(os.path.join(out_dir, "..", "UI", "Resources", "Icons"), prev_dir),
+        "BridgeIcons": lambda: hookfall_item_icons.bridge_icons(os.path.join(out_dir, "..", "UI", "Resources", "Icons"), prev_dir),
         "Icons": lambda: icons(os.path.join(out_dir, "..", "UI", "Resources", "Icons"), prev_dir),
     }
     for name, job in jobs.items():

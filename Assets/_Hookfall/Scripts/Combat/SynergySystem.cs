@@ -62,6 +62,34 @@ namespace Hookfall.Combat
 
         /// <summary>Raised when the counts change (an item was gained), for the HUD.</summary>
         public event Action Changed;
+        /// <summary>Raised once when a duo synergy first becomes active.</summary>
+        public event Action<Duo> DuoUnlocked;
+
+        [Header("Duos (two schools at 2 items each)")]
+        [SerializeField] private float steamRadius = 3.5f;
+        [SerializeField] private float tailwindSpeed = 25f;
+        [SerializeField] private float tailwindInterval = 0.6f;
+        [SerializeField] private float tailwindDamage = 20f;
+        [SerializeField] private float glacierRadius = 7f;
+        [SerializeField, Range(0f, 1f)] private float goldenTouchChance = 0.35f;
+
+        [Header("Berserk Rage power-up")]
+        [SerializeField] private float frenzyDamage = 1.6f;
+        [SerializeField] private float frenzyCooldown = 0.65f;
+
+        private readonly bool[] duoAnnounced = new bool[DuoInfo.All.Length];
+        private float lastSteam, nextBolt, lastGlacier = -999f, frenzyUntil;
+
+        public bool HasDuo(Duo duo)
+        {
+            (School a, School b) = DuoInfo.Schools(duo);
+            return Has(a, FirstTier) && Has(b, FirstTier);
+        }
+
+        /// <summary>Berserk Rage: more damage and faster attacks for a while.</summary>
+        public void StartFrenzy(float seconds) => frenzyUntil = Mathf.Max(frenzyUntil, Time.time + seconds);
+        public bool Frenzied => Time.time < frenzyUntil;
+        public float FrenzyLeft => Mathf.Max(0f, frenzyUntil - Time.time);
         /// <summary>For effects: a chain effect went off (position, radius, school).</summary>
         public static event Action<Vector3, float, School> ChainFired;
 
@@ -75,9 +103,9 @@ namespace Hookfall.Combat
         // ---------- What items and enemies read ----------
 
         public int ExtraProjectiles => Has(School.Arcane, FirstTier) ? 1 : 0;
-        public float CooldownMultiplier => Has(School.Arcane, SecondTier) ? arcaneCooldown : 1f;
-        public float DamageMultiplier => Has(School.Wild, SecondTier) && player != null
-            ? 1f + Mathf.Clamp((player.Speed - wildSpeedStart) * wildDamagePerSpeed, 0f, wildMaxDamage) : 1f;
+        public float CooldownMultiplier => (Has(School.Arcane, SecondTier) ? arcaneCooldown : 1f) * (Frenzied ? frenzyCooldown : 1f);
+        public float DamageMultiplier => (Has(School.Wild, SecondTier) && player != null
+            ? 1f + Mathf.Clamp((player.Speed - wildSpeedStart) * wildDamagePerSpeed, 0f, wildMaxDamage) : 1f) * (Frenzied ? frenzyDamage : 1f);
         public float ShockAmp => shockAmp + (Has(School.Storm, FirstTier) ? stormShockAmp : 0f) + CharmBoost(School.Storm);
         public float ChillAmp => (Has(School.Frost, FirstTier) ? frostChillAmp : 0f) + CharmBoost(School.Frost);
         public float LifestealMultiplier => Has(School.Blood, SecondTier) && stats != null && stats.CurrentHealth < stats.MaxHealth * 0.5f ? 2f : 1f;
@@ -148,6 +176,8 @@ namespace Hookfall.Combat
                 if (Has(school, FirstTier) && !granted[(int)school, 0]) { granted[(int)school, 0] = true; GrantFirst(school); }
                 if (Has(school, SecondTier) && !granted[(int)school, 1]) { granted[(int)school, 1] = true; GrantSecond(school); }
             }
+            foreach (Duo duo in DuoInfo.All)
+                if (HasDuo(duo) && !duoAnnounced[(int)duo]) { duoAnnounced[(int)duo] = true; DuoUnlocked?.Invoke(duo); }
             Changed?.Invoke();
         }
 
@@ -183,6 +213,24 @@ namespace Hookfall.Combat
                     case School.Blood: enemy.Bleed(damage * bleedShare * BleedMultiplier, bleedTime); break;
                 }
             }
+
+            // Duos that act on a hit.
+            bool flame = Holds(item, School.Flame), frost = Holds(item, School.Frost), storm = Holds(item, School.Storm);
+            if (HasDuo(Duo.Wildfire) && Holds(item, School.Wild)) enemy.Burn(damage * burnShare * BurnMultiplier, burnTime);
+            if (HasDuo(Duo.Spellstorm) && item is ProjectileItem) enemy.Shock(shockTime);
+            if (HasDuo(Duo.FrostbittenWounds) && enemy.Chilled) enemy.Bleed(damage * bleedShare * BleedMultiplier, bleedTime);
+            if (HasDuo(Duo.ThermalShock) && ((frost && enemy.Burning) || (flame && enemy.Chilled)) && Time.time - lastSteam > 0.15f)
+            {
+                lastSteam = Time.time;
+                chains.Enqueue((enemy.transform.position, School.Frost, Mathf.Max(15f, damage)));   // a steam burst
+            }
+            if (HasDuo(Duo.Superconductor) && storm && enemy.Frozen) chains.Enqueue((enemy.transform.position, School.Storm, Mathf.Max(15f, damage)));
+        }
+
+        private static bool Holds(ItemBase item, School school)
+        {
+            foreach (School s in item.Schools) if (s == school) return true;
+            return false;
         }
 
         private void OnEnemyHit(EnemyBase enemy, float damage)
@@ -199,10 +247,20 @@ namespace Hookfall.Combat
             if (!killed) return;
             if (Has(School.Flame, SecondTier) && enemy.Burning) chains.Enqueue((enemy.transform.position, School.Flame, enemy.BurnDps));
             if (Has(School.Storm, SecondTier) && enemy.Shocked) chains.Enqueue((enemy.transform.position, School.Storm, 0f));
+            if (HasDuo(Duo.GoldenTouch) && UnityEngine.Random.value < goldenTouchChance && Progression.PickupSpawner.Instance != null)
+                Progression.PickupSpawner.Instance.DropGold(enemy.transform.position, 2);
         }
 
         private void OnPlayerHurt(float amount)
         {
+            // Glacier Wall chills (no damage), so it works on islands too.
+            if (HasDuo(Duo.GlacierWall) && Time.time - lastGlacier > 1f)
+            {
+                lastGlacier = Time.time;
+                EnemyQuery.InRadius(transform.position, glacierRadius, near);
+                foreach (EnemyBase e in near) e.Chill(ChillSlow, chillTime);
+                ChainFired?.Invoke(transform.position, glacierRadius, School.Frost);
+            }
             // Like every damaging effect, the guardian shockwave works only in flight.
             if (!Has(School.Guardian, SecondTier) || player == null || !player.IsAirborne || Time.time - lastWave < guardianWaveCooldown) return;
             lastWave = Time.time;
@@ -211,6 +269,19 @@ namespace Hookfall.Combat
 
         private void Update()
         {
+            // Tailwind Thunder: lightning on the nearest enemy while flying fast.
+            if (HasDuo(Duo.TailwindThunder) && player != null && player.IsAirborne && player.Speed > tailwindSpeed && Time.time >= nextBolt)
+            {
+                nextBolt = Time.time + tailwindInterval;
+                EnemyBase target = EnemyQuery.Nearest(transform.position, 18f);
+                if (target != null)
+                {
+                    target.Shock(shockTime);
+                    target.TakeDamage(tailwindDamage * (stats != null ? stats.DamageMultiplier : 1f));
+                    ChainFired?.Invoke(target.transform.position, 1.5f, School.Storm);
+                }
+            }
+
             for (int i = 0; i < maxChainsPerFrame && chains.Count > 0; i++)
             {
                 (Vector3 at, School school, float strength) = chains.Dequeue();
@@ -223,9 +294,14 @@ namespace Hookfall.Combat
                         foreach (EnemyBase e in near) if (!e.Burning) e.Burn(strength, burnTime);
                         ChainFired?.Invoke(at, flameSpreadRadius, school);
                         break;
-                    case School.Storm:
+                    case School.Frost:   // Thermal Shock's steam burst
+                        EnemyQuery.InRadius(at, steamRadius, near);
+                        foreach (EnemyBase e in near) e.TakeDamage(strength * 0.8f);
+                        ChainFired?.Invoke(at, steamRadius, school);
+                        break;
+                    case School.Storm:   // strength 0: a Storm 4 death burst; otherwise a Superconductor arc
                         EnemyQuery.InRadius(at, stormBurstRadius, near);
-                        foreach (EnemyBase e in near) { e.Shock(shockTime); e.TakeDamage(stormBurstDamage * damageScale); }
+                        foreach (EnemyBase e in near) { e.Shock(shockTime); e.TakeDamage(strength > 0f ? strength * 0.5f : stormBurstDamage * damageScale); }
                         ChainFired?.Invoke(at, stormBurstRadius, school);
                         break;
                     case School.Guardian:

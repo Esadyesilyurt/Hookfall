@@ -43,6 +43,14 @@ namespace Hookfall.Progression
             if (Instance == this) Instance = null;
         }
 
+        private readonly HashSet<Pickup> active = new HashSet<Pickup>();
+
+        /// <summary>Every gem and coin on the map flies to the Warden (Treasure Gale power-up).</summary>
+        public void MagnetiseAll()
+        {
+            foreach (Pickup pickup in active) pickup.Magnetise();
+        }
+
         public void DropXP(Vector3 position, float amount)
         {
             if (amount <= 0f) return;
@@ -61,6 +69,7 @@ namespace Hookfall.Progression
             Pickup pickup = PoolFor(prefab).Get();
             pickup.transform.position = position + UnityEngine.Random.insideUnitSphere * scatter;
             pickup.Init(this, player.transform, amount);
+            active.Add(pickup);
         }
 
         public void Collect(Pickup pickup, float value)
@@ -73,6 +82,7 @@ namespace Hookfall.Progression
 
         public void Release(Pickup pickup)
         {
+            active.Remove(pickup);
             if (prefabOf.TryGetValue(pickup, out Pickup prefab)) pools[prefab].Release(pickup);
             else Destroy(pickup.gameObject);
         }

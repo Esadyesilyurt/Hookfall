@@ -125,6 +125,12 @@ namespace Hookfall.Tests
             while (Time.realtimeSinceStartup < end && !opened)
             {
                 opened = !(bool)ready.GetValue(cache);   // the cache stops being ready once it opens
+                if (opened)
+                {
+                    Type enemyBase = Type.GetType("Hookfall.Enemies.EnemyBase, Assembly-CSharp");
+                    foreach (Component e in (IList)enemyBase.GetField("Active").GetValue(null))
+                        Assert.Greater(Vector3.Distance(e.transform.position, cache.transform.position), 45f, "Opening the cache should destroy every enemy within 45 m");
+                }
                 if (Time.timeScale == 0f && levelUp != null) levelUpType.GetMethod("Pick").Invoke(levelUp, new object[] { 0 });
                 KeepAlive(player);
                 player.transform.position = cache.transform.position + new Vector3(1.2f, 1.02f, 0f);
@@ -743,6 +749,79 @@ namespace Hookfall.Tests
             for (int i = 0; i < 5; i++) { KeepAlive(player); yield return null; }
             bool chainFired = (int)synergyType.GetProperty("ChainsFired").GetValue(synergy) > chainsBefore;
             Assert.IsTrue(chainFired, "A shocked enemy's death with Storm 4 should fire a lightning burst");
+            LogAssert.NoUnexpectedReceived();
+        }
+
+        /// <summary>Power-ups: each kind does its job when the Warden touches it.</summary>
+        [UnityTest]
+        public IEnumerator PowerUpsWork()
+        {
+            SceneManager.LoadScene("Arena");
+            yield return null;
+            GameObject player = GameObject.Find("Player");
+            var body = player.GetComponent<Rigidbody>();
+            Type spawnerType = Type.GetType("Hookfall.World.PowerUpSpawner, Assembly-CSharp");
+            Type kindType = Type.GetType("Hookfall.World.PowerUpKind, Assembly-CSharp");
+            Type enemyType = Type.GetType("Hookfall.Enemies.EnemyBase, Assembly-CSharp");
+            Type statsType = Type.GetType("Hookfall.Player.PlayerStats, Assembly-CSharp");
+            Type synergyType = Type.GetType("Hookfall.Combat.SynergySystem, Assembly-CSharp");
+            object spawner = spawnerType.GetProperty("Instance").GetValue(null);
+            Assert.IsNotNull(spawner, "The arena needs a PowerUpSpawner");
+            var active = (IList)enemyType.GetField("Active").GetValue(null);
+            float end = Time.realtimeSinceStartup + 8f;
+            while (active.Count < 3 && Time.realtimeSinceStartup < end) { KeepAlive(player); yield return null; }
+            Assert.Greater(active.Count, 0, "Enemies should spawn");
+
+            IEnumerator Touch(string kind)
+            {
+                Vector3 at = body.position;
+                spawnerType.GetMethod("SpawnAt").Invoke(spawner, new[] { (object)at, Enum.Parse(kindType, kind) });
+                yield return null;
+                yield return null;
+            }
+
+            yield return Touch("Timefrost");
+            Assert.IsTrue((bool)enemyType.GetProperty("Frozen").GetValue(active[0]), "Timefrost should freeze the enemies");
+
+            Component stats = player.GetComponent(statsType);
+            statsType.GetProperty("CurrentHealth").SetValue(stats, 10f);
+            yield return Touch("HealingDew");
+            Assert.Greater((float)statsType.GetProperty("CurrentHealth").GetValue(stats), 40f, "Healing Dew should heal");
+
+            yield return Touch("BerserkRage");
+            Assert.IsTrue((bool)synergyType.GetProperty("Frenzied").GetValue(player.GetComponent(synergyType)), "Berserk Rage should start the frenzy");
+
+            yield return Touch("TreasureGale");
+            yield return Touch("HeartstoneNova");
+            Assert.AreEqual(0, active.Count, "Heartstone Nova should destroy every enemy");
+            KeepAlive(player);
+            LogAssert.NoUnexpectedReceived();
+        }
+
+        /// <summary>Duos: Flame 2 and Frost 2 unlock Thermal Shock.</summary>
+        [UnityTest]
+        public IEnumerator DuoUnlocksAcrossSchools()
+        {
+            PlayerPrefs.SetString("hf_character", "Warden");
+            SceneManager.LoadScene("Arena");
+            yield return null;
+            GameObject player = GameObject.Find("Player");
+            var flags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+            Type combatType = Type.GetType("Hookfall.Combat.CombatSystem, Assembly-CSharp");
+            Type rewardType = Type.GetType("Hookfall.Combat.ChestReward, Assembly-CSharp");
+            Type statType = Type.GetType("Hookfall.Player.StatType, Assembly-CSharp");
+            Type statsType = Type.GetType("Hookfall.Player.PlayerStats, Assembly-CSharp");
+            Type synergyType = Type.GetType("Hookfall.Combat.SynergySystem, Assembly-CSharp");
+            Type duoType = Type.GetType("Hookfall.Combat.Duo, Assembly-CSharp");
+            Component combat = player.GetComponent(combatType);
+            Component synergy = player.GetComponent(synergyType);
+            Func<bool> thermal = () => (bool)synergyType.GetMethod("HasDuo").Invoke(synergy, new[] { Enum.Parse(duoType, "ThermalShock") });
+            Assert.IsFalse(thermal(), "No duo at the start");
+            foreach (Component prefab in (IList)combatType.GetField("itemPrefabs", flags).GetValue(combat))
+                if (prefab.name == "PF_Item_SteamGauntlet" || prefab.name == "PF_Item_ArcLaser")
+                    combatType.GetMethod("Claim").Invoke(combat, new[] { Activator.CreateInstance(rewardType, prefab.GetType().GetProperty("Rarity").GetValue(prefab), prefab, true, 1, Enum.ToObject(statType, 0)), player.GetComponent(statsType) });
+            Assert.IsTrue(thermal(), "Moonblade Halo + Steamforged Gauntlet (Frost 2) and the gauntlet + Sunlance Prism (Flame 2) should unlock Thermal Shock");
+            yield return null;
             LogAssert.NoUnexpectedReceived();
         }
 

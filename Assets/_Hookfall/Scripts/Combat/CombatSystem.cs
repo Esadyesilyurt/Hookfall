@@ -160,7 +160,7 @@ namespace Hookfall.Combat
         private ItemBase Find(ItemBase prefab)
         {
             foreach (ItemBase item in items)
-                if (item.GetType() == prefab.GetType()) return item;
+                if (item.name == prefab.name) return item;   // by prefab, not by class: several items share a class
             return null;
         }
 

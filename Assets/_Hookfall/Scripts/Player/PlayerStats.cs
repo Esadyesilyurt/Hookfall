@@ -112,10 +112,22 @@ namespace Hookfall.Player
         public event Action ShieldBlocked;
         public event Action Revived;
 
+        private float lastIronWill = -999f;
+
         public void Heal(float amount)
         {
-            if (!IsDead) CurrentHealth = Mathf.Min(maxHealth, CurrentHealth + amount);
+            if (IsDead) return;
+            // Iron Will (Blood + Guardian duo): healing past full raises a one-hit shield, at most every 6 s.
+            if (CurrentHealth + amount > maxHealth && ShieldCharges == 0 && synergy != null && synergy.HasDuo(Hookfall.Combat.Duo.IronWill) && Time.time - lastIronWill > 6f)
+            {
+                ShieldCharges = 1;
+                lastIronWill = Time.time;
+                ShieldRaised?.Invoke();
+            }
+            CurrentHealth = Mathf.Min(maxHealth, CurrentHealth + amount);
         }
+
+        public event Action ShieldRaised;
 
         private Hookfall.Combat.SynergySystem synergy;
 

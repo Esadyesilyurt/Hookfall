@@ -323,8 +323,8 @@ MonoBehaviour:
   maxHealth: 150
   moveSpeed: 0
   contactDamage: 0
-  xpReward: 5
-  goldReward: 5
+  xpReward: 20
+  goldReward: 15
   hitRadius: 1.4
   acceleration: 60
   separationRadius: 1.6
