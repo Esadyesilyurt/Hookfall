@@ -51,6 +51,12 @@ namespace Hookfall.Progression
             foreach (Pickup pickup in active) pickup.Magnetise();
         }
 
+        /// <summary>A new stage: every gem and coin left on the old map goes.</summary>
+        public void ReleaseAll()
+        {
+            foreach (Pickup pickup in new List<Pickup>(active)) Release(pickup);
+        }
+
         public void DropXP(Vector3 position, float amount)
         {
             if (amount <= 0f) return;

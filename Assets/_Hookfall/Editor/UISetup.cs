@@ -120,7 +120,7 @@ namespace Hookfall.EditorTools
             for (int y = 0; y < h; y++)
                 for (int x = 0; x < w; x++)
                     tex.SetPixel(x, y, shade(x + 0.5f, y + 0.5f));
-            File.WriteAllBytes(path, tex.EncodeToPNG());
+            BuildUtil.WriteIfChanged(path, tex.EncodeToPNG());
             UnityEngine.Object.DestroyImmediate(tex);
             AssetDatabase.ImportAsset(path);
             SpriteImport(path, border);

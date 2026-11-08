@@ -2,7 +2,8 @@
 // pooling, hit flash, elites and the fallbacks in GDD 5.7.
 // AI disclosure: written with Claude (Anthropic) on 2026-11-04 as part of the midterm project skeleton,
 // rewritten on 2026-11-07 for steering, think LOD, pooling and elites, and given catch-up speed and the school statuses
-// (burn, chill, freeze, shock, bleed) on 2026-11-08. Prompts and changes are recorded in Docs/PromptLog.md.
+// (burn, chill, freeze, shock, bleed) on 2026-11-08; hooks for the stage boss, the boss zone that keeps the horde
+// below the boss arena and the stage reward scale were added the same day. Prompts and changes are recorded in Docs/PromptLog.md.
 using System.Collections.Generic;
 using Hookfall.Core;
 using Hookfall.Player;
@@ -54,6 +55,8 @@ namespace Hookfall.Enemies
         [Tooltip("Shader colour property used for the hit flash, elite glow and attack warning (toon Shader Graph).")]
         [SerializeField] private string glowProperty = "_EmissionColor";
         [SerializeField] private float flashDuration = 0.08f;
+        [Tooltip("Hit flash colour; the boss uses a dim one, or its many hits would strobe.")]
+        [SerializeField] private Color flashColor = Color.white;
         [SerializeField] private Transform wingLeft;
         [SerializeField] private Transform wingRight;
         [SerializeField] private float flapSpeed = 14f;
@@ -109,6 +112,15 @@ namespace Hookfall.Enemies
         public Vector3 Velocity { get; private set; }
         public string CurrentStateName => machine.Current?.Name ?? "None";
         public EnemyBase SourcePrefab { get; set; }
+        /// <summary>The stage boss: mass kills (Heartstone Nova, the tower cache) do not destroy it.</summary>
+        public virtual bool IsBoss => false;
+        /// <summary>Whether it may fly up into the boss arena; the plain horde stays below it (StageDirector).</summary>
+        public virtual bool CanEnterBossZone => IsElite;
+        /// <summary>Takes no damage (the boss during its entrance).</summary>
+        protected virtual bool Invulnerable => false;
+        protected virtual bool ImmuneToFreeze => false;
+        /// <summary>Never moved by the fallbacks (too far, stuck, below the abyss): the boss stays where it rose.</summary>
+        protected virtual bool Anchored => false;
 
         public EnemyDirector Director { get; private set; }
         public PlayerController Player { get; private set; }
@@ -212,6 +224,7 @@ namespace Hookfall.Enemies
 
             Velocity = Vector3.MoveTowards(Velocity, desiredVelocity, acceleration * dt);
             transform.position += Velocity * (dt * SpeedFactor);
+            if (!CanEnterBossZone) Hookfall.World.StageDirector.KeepBelowZone(transform);
             if (Velocity.sqrMagnitude > 0.5f) transform.rotation = Quaternion.LookRotation(Velocity);
 
             FrameUpdate(dt);
@@ -223,7 +236,7 @@ namespace Hookfall.Enemies
         /// <param name="dot">A burn or bleed tick: no crit, flash or knockback.</param>
         public void TakeDamage(float amount, bool dot = false)
         {
-            if (IsDead) return;
+            if (IsDead || Invulnerable) return;
             if (!dot && PlayerStats != null && PlayerStats.CritChance > 0f && Random.value < PlayerStats.CritChance) amount *= 2f;   // Hunter's Eye
             if (synergy != null) amount *= 1f + (Shocked ? synergy.ShockAmp : 0f) + (Chilled ? synergy.ChillAmp : 0f);
             Health -= amount;
@@ -270,7 +283,7 @@ namespace Hookfall.Enemies
 
         public void Freeze(float duration)
         {
-            if (IsDead) return;
+            if (IsDead || ImmuneToFreeze) return;
             freezeTimer = Mathf.Max(freezeTimer, duration);
             RefreshStatusGlow();
         }
@@ -328,8 +341,9 @@ namespace Hookfall.Enemies
                 PickupSpawner drops = PickupSpawner.Instance;
                 if (drops != null)
                 {
-                    drops.DropXP(transform.position, xpReward * rewardMultiplier);
-                    drops.DropGold(transform.position, Mathf.RoundToInt(goldReward * rewardMultiplier));
+                    float stage = Hookfall.World.StageDirector.RewardScale;   // later stages pay more
+                    drops.DropXP(transform.position, xpReward * rewardMultiplier * stage);
+                    drops.DropGold(transform.position, Mathf.RoundToInt(goldReward * rewardMultiplier * stage));
                 }
             }
             OnDied(giveReward);
@@ -424,7 +438,7 @@ namespace Hookfall.Enemies
         private void ApplyGlow()
         {
             if (renderers == null) return;
-            Color glow = flashTimer > 0f ? Color.white : warning ? new Color(1.2f, 0.1f, 0.05f) : statusGlow != Color.black ? statusGlow : baseGlow;
+            Color glow = flashTimer > 0f ? flashColor : warning ? new Color(1.2f, 0.1f, 0.05f) : statusGlow != Color.black ? statusGlow : baseGlow;
             foreach (Renderer r in renderers)
             {
                 if (r == null || r is LineRenderer) continue;
@@ -443,6 +457,7 @@ namespace Hookfall.Enemies
 
         private void RunFallbacks(float elapsed)
         {
+            if (Anchored) return;
             if (Director != null && transform.position.y < Director.AbyssHeight)
             {
                 Die(false);   // fell into the abyss: no reward

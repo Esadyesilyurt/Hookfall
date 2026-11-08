@@ -50,6 +50,9 @@ MonoBehaviour:
   collectDistance: 1.2
   spinSpeed: 120
   lifetime: 90
+  goldHomeDelay: 0.5
+  xpHomeDelay: 1.5
+  homeRadii: 10
 --- !u!1 &4594442091576785963
 GameObject:
   m_ObjectHideFlags: 0

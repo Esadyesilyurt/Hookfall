@@ -31,5 +31,10 @@ namespace Hookfall.Core
             Turkish && !string.IsNullOrEmpty(english) && LocTable.Turkish.TryGetValue(english, out string text) ? text : english;
 
         public static string F(string englishFormat, params object[] args) => string.Format(T(englishFormat), args);
+
+        private static readonly System.Globalization.CultureInfo TurkishCulture = new System.Globalization.CultureInfo("tr-TR");
+
+        /// <summary>Capitals for display: Turkish dots its capital i (DEVİ, not DEVI). Keys keep ToUpperInvariant.</summary>
+        public static string Upper(string text) => text == null ? null : Turkish ? text.ToUpper(TurkishCulture) : text.ToUpperInvariant();
     }
 }

@@ -16,6 +16,15 @@ namespace Hookfall.Progression
         public float XPToNextLevel => Mathf.Round(10f * Mathf.Pow(Level, 1.4f));
 
         public event Action<int> LeveledUp;
+        public event Action LevelReset;
+
+        /// <summary>A new stage: back to level 1 with no XP; items and stats stay (2026-11-08).</summary>
+        public void ResetLevel()
+        {
+            Level = 1;
+            CurrentXP = 0f;
+            LevelReset?.Invoke();
+        }
 
         private void Awake() => stats = GetComponent<PlayerStats>();
 

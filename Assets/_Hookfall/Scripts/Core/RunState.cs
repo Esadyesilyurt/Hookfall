@@ -2,5 +2,5 @@
 // AI disclosure: written with Claude (Anthropic) on 2026-11-07. Prompts and changes are recorded in Docs/PromptLog.md.
 namespace Hookfall.Core
 {
-    public enum RunState { Playing, Paused, LevelUp, ChestResult, Dead }
+    public enum RunState { Playing, Paused, LevelUp, ChestResult, Dead, Cutscene }
 }

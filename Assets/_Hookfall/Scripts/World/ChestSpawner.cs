@@ -19,7 +19,7 @@ namespace Hookfall.World
 
         [Header("Spawning")]
         [SerializeField] private float interval = 45f;
-        [SerializeField] private int maxChests = 3;
+        [SerializeField] private int maxChests = 4;   // 3 until the map doubled (2026-11-08)
         [Tooltip("Chests appear on islands at least this wide (tiny hook points have no room).")]
         [SerializeField] private float minIslandWidth = 5f;
         [Tooltip("The first chest appears this many seconds into the run.")]
@@ -65,7 +65,7 @@ namespace Hookfall.World
         {
             var candidates = new List<Island>();
             foreach (Island island in Island.All)
-                if (island.Kind != IslandKind.Tower && island.Width >= minIslandWidth && chests.Find(c => c.Island == island) == null)
+                if (island.Kind != IslandKind.Tower && island.Kind != IslandKind.Boss && island.Width >= minIslandWidth && chests.Find(c => c.Island == island) == null)
                     candidates.Add(island);
             if (candidates.Count == 0) return;
 
@@ -75,6 +75,15 @@ namespace Hookfall.World
                 Quaternion.Euler(0f, Random.Range(0f, 360f), 0f), transform);
             chest.Init(this, player, chosen);
             chests.Add(chest);
+        }
+
+        /// <summary>A new stage: the old chests go with the old map; the first new one comes after the usual wait.
+        /// The price keeps rising with every chest opened in the run.</summary>
+        public void ResetForStage()
+        {
+            foreach (Chest chest in chests) if (chest != null) Destroy(chest.gameObject);
+            chests.Clear();
+            timer = firstChestAfter;
         }
 
         public void Open(Chest chest)

@@ -48,8 +48,8 @@ MonoBehaviour:
   lore: A Warden's crossbow strung with tether wire; it reaches farther than any
     wing.
   summary: Fires fast bolts at the nearest enemies from far away. Safe at low health.
-  baseDamage: 14
-  cooldown: 1.1
+  baseDamage: 13
+  cooldown: 1
   level: 1
   rarity: 0
   schools: 0600000003000000
@@ -57,3 +57,7 @@ MonoBehaviour:
   range: 40
   boltSpeed: 70
   damagePerLevel: 0.15
+  baseBolts: 2
+  homingTurnRate: 90
+  splashRadius: 0
+  splashShare: 0.5

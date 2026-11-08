@@ -66,7 +66,7 @@ namespace Hookfall.UI
             UIFactory.Row(bestRow, 12f, 0);
             UIFactory.Icon(bestRow, UISkin.Icon("Timer"), 44f);
             string best = RunRecord.HasRecord
-                ? Loc.F("<b>Best watch {0}</b>\nLevel {1} · {2} kills", RunRecord.FormatTime(RunRecord.BestTime), RunRecord.BestLevel, RunRecord.BestKills)
+                ? Loc.F("<b>Best: stage {0} · {1}</b>\nLevel {2} · {3} kills", RunRecord.BestStage, RunRecord.FormatTime(RunRecord.BestTime), RunRecord.BestLevel, RunRecord.BestKills)
                 : "No watch held yet";
             UIFactory.Sized(UIFactory.Text(bestRow, "Text", best, 24f, UITheme.Gold, TextAlignmentOptions.Left), 280f, 80f);
             UIPop.Add(panel, 0.25f, 0.9f, new Vector2(-60f, 0f));

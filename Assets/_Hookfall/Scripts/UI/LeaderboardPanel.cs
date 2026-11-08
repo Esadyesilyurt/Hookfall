@@ -58,7 +58,7 @@ namespace Hookfall.UI
 
             var text = new StringBuilder();
             foreach (LeaderboardRow row in top)
-                text.Append($"<pos=2%>#{row.Rank}<pos=16%>{row.Name}<pos=62%>{RunRecord.FormatTime(row.Seconds)}<pos=80%>{row.Character}\n");
+                text.Append($"<pos=2%>#{row.Rank}<pos=16%>{row.Name}<pos=62%>{Loc.F("S{0}", row.Stage)} {RunRecord.FormatTime(row.RunSeconds)}<pos=80%>{row.Character}\n");
             rows.text = top.Count > 0 ? text.ToString() : Loc.T("No watches on the board yet.");
             mine.text = !me.HasValue ? Loc.T("You have no score on the board yet.")
                 : me.Value.Rank <= Shown ? Loc.T("You are in the top 20.")

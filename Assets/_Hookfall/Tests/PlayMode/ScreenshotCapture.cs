@@ -42,6 +42,9 @@ namespace Hookfall.Tests
             GameObject player = GameObject.Find("Player");
             Type gmType = Type.GetType("Hookfall.Core.GameManager, Assembly-CSharp");
             gmType.GetProperty("RunTime").SetValue(gmType.GetProperty("Instance").GetValue(null), 150f);
+            Type stageType0 = Type.GetType("Hookfall.World.StageDirector, Assembly-CSharp");
+            stageType0.GetProperty("StageTime").SetValue(stageType0.GetProperty("Instance").GetValue(null), 150f);
+            SceneSmokeTests.NoBoss();
             Type levelUpType = Type.GetType("Hookfall.Progression.LevelUpSystem, Assembly-CSharp");
             Component levelUp = player.GetComponent(levelUpType);
 
@@ -139,6 +142,111 @@ namespace Hookfall.Tests
             gmType.GetMethod("EndRun").Invoke(gm, new object[] { "Fell into the abyss" });
             yield return new WaitForSecondsRealtime(0.8f);
             yield return Grab("ui_runend");
+        }
+
+        /// <summary>The stage boss: its entrance, the fight, its fall, the portal and the next stage's title.</summary>
+        [UnityTest]
+        public IEnumerator CaptureBossShots()
+        {
+            if (string.IsNullOrEmpty(Folder)) Assert.Ignore("Set HOOKFALL_SHOT_DIR to capture screenshots.");
+            Directory.CreateDirectory(Folder);
+            Type locType = Type.GetType("Hookfall.Core.Loc, Assembly-CSharp");
+            locType.GetProperty("Turkish").SetValue(null, Environment.GetEnvironmentVariable("HOOKFALL_SHOT_LANG") == "tr");
+            PlayerPrefs.SetString("hf_character", "Warden");
+            SceneManager.LoadScene("Arena");
+            yield return null;
+            var flags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+            GameObject player = GameObject.Find("Player");
+            Type stageType = Type.GetType("Hookfall.World.StageDirector, Assembly-CSharp");
+            Type gmType = Type.GetType("Hookfall.Core.GameManager, Assembly-CSharp");
+            Type statsType = Type.GetType("Hookfall.Player.PlayerStats, Assembly-CSharp");
+            Type enemyType = Type.GetType("Hookfall.Enemies.EnemyBase, Assembly-CSharp");
+            Type chestUiType = Type.GetType("Hookfall.UI.ChestResultUI, Assembly-CSharp");
+            Type levelUpType = Type.GetType("Hookfall.Progression.LevelUpSystem, Assembly-CSharp");
+            object stage = stageType.GetProperty("Instance").GetValue(null);
+            object gm = gmType.GetProperty("Instance").GetValue(null);
+            Component stats = player.GetComponent(statsType);
+            Func<string> state = () => gmType.GetProperty("State").GetValue(gm).ToString();
+            void Alive()
+            {
+                statsType.GetProperty("CurrentHealth").SetValue(stats, statsType.GetProperty("MaxHealth").GetValue(stats));
+                statsType.GetMethod("SetAbyssKillHeight").Invoke(stats, new object[] { -100000f });
+                if (state() == "LevelUp") levelUpType.GetMethod("Pick").Invoke(player.GetComponent(levelUpType), new object[] { 0 });
+            }
+            Vector3 centre = (Vector3)stageType.GetProperty("ArenaCentre").GetValue(stage);
+
+            // Stand on the tower deck, so the entrance is seen from the Warden's place.
+            yield return new WaitForSecondsRealtime(1f);
+            player.GetComponent<Rigidbody>().position = new Vector3(0f, 19.5f, -1.5f);
+            player.transform.position = new Vector3(0f, 19.5f, -1.5f);
+            yield return new WaitForSecondsRealtime(0.5f);
+            stageType.GetMethod("SummonBoss").Invoke(stage, null);
+            yield return new WaitForSecondsRealtime(1.9f);
+            yield return Grab("boss_entrance_fall");
+            yield return new WaitForSecondsRealtime(1.6f);
+            yield return Grab("boss_entrance_roar");
+            float end = Time.realtimeSinceStartup + 10f;
+            while (Time.realtimeSinceStartup < end && state() != "Playing") { Alive(); yield return null; }
+
+            // The fight: the Warden on one of the boss's islands, the HUD with its health bar.
+            object boss = stageType.GetProperty("Boss").GetValue(stage);
+            Vector3 perch = centre + new Vector3(0f, -14f, -30f);
+            foreach (Component island in (IList)Type.GetType("Hookfall.World.Island, Assembly-CSharp").GetField("All").GetValue(null))
+                if (island.GetType().GetProperty("Kind").GetValue(island).ToString() == "Boss") { perch = island.transform.position + Vector3.up * 1.6f; break; }
+            player.GetComponent<Rigidbody>().position = perch;
+            player.transform.position = perch;
+            enemyType.GetMethod("TakeDamage").Invoke(boss, new object[] { (float)enemyType.GetProperty("MaxHealth").GetValue(boss) * 0.45f, false });
+            end = Time.realtimeSinceStartup + 3f;
+            while (Time.realtimeSinceStartup < end) { Alive(); yield return null; }
+            yield return Grab("boss_fight");
+            Camera cam = Camera.main;
+            var overview = new GameObject("Overview").AddComponent<Camera>();
+            overview.CopyFrom(cam);
+            overview.fieldOfView = 55f;
+            LookAt(overview, centre + Vector3.down * 8f, new Vector3(70f, 10f, -70f));
+            Render(overview, "boss_arena");
+
+            // It falls; the portal rises.
+            enemyType.GetMethod("TakeDamage").Invoke(boss, new object[] { (float)enemyType.GetProperty("MaxHealth").GetValue(boss) * 5f, false });
+            yield return new WaitForSecondsRealtime(0.5f);
+            yield return Grab("boss_falls");
+            end = Time.realtimeSinceStartup + 10f;
+            bool rewardShot = false;
+            while (Time.realtimeSinceStartup < end && !rewardShot)
+            {
+                Alive();
+                if (state() == "ChestResult")
+                {
+                    yield return new WaitForSecondsRealtime(0.8f);
+                    yield return Grab("boss_reward");
+                    object ui = chestUiType.GetProperty("Instance").GetValue(null);
+                    chestUiType.GetMethod("Pick", flags).Invoke(ui, new object[] { 0 });
+                    rewardShot = true;
+                }
+                yield return null;
+            }
+            object portal = stageType.GetProperty("Portal").GetValue(stage);
+            if (portal != null)
+            {
+                Vector3 portalCentre = (Vector3)portal.GetType().GetProperty("Centre").GetValue(portal);
+                LookAt(overview, portalCentre, new Vector3(16f, 5f, -18f));
+                Render(overview, "portal");
+                UnityEngine.Object.Destroy(overview.gameObject);
+                player.GetComponent<Rigidbody>().position = portalCentre + new Vector3(0f, -1.5f, -8f);
+                player.transform.position = portalCentre + new Vector3(0f, -1.5f, -8f);
+                yield return new WaitForSecondsRealtime(0.5f);
+                player.GetComponent<Rigidbody>().position = portalCentre;
+                player.transform.position = portalCentre;
+                yield return new WaitForSecondsRealtime(1.0f);
+                yield return Grab("portal_dive");
+                yield return new WaitForSecondsRealtime(1.6f);
+                yield return Grab("stage_title");
+                end = Time.realtimeSinceStartup + 8f;
+                while (Time.realtimeSinceStartup < end && state() != "Playing") { Alive(); yield return null; }
+                yield return new WaitForSecondsRealtime(1.5f);
+                Alive();
+                yield return Grab("stage2_start");
+            }
         }
 
         private static void LookAt(Camera camera, Vector3 target, Vector3 offset) =>

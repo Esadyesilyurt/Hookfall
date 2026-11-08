@@ -66,14 +66,17 @@ namespace Hookfall.World
             if (standing) HUD.InteractPrompt = Hookfall.Core.Loc.T("Opening the tower cache... hold your ground");
             if (progress < 1f) return;
 
-            // The long hold pays: every enemy close by is destroyed, then one pick from three Legendary items (2026-11-08).
+            // The long hold pays: every enemy close by is destroyed (never the boss), then one pick from three Legendary items (2026-11-08).
             foreach (Hookfall.Enemies.EnemyBase enemy in Hookfall.Enemies.EnemyBase.Active.ToArray())
-                if ((enemy.transform.position - transform.position).sqrMagnitude <= clearRadius * clearRadius) enemy.Die(true);
+                if (!enemy.IsBoss && (enemy.transform.position - transform.position).sqrMagnitude <= clearRadius * clearRadius) enemy.Die(true);
             Opened?.Invoke(transform.position, Rarity.Legendary);
             SetReady(false);
             HUD.Announce(Hookfall.Core.Loc.T("The Heartstone answers!"), new Color(1f, 0.62f, 0.15f));
             ChestResultUI.OfferSeries(combat, stats, Rarity.Legendary, 1, Hookfall.Core.Loc.T("TOWER CACHE"));
         }
+
+        /// <summary>A new stage: the cache waits its full time again.</summary>
+        public void ResetForStage() => SetReady(false);
 
         private void SetReady(bool ready)
         {

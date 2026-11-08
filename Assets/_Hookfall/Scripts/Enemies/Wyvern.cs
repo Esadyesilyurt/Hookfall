@@ -40,6 +40,9 @@ namespace Hookfall.Enemies
 
         protected override IEnemyState DefaultState => Chase;
 
+        /// <summary>Wyverns fly up to the boss arena; the bats stay below it (2026-11-08).</summary>
+        public override bool CanEnterBossZone => true;
+
         protected override void BuildStates()
         {
             Chase = new WyvernChaseState(this);

@@ -1,7 +1,9 @@
 // Hookfall - spawns the horde ahead of and around the player, mixes in wyverns and island golems, sends elite waves,
 // scales difficulty over time and pools every enemy (GDD 4.8, 5.1, 5.7).
 // AI disclosure: written with Claude (Anthropic) on 2026-11-04 as part of the midterm project skeleton,
-// rewritten on 2026-11-07 (pooling, wyverns, golems, elites, performance fallback). Prompts and changes are recorded in Docs/PromptLog.md.
+// rewritten on 2026-11-07 (pooling, wyverns, golems, elites, performance fallback); stages on 2026-11-08: time and
+// growth restart every stage on top of the StageDirector's multipliers, the boss calls escorts, a new stage clears
+// the sky. Prompts and changes are recorded in Docs/PromptLog.md.
 using System;
 using System.Collections.Generic;
 using Hookfall.Core;
@@ -74,7 +76,7 @@ namespace Hookfall.Enemies
 
         [Header("Arena")]
         [Tooltip("Spawns stay inside this horizontal radius (inside the storm wall).")]
-        [SerializeField] private float arenaRadius = 180f;
+        [SerializeField] private float arenaRadius = 370f;   // 180 until the map doubled (2026-11-08)
 
         private readonly Dictionary<EnemyBase, ObjectPool<EnemyBase>> pools = new Dictionary<EnemyBase, ObjectPool<EnemyBase>>();
         private ObjectPool<Boulder> boulders;
@@ -97,12 +99,22 @@ namespace Hookfall.Enemies
         public int AliveCount => EnemyBase.Active.Count;
         public float AbyssHeight => islands != null ? islands.AbyssKillHeight : -70f;
 
+        /// <summary>Minutes into the current stage (the run before stages existed).</summary>
         private float MinutesSurvived =>
-            (GameManager.Instance != null ? GameManager.Instance.RunTime : Time.timeSinceLevelLoad) / 60f;
+            (StageDirector.Instance != null ? StageDirector.Instance.StageTime
+                : GameManager.Instance != null ? GameManager.Instance.RunTime : Time.timeSinceLevelLoad) / 60f;
 
-        /// <summary>Enemy damage at spawn: grows with time and with the Warden's level.</summary>
+        private static float StageHealth => StageDirector.Instance != null ? StageDirector.Instance.HealthScale : 1f;
+        private static float StageDamage => StageDirector.Instance != null ? StageDirector.Instance.DamageScale : 1f;
+        private static float StageGrowth => StageDirector.Instance != null ? StageDirector.Instance.GrowthScale : 1f;
+        private static float StageSpawns => StageDirector.Instance != null ? StageDirector.Instance.SpawnScale : 1f;
+
+        /// <summary>Enemy health at spawn: the stage's base, growing with time (faster on later stages).</summary>
+        private float HealthScaleAt(float minutes) => StageHealth * (1f + healthGrowthPerMinute * StageGrowth * minutes);
+
+        /// <summary>Enemy damage at spawn: the stage's base, growing with time and with the Warden's level.</summary>
         private float DamageScaleAt(float minutes) =>
-            1f + damageGrowthPerMinute * minutes + damageGrowthPerLevel * ((playerXP != null ? playerXP.Level : 1) - 1);
+            StageDamage * (1f + StageGrowth * (damageGrowthPerMinute * minutes + damageGrowthPerLevel * ((playerXP != null ? playerXP.Level : 1) - 1)));
 
         public static void RaiseHit(EnemyBase enemy, float damage) => Hit?.Invoke(enemy, damage);
         public static void RaiseSlam(Golem golem) => Slammed?.Invoke(golem);
@@ -133,7 +145,7 @@ namespace Hookfall.Enemies
             bool full = AliveCount >= maxAlive;
             if (!full && !LowPerformance)
             {
-                float spawnRate = baseSpawnPerSecond * Mathf.Pow(1f + spawnGrowthPerMinute, minutes);
+                float spawnRate = baseSpawnPerSecond * StageSpawns * Mathf.Pow(1f + spawnGrowthPerMinute, minutes);
                 spawnBudget += spawnRate * Time.deltaTime;
             }
             else spawnBudget = 0f;   // fallback: cap reached or frame rate low, pause spawning
@@ -147,8 +159,8 @@ namespace Hookfall.Enemies
 
             UpdateGolems(minutes);
 
-            float runTime = minutes * 60f;
-            if (runTime >= nextEliteTime)
+            float stageTime = minutes * 60f;
+            if (stageTime >= nextEliteTime)
             {
                 nextEliteTime += eliteInterval;
                 SpawnEliteWave(minutes);
@@ -173,7 +185,8 @@ namespace Hookfall.Enemies
         {
             EnemyBase enemy = PoolFor(prefab).Get();
             enemy.transform.SetPositionAndRotation(position, Quaternion.identity);
-            enemy.Init(this, player, 1f + healthGrowthPerMinute * minutes, DamageScaleAt(minutes));
+            enemy.Init(this, player, HealthScaleAt(minutes), DamageScaleAt(minutes));
+            if (!enemy.CanEnterBossZone) StageDirector.KeepBelowZone(enemy.transform);
             return enemy;
         }
 
@@ -198,7 +211,7 @@ namespace Hookfall.Enemies
             if (island == null) return null;
             var golem = (Golem)PoolFor(golemPrefab).Get();
             PlaceGolem(golem, island);
-            golem.Init(this, player, 1f + healthGrowthPerMinute * minutes, DamageScaleAt(minutes));
+            golem.Init(this, player, HealthScaleAt(minutes), DamageScaleAt(minutes));
             return golem;
         }
 
@@ -245,6 +258,30 @@ namespace Hookfall.Enemies
                     if (golem != null) MakeElite(golem);
                 }
             EliteWave?.Invoke();
+        }
+
+        /// <summary>The boss calls its escort: a wyvern or a bat at a point near it (elites may enter the boss zone).</summary>
+        public EnemyBase SpawnEscort(bool wyvern, Vector3 position, bool elite)
+        {
+            EnemyBase prefab = wyvern && wyvernPrefab != null ? wyvernPrefab : batPrefab;
+            if (prefab == null) return null;
+            EnemyBase enemy = SpawnFlyer(prefab, position, MinutesSurvived);
+            if (elite) MakeElite(enemy);
+            enemy.transform.position = position;   // an elite may stay up in the boss zone
+            return enemy;
+        }
+
+        /// <summary>The boss itself: not pooled, scaled like the stage's enemies.</summary>
+        public void InitBoss(EnemyBase boss) => boss.Init(this, player, StageHealth, StageDamage);
+
+        /// <summary>A new stage: every enemy leaves the sky without a reward, and the waves start over.</summary>
+        public void ClearForStage()
+        {
+            foreach (EnemyBase enemy in EnemyBase.Active.ToArray()) enemy.Die(false);
+            spawnBudget = 0f;
+            flockLeft = 0;
+            golemTimer = 0f;
+            nextEliteTime = eliteInterval;
         }
 
         private void MakeElite(EnemyBase enemy) =>

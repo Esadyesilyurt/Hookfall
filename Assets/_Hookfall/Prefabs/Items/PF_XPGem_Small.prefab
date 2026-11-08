@@ -140,3 +140,6 @@ MonoBehaviour:
   collectDistance: 1.2
   spinSpeed: 120
   lifetime: 90
+  goldHomeDelay: 0.5
+  xpHomeDelay: 1.5
+  homeRadii: 10

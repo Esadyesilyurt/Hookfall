@@ -44,6 +44,8 @@ namespace Hookfall.EditorTools
             ("M_EmberRobe", new Color(0.78f, 0.2f, 0.12f), false), ("M_EmberTrim", new Color(1f, 0.62f, 0.15f), false),
             ("M_FrostRobe", new Color(0.55f, 0.78f, 0.95f), false), ("M_FrostFur", new Color(0.95f, 0.97f, 1f), false),
             ("M_StormArmor", new Color(0.22f, 0.28f, 0.5f), false), ("M_StormGold", new Color(1f, 0.82f, 0.25f), false),
+            // The stage boss (2026-11-08).
+            ("M_BossStone", new Color(0.3f, 0.27f, 0.34f), false),
         };
 
         /// <summary>Far scenery colours: pale and blue-shifted, so it reads as distant haze (SG_Backdrop has no fog).</summary>

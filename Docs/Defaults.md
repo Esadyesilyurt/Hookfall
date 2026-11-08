@@ -1,18 +1,18 @@
-#uuuundundefinedfineddundundundundefinedfinedfinedfinedfineddundundefinedfinedfineddefinedHundefinedundefinedkfaundefinedundefinedundefined–undefinedDefauundefinedundefinedundefinedundefinedandundefineddeundefinedundefinedaundefinediundefinednundefined
+# Hookfall – Defaults and deviations
 
-Values undefinedundefinede GDD does not give, piundefinedked by Claude on 2026undefined11-07 undefinedundefineden building Weeks 9–13 undefinedsee Docs/PundefinedomptLog.md #16–20undefined. Every value is a serialized field you can change in the Inspector; the script is named in brackets. Playtests in Weeks 12–13 should tune them.
+Values the GDD does not give, picked by Claude on 2026-11-07 when building Weeks 9–13 (see Docs/PromptLog.md #16–20). Every value is a serialized field you can change in the Inspector; the script is named in brackets. Playtests in Weeks 12–13 should tune them.
 
 ## Values the GDD leaves open
 
 ### Hook, movement, camera
 | Value | Default | Where |
 | --- | --- | --- |
-| Rope length after attach | 85% of distance (GDDundefined 15% reel-in; the skeleton used 80%) | GrappleHook |
+| Rope length after attach | 85% of distance (GDD: 15% reel-in; the skeleton used 80%) | GrappleHook |
 | Rope minimum length | 25% of distance | GrappleHook |
 | Base health regen | 1 HP/s from the start of a run (0 until 2026-11-08); each Health regen pick adds 0.5 HP/s | PlayerStats |
 | Movement soft cap | Bonuses count fully up to +100%; above that each pick counts 25% | PlayerStats |
 | Camera | Orbit radius 8 m, target offset 1.6 m, pitch −80° to 80° (−40° to 75° until 2026-11-08), damping 0.1 | Player Camera (Cinemachine) |
-| Camera collision | Cinemachine Deoccluder against the World layer (islands, toundefineder, props): pulls the camera towards the Warden, camera radius 0.45 m, at least 0.6 m from the target, 0.35 s return | Player Camera |
+| Camera collision | Cinemachine Deoccluder against the World layer (islands, tower, props): pulls the camera towards the Warden, camera radius 0.45 m, at least 0.6 m from the target, 0.35 s return | Player Camera |
 
 ### Pickups and level-up
 | Value | Default | Where |
@@ -182,7 +182,42 @@ Bridge passives (Rare, two schools each): Steamforged Gauntlet (Flame, Frost), T
 | Golems | 20 XP, 15 gold (5 and 5 before); 40% chance to drop a power-up | EnemyPrefabs, PowerUpSpawner |
 | Tower cache | Destroys every enemy within 45 m, then one pick from three Legendary choices | TowerCache, ChestResultUI |
 | Enemy damage | +8% per minute and +10% per Warden level above 1, fixed at spawn | EnemyDirector |
-| Full slots | Chests still offer new items; with every slot full one choice stays a level or a stat. A new item replaces an owned item of its kind chosen on a second screen (with no screen: the lowest-level one). Set bonuses already granted stay | CombatSystem, ChestResultUI |
+| Full slots | Chests still offer new items; with every slot full one choice stays a level or a stat. A new item replaces an owned item of its kind chosen on a second screen (when the screen cannot open: the lowest-level one). Set bonuses already granted stay | CombatSystem, ChestResultUI |
+
+### Stages and the boss (2026-11-08)
+| Value | Default | Where |
+| --- | --- | --- |
+| Boss bar | Gold earned on the stage (spending on chests does not slow it): 1500 on stage 1, x1.6 per stage | StageDirector |
+| Enemies per stage | Health x2.5, damage x1.8, growth per minute and per level 35% faster, spawns x1.2, XP and gold per kill x1.5 (each once per stage after the first); waves and elite timers follow the stage clock | StageDirector, EnemyDirector |
+| New stage | New map; the Warden back to level 1 at the foot of the tower with full health; items, item levels, stats and gold kept; the chest price keeps rising; the tower cache waits its full time | StageDirector |
+| Boss arena | The boss 78 m above the tower; six islands at 30 m around it, 14-24 m below it; three updrafts and eight hook anchors lead up | StageDirector, SkyFeatures |
+| Boss zone | Inside 85 m of the arena's axis the plain horde cannot rise above 30 m below the boss; wyverns and elites can | StageDirector, EnemyBase |
+| Boss | 14000 health x the stage's health; never moves, immune to freeze, not killed by Heartstone Nova (10% of its health) or the tower cache; touching it hurts (20) and throws the Warden off | EnemyPrefabs, Boss |
+| Shard volley | Every 3 s (0.5 s warning: the core flares): 6 shards in a 30 degree fan, 34 m/s, turning 38 degrees/s towards the Warden, 16 damage; islands block them | Boss |
+| Shockwave | Within 31 m, every 6.5 s (0.7 s warning: red glow, arms up): a ring at the boss's height grows to 46 m at 32 m/s, 36 damage within 3.2 m of its plane | Boss |
+| Escorts and rage | At 70% and 35%: 5 wyverns and 10 elite bats (elite wyverns at 35%); below 30% everything 45% faster and 2 more shards; 60% faster while the Warden stands on an island | Boss |
+| After the boss | It crumbles in slow motion, its gold and XP fly to the Warden, an island with the portal rises where it stood, then one pick from three Legendary items | StageDirector |
+| Cutscenes | Entrance about 5 s (camera to the arena, islands rise, the boss falls, lands and roars, name card); portal about 4.5 s (dive into the ring, white, the next stage's card); Space, Enter or Esc skips | CutsceneDirector |
+| Record and board | The best run is the latest stage, then the longest time; the leaderboard score is (stage - 1) x 100000 + seconds, so old scores stay stage 1 | RunRecord, Leaderboard |
+
+### Map size (2026-11-08: twice as wide)
+| Value | Default | Where |
+| --- | --- | --- |
+| Large islands | 6-8, 26-40 m wide, 70-270 m out; golems never spawn on them | IslandGenerator |
+| Inner and outer rings | 22-30 islands 40-210 m out; 42-58 small ones 190-310 m out; 8-12 perches | IslandGenerator |
+| Reach | Every island's rim within 22 m of a reachable rim (was 32 m centre to centre) | IslandGenerator |
+| Start | No prop within 4 m of the Warden's start on the tower island | IslandGenerator |
+| Edge and view | Storm wall at 390 m (wind from 350 m), far scenery 700-920 m, fog 110-400 m, far clip 1000 m | StormWall, Backdrop, ArenaSceneBuilder |
+| Open sky | 16 updrafts, 8 air channels, 24 crystals, 20 anchors; 4 chests at once | SkyFeatures, ChestSpawner |
+
+### Pickups and balance (2026-11-08, from the balance probe)
+| Value | Default | Where |
+| --- | --- | --- |
+| Gold | Flies to the Warden on its own 0.5 s after it drops | Pickup |
+| XP gems | Within 10 pickup radii (40 m at the start), they follow after 1.5 s | Pickup |
+| Salamander Familiar | 12 damage every 0.85 s, 24 m, 46 m/s fireballs that home in and splash 50% within 2.8 m (11, 0.9 s, 30 m, 32 m/s straight before) | ItemPrefabs |
+| Elven Skybow | Two bolts from level 1, 13 damage every 1 s, slight homing (one bolt, 14, 1.1 s before) | ItemPrefabs |
+| Frost Wyrm's Breath | Aims at the nearest enemy, 10 damage every 1.3 s, reach 18 m (along the flight, 9, 1.4 s, 13 m before) | ShardBurst, ItemPrefabs |
 
 ## Where the build differs from the GDD
 
@@ -197,4 +232,4 @@ Bridge passives (Rare, two schools each): Steamforged Gauntlet (Flame, Frost), T
 | Hook values 4.1: spring 4.5, damper 7, max air speed 35, strafe 6 | A taut rope with a downhill pump, 1.8x air gravity, 40 m/s with capped boosts, strafe 12, a power-swing Zip, wall jumps, air tricks | Esad found the swing slow and islands hard to climb (2026-11-08) |
 | Spawn rate 2/s, +15% per minute, flocks of 4–8 (4.8) | 2/s, +20% per minute, flocks of 4–8, at most 120 alive | Esad found the first build too calm (2026-11-07: 5/s, flocks of 8–14, 300 alive), then far too crowded (2026-11-08) |
 | Six items, eleven stats (4.5, 4.6) | A seventh chest item (Tether Coil) and two Zip stats | Added with the right-click Zip on Esad's request (2026-11-07) |
-| Islands at any height, arena edge not described (4.9, 7.1) | Three height bands with a reachability check, and a storm wall at 195 m with far scenery beyond | Esad's feedback: islands could not be climbed and the edge felt empty |
+| Islands at any height, arena edge not described (4.9, 7.1) | Three height bands with a reachability check, and a storm wall at 390 m (195 m until the map doubled on 2026-11-08) with far scenery beyond | Esad's feedback: islands could not be climbed and the edge felt empty |

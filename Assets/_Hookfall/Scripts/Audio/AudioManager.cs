@@ -194,6 +194,9 @@ namespace Hookfall.Audio
         private void OnDied(EnemyBase enemy, bool killed) { if (killed) Play(SoundId.EnemyDeath, enemy.transform.position); }
         private void OnSlam(Golem golem) => Play(SoundId.GolemSlam, golem.transform.position);
         private void OnBoulder(Vector3 position) => Play(SoundId.BoulderBreak, position);
+        /// <summary>Every music layer plays while the boss fights (the StageDirector calls it every frame).</summary>
+        public void KeepMusicFull() => eliteMusicTimer = Mathf.Max(eliteMusicTimer, 2f);
+
         private void OnEliteWave() { eliteMusicTimer = eliteFullMusicSeconds; Play(SoundId.EliteWave); }
         private void OnCollected(PickupKind kind) => Play(kind == PickupKind.XP ? SoundId.XPPickup : SoundId.GoldPickup);
         private void OnChest(Vector3 position, Rarity rarity) => Play(SoundId.ChestOpen);

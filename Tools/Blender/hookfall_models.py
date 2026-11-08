@@ -717,6 +717,9 @@ def main():
     # Icons for the long-range items, the passives and Lifesteal (2026-11-08).
     import hookfall_item_icons
     hookfall_item_icons.install(globals())
+    # The stage boss and its portal (2026-11-08).
+    import hookfall_boss
+    hookfall_boss.install(globals())
 
     argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
     out_dir = os.path.abspath(argv[0]) if argv else os.path.abspath("Assets/_Hookfall/Art/Models")
@@ -768,6 +771,8 @@ def main():
         "ItemIcons": lambda: hookfall_item_icons.item_icons(os.path.join(out_dir, "..", "UI", "Resources", "Icons"), prev_dir),
         "BuildIcons": lambda: hookfall_item_icons.build_icons(os.path.join(out_dir, "..", "UI", "Resources", "Icons"), prev_dir),
         "BridgeIcons": lambda: hookfall_item_icons.bridge_icons(os.path.join(out_dir, "..", "UI", "Resources", "Icons"), prev_dir),
+        "Boss": lambda: hookfall_boss.boss(out_dir, prev_dir),
+        "Portal": lambda: hookfall_boss.portal(out_dir, prev_dir),
         "Icons": lambda: icons(os.path.join(out_dir, "..", "UI", "Resources", "Icons"), prev_dir),
     }
     for name, job in jobs.items():

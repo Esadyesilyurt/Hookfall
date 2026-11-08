@@ -1,6 +1,7 @@
 // Hookfall - run state: timer, kills, pause, modal screens (level-up, chest), death, record and scene changes.
 // AI disclosure: written with Claude (Anthropic) on 2026-11-04 as part of the midterm project skeleton,
-// extended on 2026-11-07 (modal states, record, menu). Prompts and changes are recorded in Docs/PromptLog.md.
+// extended on 2026-11-07 (modal states, record, menu) and 2026-11-08 (cutscenes, the stage in the record and on the
+// leaderboard). Prompts and changes are recorded in Docs/PromptLog.md.
 using System;
 using Hookfall.Progression;
 using UnityEngine;
@@ -75,15 +76,29 @@ namespace Hookfall.Core
             if (State == RunState.LevelUp || State == RunState.ChestResult) SetState(RunState.Playing);
         }
 
+        /// <summary>Stops the world for a cutscene (the boss's entrance, the portal). False if another screen is open.</summary>
+        public bool BeginCutscene()
+        {
+            if (State != RunState.Playing) return false;
+            SetState(RunState.Cutscene);
+            return true;
+        }
+
+        public void EndCutscene()
+        {
+            if (State == RunState.Cutscene) SetState(RunState.Playing);
+        }
+
         public void EndRun(string reason)
         {
             if (State == RunState.Dead) return;
             EndReason = reason;
-            NewRecord = RunRecord.Submit(RunTime, playerXP != null ? playerXP.Level : 1, Kills);
-            Hookfall.Player.CharacterRoster.RecordRun(playerXP != null ? playerXP.Level : 1, Kills);
-            Hookfall.Online.Leaderboard.SubmitRun(RunTime, Hookfall.Player.CharacterRoster.ActiveId);
+            int stage = Hookfall.World.StageDirector.Instance != null ? Hookfall.World.StageDirector.Instance.Stage : 1;
+            NewRecord = RunRecord.Submit(RunTime, playerXP != null ? playerXP.Level : 1, Kills, stage);
+            Hookfall.Player.CharacterRoster.RecordRun(playerXP != null ? playerXP.Level : 1, Kills, RunTime);
+            Hookfall.Online.Leaderboard.SubmitRun(RunTime, Hookfall.Player.CharacterRoster.ActiveId, stage);
             SetState(RunState.Dead);
-            Debug.Log($"[Hookfall] Run over ({reason}). Time {RunTime:F1} s, kills {Kills}.");
+            Debug.Log($"[Hookfall] Run over ({reason}). Stage {stage}, time {RunTime:F1} s, kills {Kills}.");
             RunEnded?.Invoke();
         }
 
@@ -100,7 +115,7 @@ namespace Hookfall.Core
         {
             State = next;
             Time.timeScale = next == RunState.Playing ? 1f : 0f;
-            LockCursor(next == RunState.Playing);
+            LockCursor(next == RunState.Playing || next == RunState.Cutscene);
             StateChanged?.Invoke(next);
         }
 

@@ -25,6 +25,15 @@ namespace Hookfall.Tests
             statsType.GetProperty("CurrentHealth").SetValue(stats, statsType.GetProperty("MaxHealth").GetValue(stats));
             // A fall into the abyss would end the run and stop time, and a test waiting for a physics step would hang.
             statsType.GetMethod("SetAbyssKillHeight").Invoke(stats, new object[] { -100000f });
+            NoBoss();
+        }
+
+        /// <summary>Keeps the stage boss away: its entrance stops time, and a test waiting on a physics step would hang.</summary>
+        internal static void NoBoss()
+        {
+            Type stageType = Type.GetType("Hookfall.World.StageDirector, Assembly-CSharp");
+            object stage = stageType.GetProperty("Instance").GetValue(null);
+            if (stage != null) stageType.GetField("firstBossGold", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(stage, 100000000);
         }
 
         /// <summary>Moves the Warden at once: setting only the transform can be undone by interpolation before the next physics step.</summary>
@@ -895,7 +904,7 @@ namespace Hookfall.Tests
             // Enemy damage grows with the Warden's level.
             Type directorType = Type.GetType("Hookfall.Enemies.EnemyDirector, Assembly-CSharp");
             Type xpType = Type.GetType("Hookfall.Progression.XPSystem, Assembly-CSharp");
-            object director = UnityEngine.Object.FindFirstObjectByType(directorType);
+            object director = UnityEngine.Object.FindAnyObjectByType(directorType);
             var scaleAt = directorType.GetMethod("DamageScaleAt", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
             float atLevel1 = (float)scaleAt.Invoke(director, new object[] { 0f });
             xpType.GetProperty("Level").SetValue(player.GetComponent(xpType), 21);
@@ -934,16 +943,200 @@ namespace Hookfall.Tests
             LogAssert.NoUnexpectedReceived();
         }
 
-        /// <summary>Jumps the run clock to 4:55 so wyverns, golems and the first elite wave all appear.</summary>
+        /// <summary>Stages: the boss bar fills, the boss rises in a cutscene, plain bats stay below its zone while wyverns
+        /// climb, Heartstone Nova only wounds it, its death opens the portal and offers a Legendary pick, and the portal
+        /// starts stage 2 on a new map at level 1 with the same items.</summary>
+        [UnityTest]
+        public IEnumerator BossPortalAndNextStage()
+        {
+            PlayerPrefs.SetString("hf_character", "Warden");
+            SceneManager.LoadScene("Arena");
+            yield return null;
+            GameObject player = GameObject.Find("Player");
+            var flags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+            Type stageType = Type.GetType("Hookfall.World.StageDirector, Assembly-CSharp");
+            Type gmType = Type.GetType("Hookfall.Core.GameManager, Assembly-CSharp");
+            Type enemyType = Type.GetType("Hookfall.Enemies.EnemyBase, Assembly-CSharp");
+            Type directorType = Type.GetType("Hookfall.Enemies.EnemyDirector, Assembly-CSharp");
+            Type cutsceneType = Type.GetType("Hookfall.Feel.CutsceneDirector, Assembly-CSharp");
+            Type xpType = Type.GetType("Hookfall.Progression.XPSystem, Assembly-CSharp");
+            Type walletType = Type.GetType("Hookfall.Progression.GoldWallet, Assembly-CSharp");
+            Type combatType = Type.GetType("Hookfall.Combat.CombatSystem, Assembly-CSharp");
+            Type generatorType = Type.GetType("Hookfall.World.IslandGenerator, Assembly-CSharp");
+            Type levelUpType = Type.GetType("Hookfall.Progression.LevelUpSystem, Assembly-CSharp");
+            Type chestUiType = Type.GetType("Hookfall.UI.ChestResultUI, Assembly-CSharp");
+            Type powerType = Type.GetType("Hookfall.World.PowerUpSpawner, Assembly-CSharp");
+            Type kindType = Type.GetType("Hookfall.World.PowerUpKind, Assembly-CSharp");
+            object stage = stageType.GetProperty("Instance").GetValue(null);
+            Assert.IsNotNull(stage, "The arena needs a StageDirector");
+            Assert.AreEqual(1, (int)stageType.GetProperty("Stage").GetValue(stage));
+            object gm = gmType.GetProperty("Instance").GetValue(null);
+            Func<string> state = () => gmType.GetProperty("State").GetValue(gm).ToString();
+            var cutscenes = UnityEngine.Object.FindAnyObjectByType(cutsceneType);
+            var skip = cutsceneType.GetField("skip", flags);
+            Component levelUp = player.GetComponent(levelUpType);
+            Component xp = player.GetComponent(xpType);
+            Type statsType = Type.GetType("Hookfall.Player.PlayerStats, Assembly-CSharp");
+            Component stats = player.GetComponent(statsType);
+            void Alive()
+            {
+                statsType.GetProperty("CurrentHealth").SetValue(stats, statsType.GetProperty("MaxHealth").GetValue(stats));
+                statsType.GetMethod("SetAbyssKillHeight").Invoke(stats, new object[] { -100000f });
+            }
+            float chestShownAt = -1f;
+            bool rewardPicked = false;
+            void Screens()
+            {
+                if (state() == "LevelUp") levelUpType.GetMethod("Pick").Invoke(levelUp, new object[] { 0 });
+                if (state() == "ChestResult")
+                {
+                    if (chestShownAt < 0f) chestShownAt = Time.realtimeSinceStartup;
+                    if (Time.realtimeSinceStartup - chestShownAt > 0.4f)
+                    {
+                        object ui = chestUiType.GetProperty("Instance").GetValue(null);
+                        chestUiType.GetMethod("Pick", flags).Invoke(ui, new object[] { 0 });
+                        rewardPicked = true;
+                        chestShownAt = -1f;
+                    }
+                }
+                if (state() == "Cutscene") skip.SetValue(cutscenes, true);
+            }
+
+            // A few levels first, so the reset has something to undo.
+            xpType.GetMethod("AddXP").Invoke(xp, new object[] { 120f });
+            for (int i = 0; i < 30; i++) { Screens(); yield return null; }
+            Assert.Greater((int)xpType.GetProperty("Level").GetValue(xp), 2, "120 XP should give a few levels");
+
+            // The gold bar fills: the boss rises in a cutscene.
+            int target = (int)stageType.GetProperty("GoldTarget").GetValue(stage);
+            walletType.GetMethod("Add").Invoke(player.GetComponent(walletType), new object[] { target });
+            bool sawCutscene = false;
+            object boss = null;
+            float end = Time.realtimeSinceStartup + 15f;
+            while (Time.realtimeSinceStartup < end)
+            {
+                Alive();
+                sawCutscene |= state() == "Cutscene";
+                Screens();
+                boss = stageType.GetProperty("Boss").GetValue(stage);
+                if (boss != null && (bool)boss.GetType().GetProperty("Fighting").GetValue(boss) && state() == "Playing") break;
+                yield return null;
+            }
+            Assert.IsTrue(sawCutscene, "The boss's entrance should play as a cutscene");
+            Assert.IsNotNull(boss, "The boss should rise when the gold bar is full");
+            Assert.IsTrue((bool)boss.GetType().GetProperty("Fighting").GetValue(boss), "The boss should fight after its entrance");
+            Assert.AreEqual("Playing", state(), "The game should run again after the cutscene");
+            Assert.IsNotNull(GameObject.Find("Boss Arena"), "The boss should bring its own islands");
+
+            // Only wyverns and elites climb into the boss zone.
+            Vector3 centre = (Vector3)stageType.GetProperty("ArenaCentre").GetValue(stage);
+            object director = UnityEngine.Object.FindAnyObjectByType(directorType);
+            var escort = directorType.GetMethod("SpawnEscort");
+            var bat = (Component)escort.Invoke(director, new object[] { false, centre + new Vector3(20f, 0f, 0f), false });
+            var wyvern = (Component)escort.Invoke(director, new object[] { true, centre + new Vector3(-20f, 0f, 0f), false });
+            yield return null;
+            Assert.Less(bat.transform.position.y, centre.y - 25f, "A plain bat should stay below the boss arena");
+            Assert.Greater(wyvern.transform.position.y, centre.y - 15f, "A wyvern may fly up to the boss");
+
+            // Heartstone Nova only wounds the boss.
+            float max = (float)enemyType.GetProperty("MaxHealth").GetValue(boss);
+            powerType.GetMethod("Use").Invoke(powerType.GetProperty("Instance").GetValue(null), new[] { Enum.Parse(kindType, "HeartstoneNova"), (object)centre });
+            float health = (float)enemyType.GetProperty("Health").GetValue(boss);
+            Assert.IsFalse((bool)enemyType.GetProperty("IsDead").GetValue(boss), "Heartstone Nova must not kill the boss");
+            Assert.Less(health, max * 0.95f, "Heartstone Nova should wound the boss");
+
+            // It dies: the portal rises where it stood and its reward is offered.
+            enemyType.GetMethod("TakeDamage").Invoke(boss, new object[] { max * 5f, false });
+            Assert.IsTrue((bool)enemyType.GetProperty("IsDead").GetValue(boss), "The boss should die");
+            object portal = null;
+            end = Time.realtimeSinceStartup + 20f;
+            while (Time.realtimeSinceStartup < end && !(portal != null && rewardPicked))
+            {
+                Alive();
+                Screens();
+                portal = stageType.GetProperty("Portal").GetValue(stage);
+                yield return null;
+            }
+            Assert.IsNotNull(portal, "A portal should open where the boss fell");
+            Assert.IsTrue(rewardPicked, "The boss should offer its reward");
+
+            // Through the portal: stage 2.
+            var items = new System.Collections.Generic.List<string>();
+            foreach (Component item in (IList)combatType.GetProperty("Items").GetValue(player.GetComponent(combatType))) items.Add(item.name);
+            object generator = UnityEngine.Object.FindAnyObjectByType(generatorType);
+            int seed = (int)generatorType.GetProperty("UsedSeed").GetValue(generator);
+            Vector3 portalCentre = (Vector3)portal.GetType().GetProperty("Centre").GetValue(portal);
+            Teleport(player, portalCentre);
+            end = Time.realtimeSinceStartup + 20f;
+            while (Time.realtimeSinceStartup < end)
+            {
+                Alive();
+                Screens();
+                if ((int)stageType.GetProperty("Stage").GetValue(stage) == 2 && stageType.GetProperty("Current").GetValue(stage).ToString() == "Gathering"
+                    && state() == "Playing") break;
+                yield return null;
+            }
+            Assert.AreEqual(2, (int)stageType.GetProperty("Stage").GetValue(stage), "The portal should start stage 2");
+            Assert.AreEqual("Playing", state(), "The game should run on stage 2");
+            Assert.AreEqual(1, (int)xpType.GetProperty("Level").GetValue(xp), "The Warden starts stage 2 at level 1");
+            var after = new System.Collections.Generic.List<string>();
+            foreach (Component item in (IList)combatType.GetProperty("Items").GetValue(player.GetComponent(combatType))) after.Add(item.name);
+            CollectionAssert.AreEqual(items, after, "Items stay through the portal");
+            Assert.AreNotEqual(seed, (int)generatorType.GetProperty("UsedSeed").GetValue(generator), "Stage 2 should have a new map");
+            Assert.IsNull(GameObject.Find("Boss Arena"), "The boss arena goes with the old stage");
+            Assert.Less(Vector3.Distance(player.transform.position, new Vector3(0f, 1.6f, -7f)), 4f, "The Warden starts at the foot of the tower");
+            Assert.Greater((float)stageType.GetProperty("HealthScale").GetValue(stage), 1f, "Enemies are tougher on stage 2");
+            LogAssert.NoUnexpectedReceived();
+        }
+
+        /// <summary>The doubled map: many more islands, reaching much further, with large islands golems never take.</summary>
+        [UnityTest]
+        public IEnumerator BigMapAndGolemFreeLargeIslands()
+        {
+            SceneManager.LoadScene("Arena");
+            yield return null;
+            NoBoss();
+            Type islandType = Type.GetType("Hookfall.World.Island, Assembly-CSharp");
+            int count = 0, large = 0;
+            float reach = 0f;
+            foreach (Component island in (IList)islandType.GetField("All").GetValue(null))
+            {
+                count++;
+                if (islandType.GetProperty("Kind").GetValue(island).ToString() == "Large") large++;
+                Vector3 p = island.transform.position;
+                reach = Mathf.Max(reach, new Vector2(p.x, p.z).magnitude);
+            }
+            Assert.Greater(count, 70, "The doubled map should have many more islands");
+            Assert.Greater(large, 3, "The map should have large islands");
+            Assert.Greater(reach, 220f, "Islands should reach twice as far");
+
+            Type directorType = Type.GetType("Hookfall.Enemies.EnemyDirector, Assembly-CSharp");
+            object director = UnityEngine.Object.FindAnyObjectByType(directorType);
+            var spawnGolem = directorType.GetMethod("SpawnGolem", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            Type golemType = Type.GetType("Hookfall.Enemies.Golem, Assembly-CSharp");
+            int golems = 0;
+            for (int i = 0; i < 30; i++)
+            {
+                object golem = spawnGolem.Invoke(director, new object[] { 5f });
+                if (golem == null) continue;
+                golems++;
+                object home = golemType.GetProperty("HomeIsland").GetValue(golem);
+                Assert.AreNotEqual("Large", islandType.GetProperty("Kind").GetValue(home).ToString(), "Golems never spawn on large islands");
+            }
+            Assert.Greater(golems, 0, "Golems should still find islands");
+            yield return null;
+            LogAssert.NoUnexpectedReceived();
+        }
+
+        /// <summary>Jumps the stage clock to 4:55 so wyverns, golems and the first elite wave all appear.</summary>
         [UnityTest]
         public IEnumerator LateRunSpawnsEveryEnemy()
         {
             SceneManager.LoadScene("Arena");
             yield return null;
 
-            Type gmType = Type.GetType("Hookfall.Core.GameManager, Assembly-CSharp");
-            object gm = gmType.GetProperty("Instance").GetValue(null);
-            gmType.GetProperty("RunTime").SetValue(gm, 295f);
+            Type stageType = Type.GetType("Hookfall.World.StageDirector, Assembly-CSharp");
+            stageType.GetProperty("StageTime").SetValue(stageType.GetProperty("Instance").GetValue(null), 295f);   // the waves follow the stage clock
 
             GameObject player = GameObject.Find("Player");
             Type levelUpType = Type.GetType("Hookfall.Progression.LevelUpSystem, Assembly-CSharp");

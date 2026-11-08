@@ -79,6 +79,14 @@ namespace Hookfall.World
             }
         }
 
+        /// <summary>A new stage: the power-ups of the old map go.</summary>
+        public void ClearAll()
+        {
+            foreach (PowerUp power in alive) if (power != null) Destroy(power.gameObject);
+            alive.Clear();
+            timer = Random.Range(interval.x, interval.y);
+        }
+
         public PowerUpKind RollKind()
         {
             float total = 0f;
@@ -168,7 +176,10 @@ namespace Hookfall.World
                     foreach (EnemyBase enemy in EnemyBase.Active.ToArray()) enemy.Freeze(freezeSeconds);
                     break;
                 case PowerUpKind.HeartstoneNova:
-                    foreach (EnemyBase enemy in EnemyBase.Active.ToArray()) enemy.Die(true);
+                    // Every enemy dies; the boss only loses a tenth of its health.
+                    foreach (EnemyBase enemy in EnemyBase.Active.ToArray())
+                        if (enemy.IsBoss) enemy.TakeDamage(enemy.MaxHealth * 0.1f, true);
+                        else enemy.Die(true);
                     break;
             }
             HUD.Announce(NameOf(kind), ColorOf(kind));

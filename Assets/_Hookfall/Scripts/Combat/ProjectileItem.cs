@@ -17,7 +17,7 @@ namespace Hookfall.Combat
         protected override void Awake()
         {
             base.Awake();
-            strike = Strike;
+            strike = OnProjectileHit;
             // Projectiles live outside the player so they do not move with it.
             container = new GameObject($"{name} Projectiles").transform;
             pool = new ObjectPool<Projectile>(
@@ -26,6 +26,9 @@ namespace Hookfall.Combat
                 p => p.gameObject.SetActive(false),
                 p => Destroy(p.gameObject), false, 32, 400);
         }
+
+        /// <summary>A projectile hit an enemy: schools' statuses, then damage (an item may add a splash).</summary>
+        protected virtual void OnProjectileHit(Enemies.EnemyBase enemy, float damage) => Strike(enemy, damage);
 
         protected void Fire(Vector3 position, Vector3 velocity, float life, Enemies.EnemyBase homingTarget = null, float turnRate = 0f)
         {

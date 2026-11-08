@@ -9,8 +9,8 @@ namespace Hookfall.Tests
 {
     public class RecordGuard
     {
-        private static readonly string[] FloatKeys = { "hf_best_time" };
-        private static readonly string[] IntKeys = { "hf_best_level", "hf_best_kills", "hf_total_kills", "hf_max_level" };
+        private static readonly string[] FloatKeys = { "hf_best_time", "hf_longest_time" };
+        private static readonly string[] IntKeys = { "hf_best_level", "hf_best_kills", "hf_best_stage", "hf_total_kills", "hf_max_level" };
         private static readonly string[] StringKeys = { "hf_character", "hf_language" };
         private readonly Dictionary<string, object> saved = new Dictionary<string, object>();
 

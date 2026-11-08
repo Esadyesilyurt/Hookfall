@@ -22,6 +22,14 @@ namespace Hookfall.Audio
         EliteWave,
         RunEnd,
         WallJump,
-        Trick
+        Trick,
+        // The stage boss and the portal (2026-11-08).
+        BossRoar,
+        BossVolley,
+        BossSlam,
+        BossDeath,
+        PortalOpen,
+        PortalEnter,
+        StageStart
     }
 }
