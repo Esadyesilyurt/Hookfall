@@ -29,11 +29,37 @@ namespace Hookfall.UI
         private float shownAt;
 
         /// <summary>Rolls a chest's choices and shows them; with no screen available the first choice is given at once.</summary>
-        public static void Offer(CombatSystem combat, PlayerStats stats, Rarity rarity)
+        public static void Offer(CombatSystem combat, PlayerStats stats, Rarity rarity) => OfferSeries(combat, stats, rarity, 1, null);
+
+        /// <summary>Several picks in a row (the tower cache: three Legendary picks), titled "title · 1/3".</summary>
+        public static void OfferSeries(CombatSystem combat, PlayerStats stats, Rarity rarity, int count, string seriesTitle)
         {
+            for (int i = 0; i < count; i++)
+            {
+                List<ChestReward> rolled = combat.RollChest(rarity);
+                string title = seriesTitle != null ? $"{seriesTitle}  ·  {i + 1}/{count}" : null;
+                if (Instance == null || !Instance.Show(rarity, rolled, choice => combat.Claim(choice, stats), title))
+                {
+                    combat.Claim(rolled[0], stats);
+                    continue;
+                }
+                // The rest follow, one after each pick.
+                Instance.pending = count - i - 1;
+                Instance.next = () => Instance.ContinueSeries(combat, stats, rarity, count, seriesTitle);
+                return;
+            }
+        }
+
+        private int pending;
+        private Action next;
+
+        private void ContinueSeries(CombatSystem combat, PlayerStats stats, Rarity rarity, int count, string seriesTitle)
+        {
+            int index = count - pending;
+            pending--;
             List<ChestReward> rolled = combat.RollChest(rarity);
-            if (Instance == null || !Instance.Show(rarity, rolled, choice => combat.Claim(choice, stats)))
-                combat.Claim(rolled[0], stats);
+            string title = $"{seriesTitle}  ·  {index + 1}/{count}";
+            if (!Show(rarity, rolled, choice => combat.Claim(choice, stats), title)) combat.Claim(rolled[0], stats);
         }
 
         private void Awake()
@@ -62,7 +88,7 @@ namespace Hookfall.UI
         }
 
         /// <summary>Pauses the game and shows the choices; onClaim gets the picked one. Returns false if another screen is open.</summary>
-        public bool Show(Rarity rarity, IReadOnlyList<ChestReward> options, Action<ChestReward> onClaim)
+        public bool Show(Rarity rarity, IReadOnlyList<ChestReward> options, Action<ChestReward> onClaim, string titleText = null)
         {
             GameManager gm = GameManager.Instance;
             if (gm != null && !gm.OpenModal(RunState.ChestResult)) return false;
@@ -74,7 +100,7 @@ namespace Hookfall.UI
 
             Color color = UITheme.ForRarity(rarity);
             raysImage.color = new Color(color.r, color.g, color.b, 0.3f);
-            title.text = Loc.T(rarity.ToString().ToUpperInvariant() + " CHEST");
+            title.text = titleText ?? Loc.T(rarity.ToString().ToUpperInvariant() + " CHEST");
             title.color = color;
             for (int i = 0; i < options.Count; i++)
                 cards.Add(BuildCard(i, options[i], options[i].Item != null ? UITheme.ForRarity(options[i].Item.Rarity) : color));
@@ -140,6 +166,8 @@ namespace Hookfall.UI
             choices = null;
             claim?.Invoke(choice);
             GameManager.Instance?.CloseModal();
+            if (pending > 0 && next != null) next();
+            else next = null;
         }
     }
 }

@@ -85,7 +85,7 @@ namespace Hookfall.EditorTools
                 Transform r = Pivot(visual.transform, "Arm_R", new Vector3(1.25f, 2.4f, 0f));
                 Part(r, "Arm", PrimitiveType.Cube, new Vector3(0f, -0.8f, 0f), new Vector3(0.6f, 1.8f, 0.6f), Mat("M_Golem"));
             }
-            Stats(golem, "Golem", 150f, 0f, 0f, 5f, 5, 1.4f);
+            Stats(golem, "Golem", 150f, 0f, 0f, 20f, 15, 1.4f);   // 5 XP, 5 gold until 2026-11-08: island fights must pay
             SetFloat(golem, "knockback", 0f);   // golems stand on their island
             SetFloat(golem, "hitPunch", 0.08f);
             SetRef(golem, "warningMaterial", Mat("M_Warning"));

@@ -295,7 +295,10 @@ namespace Hookfall.Enemies
                 if (dotTimer <= 0f)
                 {
                     dotTimer = 0.5f;
-                    TakeDamage(((Burning ? burnDps : 0f) + (Bleeding ? bleedDps : 0f)) * 0.5f, true);
+                    float burn = Burning ? burnDps * (Shocked && synergy != null && synergy.HasDuo(Hookfall.Combat.Duo.Plasma) ? 2f : 1f) : 0f;
+                    float dot = burn + (Bleeding ? bleedDps : 0f);
+                    if (Burning && Bleeding && synergy != null && synergy.HasDuo(Hookfall.Combat.Duo.BoilingBlood)) dot *= 1.5f;
+                    TakeDamage(dot * 0.5f, true);
                     if (IsDead) return;
                 }
             }

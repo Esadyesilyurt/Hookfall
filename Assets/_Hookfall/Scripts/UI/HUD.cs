@@ -24,6 +24,19 @@ namespace Hookfall.UI
 
         /// <summary>Set every frame by world objects the player can use (chests); cleared after drawing.</summary>
         public static string InteractPrompt;
+
+        private static string announceText;
+        private static Color announceColor;
+        private static float announceTime = -999f;
+        private TextMeshProUGUI announce;
+
+        /// <summary>A big line across the screen for a moment: power-ups, duos, the tower cache.</summary>
+        public static void Announce(string text, Color color)
+        {
+            announceText = text;
+            announceColor = color;
+            announceTime = Time.unscaledTime;
+        }
         /// <summary>Set by the tower cache while it waits on the tower; null hides the marker.</summary>
         public static Vector3? TowerCacheMarker;
         /// <summary>0..1 while the tower cache is being opened, otherwise negative.</summary>
@@ -101,6 +114,11 @@ namespace Hookfall.UI
                 "The storm pushes you back", 28f, new Color(0.7f, 0.82f, 1f), TextAlignmentOptions.Center, true);
 
             // Top right: gold and kills.
+            announce = UIFactory.Text(UIFactory.Rect(c, "Announce", new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -230f), new Vector2(1400f, 80f)),
+                "", 54f, UITheme.Gold, TextAlignmentOptions.Center, true);
+            announce.fontStyle = FontStyles.Bold;
+            announce.characterSpacing = 6f;
+
             // Under the counters: the schools the build is made of, and how far each set is.
             synergyText = UIFactory.Text(UIFactory.Rect(c, "Synergies", new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-24f, -170f), new Vector2(360f, 260f), new Vector2(1f, 1f)),
                 "", 22f, UITheme.Text, TextAlignmentOptions.TopRight, true);
@@ -236,6 +254,17 @@ namespace Hookfall.UI
 
             DrawSlots();
             DrawCacheMarker();
+
+            float age = Time.unscaledTime - announceTime;
+            announce.gameObject.SetActive(age < 2.6f);
+            if (age < 2.6f)
+            {
+                if (announce.text != announceText) announce.text = announceText;
+                Color c = announceColor;
+                c.a = Mathf.Clamp01((2.6f - age) / 0.6f);
+                announce.color = c;
+                announce.transform.localScale = Vector3.one * (1f + 0.15f * Mathf.Clamp01(1f - age * 4f));
+            }
         }
 
         private void DrawCrosshair(float dt)
@@ -267,10 +296,14 @@ namespace Hookfall.UI
 
         private void DrawSynergies()
         {
-            if (synergy == null && combat != null) synergy = combat.GetComponent<SynergySystem>();
+            if (synergy == null && combat != null)
+            {
+                synergy = combat.GetComponent<SynergySystem>();
+                if (synergy != null) synergy.DuoUnlocked += duo => Announce(Hookfall.Core.Loc.F("DUO: {0}", DuoInfo.Name(duo)), UITheme.Gold);
+            }
             if (synergy == null) return;
             int hash = 0;
-            foreach (School school in SchoolInfo.All) hash = hash * 7 + synergy.Count(school);
+            foreach (School school in SchoolInfo.All) hash = hash * 7 + Mathf.Min(synergy.Count(school), 5);
             if (hash == synergyHash) return;   // rebuild the text only when a count changes
             synergyHash = hash;
             var text = new System.Text.StringBuilder();
@@ -281,6 +314,8 @@ namespace Hookfall.UI
                 string next = count < SynergySystem.FirstTier ? "/2" : count < SynergySystem.SecondTier ? "/4" : "  " + Hookfall.Core.Loc.T("MAX");
                 text.Append($"{SchoolInfo.Colored(school)}  <b>{count}</b>{next}\n");
             }
+            foreach (Duo duo in DuoInfo.All)
+                if (synergy.HasDuo(duo)) text.Append($"<color=#FFD24D>+ {DuoInfo.Name(duo)}</color>\n");
             synergyText.text = text.ToString();
         }
 

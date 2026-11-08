@@ -75,6 +75,7 @@ namespace Hookfall.Enemies
             HomeIsland = null;
             ShowAimLine(false, Vector3.zero);
             ShowSlamRing(false);
+            if (killed && Hookfall.World.PowerUpSpawner.Instance != null) Hookfall.World.PowerUpSpawner.Instance.GolemDrop(transform.position);
         }
 
         protected override void FrameUpdate(float deltaTime)

@@ -265,6 +265,19 @@ namespace Hookfall.EditorTools
             AudioWiring.AssignClips(audio);
 
             // Open-sky features between the islands: updrafts, air channels, refill crystals, hook anchors.
+            // Power-ups floating in the sky (2026-11-08).
+            var powerUps = new GameObject("Power-ups").AddComponent<PowerUpSpawner>();
+            SetRef(powerUps, "player", controller);
+            SetRef(powerUps, "audioManager", audio);
+            SetRef(powerUps, "vfx", vfx);
+            SetRef(powerUps, "particleMaterial", ToonSetup.ParticleMaterial());
+            var orbs = new SerializedObject(powerUps);
+            SerializedProperty orbList = orbs.FindProperty("orbMaterials");
+            string[] orbNames = { "M_Gold", "M_HealGlow", "M_EnemyEye", "M_Crystal", "M_Heartstone" };   // PowerUpKind order
+            orbList.arraySize = orbNames.Length;
+            for (int i = 0; i < orbNames.Length; i++) orbList.GetArrayElementAtIndex(i).objectReferenceValue = Mat(orbNames[i]);
+            orbs.ApplyModifiedPropertiesWithoutUndo();
+
             var sky = new GameObject("Sky Features").AddComponent<SkyFeatures>();
             SetRef(sky, "islands", generator);
             SetRef(sky, "player", controller);
@@ -285,6 +298,7 @@ namespace Hookfall.EditorTools
             SetRef(feel, "impulse", impulse);
             SetRef(feel, "volume", postFx);
             SetRef(feel, "vfx", vfx);
+            SetRef(powerUps, "feel", feel);
             var numbers = new GameObject("Damage Numbers").AddComponent<DamageNumbers>();
             SetRef(numbers, "fontMaterial", AssetDatabase.LoadAssetAtPath<Material>("Assets/TextMesh Pro/Resources/Fonts & Materials/LiberationSans SDF - Outline.mat"));
 

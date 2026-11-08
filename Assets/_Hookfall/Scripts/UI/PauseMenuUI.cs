@@ -63,7 +63,7 @@ namespace Hookfall.UI
             UIFactory.Sized(statGrid, -1f, 7 * 44f);
             // The bestiary made way for the set bonuses on 2026-11-08: builds are what the player needs here.
             Header(infoPanel.transform, "SYNERGIES");
-            bestiary = UIFactory.Sized(UIFactory.Text(infoPanel.transform, "Synergies", "", 18f, UITheme.TextMuted, TextAlignmentOptions.TopLeft), -1f, 300f);
+            bestiary = UIFactory.Sized(UIFactory.Text(infoPanel.transform, "Synergies", "", 15f, UITheme.TextMuted, TextAlignmentOptions.TopLeft), -1f, 470f);
             info = infoPanel.gameObject;
 
             settings = SettingsPanel.Build(canvas.transform, () => ShowSettings(false));
@@ -149,6 +149,12 @@ namespace Hookfall.UI
                 string first = Tier(count >= SynergySystem.FirstTier, "2: " + SchoolInfo.Bonus(school, 1));
                 string second = Tier(count >= SynergySystem.SecondTier, "4: " + SchoolInfo.Bonus(school, 2));
                 text.Append($"{SchoolInfo.Colored(school)} <b>{count}</b>   {first}   ·   {second}\n");
+            }
+            text.Append("\n");
+            foreach (Duo duo in DuoInfo.All)
+            {
+                bool on = synergy != null && synergy.HasDuo(duo);
+                text.Append(Tier(on, $"<b>{DuoInfo.Name(duo)}</b> ({DuoInfo.Pair(duo)}): {DuoInfo.Effect(duo)}") + "\n");
             }
             return text.ToString();
         }

@@ -36,6 +36,7 @@ Attacks are automatic and only fire while you are in the air.
 - A global leaderboard of best watches (Unity Gaming Services for now, Steam later; setup in Docs/Leaderboard.md)
 - English and Turkish (Settings > Language)
 - Builds: every item belongs to schools (Flame, Frost, Storm, Blood, Arcane, Guardian, Wild, Fortune) with 2- and 4-item set bonuses; hits burn, chill, shock or bleed
+- Eleven duo synergies across schools, five power-ups floating in the sky, and a tower cache that clears the sky and gives three Legendary picks
 - Seven characters with their own models and school affinities
 - Fourteen attack items (three long-range: Skybolt Crossbow, Chain Lightning, Starfall) and twenty-four passives, with lifesteal (lifesteal, shield, revive, crits and more) in four rarities; rarer chests offer rarer items
 - Updrafts, air channels between islands, refill crystals for the double jump and dash, and floating hook anchors in the open sky
