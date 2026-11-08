@@ -462,6 +462,101 @@ namespace Hookfall.Tests
             Assert.IsNotNull(landedOn, "Flying into an island side 3 m below its top should climb onto an island");
         }
 
+        /// <summary>The tower: flying into the parapet 2 m below the deck climbs the Warden onto the deck.</summary>
+        [UnityTest]
+        public IEnumerator LedgeClimbReachesTheTowerTop()
+        {
+            SceneManager.LoadScene("Arena");
+            yield return null;
+            GameObject player = GameObject.Find("Player");
+            var body = player.GetComponent<Rigidbody>();
+            Type pcType = Type.GetType("Hookfall.Player.PlayerController, Assembly-CSharp");
+            Component controller = player.GetComponent(pcType);
+            Type islandType = Type.GetType("Hookfall.World.Island, Assembly-CSharp");
+            GameObject sky = GameObject.Find("Sky Features");
+            if (sky != null) sky.SetActive(false);
+            Component tower = null;
+            foreach (Component island in (IList)islandType.GetField("All").GetValue(null))
+                if (island.name == "Tower") tower = island;
+            Assert.IsNotNull(tower, "The arena needs a tower");
+            Vector3 top = (Vector3)islandType.GetProperty("Top").GetValue(tower);
+            Assert.Greater(top.y, 10f, "The tower's top should be its deck, not its base");
+            float width = (float)islandType.GetProperty("Width").GetValue(tower);
+            Vector3 outward = new Vector3(1f, 0f, 0.3f).normalized;
+            Vector3 start = top + outward * (width * 0.5f + 1.5f) + Vector3.down * 2f;
+            player.transform.position = start;
+            body.position = start;
+            body.linearVelocity = -outward * 8f;
+            Component landedOn = null;
+            float end = Time.realtimeSinceStartup + 3f;
+            yield return new WaitForFixedUpdate();
+            while (Time.realtimeSinceStartup < end && landedOn == null)
+            {
+                KeepAlive(player);
+                if (!(bool)pcType.GetProperty("IsAirborne").GetValue(controller))
+                    landedOn = (Component)pcType.GetProperty("CurrentIsland").GetValue(controller);
+                yield return new WaitForFixedUpdate();
+            }
+            LogAssert.NoUnexpectedReceived();
+            Assert.AreEqual(tower, landedOn, "Flying into the tower's parapet should climb onto the deck");
+            Assert.Greater(body.position.y, top.y - 0.5f, "The Warden should stand on the deck");
+        }
+
+        /// <summary>Full attack slots: a chest still offers new items, and one takes the place of the item given up.</summary>
+        [UnityTest]
+        public IEnumerator NewItemReplacesAChosenItemWhenFull()
+        {
+            PlayerPrefs.SetString("hf_character", "Warden");
+            SceneManager.LoadScene("Arena");
+            yield return null;
+            GameObject player = GameObject.Find("Player");
+            var flags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+            Type combatType = Type.GetType("Hookfall.Combat.CombatSystem, Assembly-CSharp");
+            Type rewardType = Type.GetType("Hookfall.Combat.ChestReward, Assembly-CSharp");
+            Type statType = Type.GetType("Hookfall.Player.StatType, Assembly-CSharp");
+            Type statsType = Type.GetType("Hookfall.Player.PlayerStats, Assembly-CSharp");
+            Type rarityType = Type.GetType("Hookfall.Combat.Rarity, Assembly-CSharp");
+            Component combat = player.GetComponent(combatType);
+            Component stats = player.GetComponent(statsType);
+            var items = (IList)combatType.GetProperty("Items").GetValue(combat);
+            Func<Component, bool> passive = c => (bool)c.GetType().GetProperty("IsPassive").GetValue(c);
+            Func<Component, object> newReward = prefab => Activator.CreateInstance(rewardType,
+                prefab.GetType().GetProperty("Rarity").GetValue(prefab), prefab, true, 1, Enum.ToObject(statType, 0));
+            var claim = combatType.GetMethod("Claim");
+            var owned = new System.Collections.Generic.HashSet<string>();
+            foreach (Component item in items) owned.Add(item.name);
+            Component spare = null;
+            foreach (Component prefab in (IList)combatType.GetField("itemPrefabs", flags).GetValue(combat))
+            {
+                if (passive(prefab) || owned.Contains(prefab.name)) continue;
+                int attacks = 0;
+                foreach (Component item in items) if (!passive(item)) attacks++;
+                if (attacks < 6) { claim.Invoke(combat, new[] { newReward(prefab), stats, null }); owned.Add(prefab.name); }
+                else if (spare == null) spare = prefab;
+            }
+            Assert.IsNotNull(spare, "There should be more attack items than slots");
+            Assert.IsFalse((bool)combatType.GetMethod("HasFreeSlot").Invoke(combat, new object[] { false }), "Attack slots should be full");
+
+            bool offersNew = false;
+            var roll = combatType.GetMethod("RollChest");
+            for (int i = 0; i < 20 && !offersNew; i++)
+                foreach (object r in (IList)roll.Invoke(combat, new[] { Enum.Parse(rarityType, "Common") }))
+                    if ((bool)rewardType.GetField("IsNewItem").GetValue(r)) offersNew = true;
+            Assert.IsTrue(offersNew, "Chests should still offer new items when the slots are full");
+
+            int count = items.Count;
+            int slot = -1;
+            for (int i = 0; i < items.Count; i++) if (!passive((Component)items[i])) slot = i;
+            Component given = (Component)items[slot];
+            string givenName = given.name;
+            claim.Invoke(combat, new[] { newReward(spare), stats, given });
+            yield return null;
+            Assert.AreEqual(count, items.Count, "Replacing should keep the number of items");
+            Assert.AreEqual(spare.name, ((Component)items[slot]).name, "The new item should take the given-up item's slot");
+            foreach (Component item in items) Assert.AreNotEqual(givenName, item.name, "The given-up item should be gone");
+            LogAssert.NoUnexpectedReceived();
+        }
+
         /// <summary>Speed cap: 40 m/s before Flight speed picks; Zip and release boosts add at most 15%.</summary>
         [UnityTest]
         public IEnumerator AirSpeedIsCapped()
@@ -584,7 +679,7 @@ namespace Hookfall.Tests
             {
                 if (owned.Contains(prefab.name)) continue;
                 object reward = Activator.CreateInstance(rewardType, prefab.GetType().GetProperty("Rarity").GetValue(prefab), prefab, true, 1, Enum.ToObject(statType, 0));
-                combatType.GetMethod("Claim").Invoke(combat, new[] { reward, stats });
+                combatType.GetMethod("Claim").Invoke(combat, new[] { reward, stats, null });
             }
             Assert.AreEqual(prefabs.Count, items.Count, "Every item should be owned");
             yield return null;
@@ -738,7 +833,7 @@ namespace Hookfall.Tests
             var flags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
             foreach (Component prefab in (IList)combatType.GetField("itemPrefabs", flags).GetValue(combat))
                 if (Array.IndexOf(new[] { "PF_Item_StormAura", "PF_Item_ChainLightning", "PF_Item_ThunderingBell", "PF_Item_LightningRod" }, prefab.name) >= 0)
-                    combatType.GetMethod("Claim").Invoke(combat, new[] { Activator.CreateInstance(rewardType, prefab.GetType().GetProperty("Rarity").GetValue(prefab), prefab, true, 1, Enum.ToObject(statType, 0)), player.GetComponent(statsType) });
+                    combatType.GetMethod("Claim").Invoke(combat, new[] { Activator.CreateInstance(rewardType, prefab.GetType().GetProperty("Rarity").GetValue(prefab), prefab, true, 1, Enum.ToObject(statType, 0)), player.GetComponent(statsType), null });
             Assert.GreaterOrEqual(count("Storm"), 4, "Four Storm items should make Storm 4");
             int chainsBefore = (int)synergyType.GetProperty("ChainsFired").GetValue(synergy);
             Component victim = null;
@@ -833,7 +928,7 @@ namespace Hookfall.Tests
             Assert.IsFalse(thermal(), "No duo at the start");
             foreach (Component prefab in (IList)combatType.GetField("itemPrefabs", flags).GetValue(combat))
                 if (prefab.name == "PF_Item_SteamGauntlet" || prefab.name == "PF_Item_ArcLaser")
-                    combatType.GetMethod("Claim").Invoke(combat, new[] { Activator.CreateInstance(rewardType, prefab.GetType().GetProperty("Rarity").GetValue(prefab), prefab, true, 1, Enum.ToObject(statType, 0)), player.GetComponent(statsType) });
+                    combatType.GetMethod("Claim").Invoke(combat, new[] { Activator.CreateInstance(rewardType, prefab.GetType().GetProperty("Rarity").GetValue(prefab), prefab, true, 1, Enum.ToObject(statType, 0)), player.GetComponent(statsType), null });
             Assert.IsTrue(thermal(), "Moonblade Halo + Steamforged Gauntlet (Frost 2) and the gauntlet + Sunlance Prism (Flame 2) should unlock Thermal Shock");
             yield return null;
             LogAssert.NoUnexpectedReceived();

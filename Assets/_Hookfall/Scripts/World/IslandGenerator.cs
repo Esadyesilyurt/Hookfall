@@ -262,9 +262,11 @@ namespace Hookfall.World
                 GameObject tower = Instantiate(towerModel, transform);
                 tower.name = "Tower";
                 tower.transform.localPosition = Vector3.zero;
-                tower.AddComponent<Island>().Setup(IslandKind.Tower, 6f);   // the tower can be hooked and stood on
                 Transform top = FindDeep(tower.transform, "TowerTop");
                 TowerTop = top != null ? top.position : transform.position + Vector3.up * towerHeight;
+                // The tower can be hooked and stood on. Its top is the deck and its width reaches the parapet, so touching
+                // the parapet or the corbels under it climbs the Warden over onto the deck (2026-11-08).
+                tower.AddComponent<Island>().Setup(IslandKind.Tower, 7.2f, TowerTop.y - tower.transform.position.y);
                 return;
             }
 
@@ -273,7 +275,7 @@ namespace Hookfall.World
             cylinder.transform.SetParent(transform, false);
             cylinder.transform.localPosition = new Vector3(0f, towerHeight * 0.5f, 0f);
             cylinder.transform.localScale = new Vector3(4f, towerHeight * 0.5f, 4f);
-            cylinder.AddComponent<Island>().Setup(IslandKind.Tower, 4f);
+            cylinder.AddComponent<Island>().Setup(IslandKind.Tower, 4f, towerHeight * 0.5f);
             SetMaterial(cylinder, towerMaterial != null ? towerMaterial : stoneMaterial);
             UseMeshCollider(cylinder);
             TowerTop = transform.position + Vector3.up * towerHeight;

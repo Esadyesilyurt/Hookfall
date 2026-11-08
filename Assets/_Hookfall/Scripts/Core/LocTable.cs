@@ -427,6 +427,11 @@ namespace Hookfall.Core
             { "A glass orb with a tiny storm inside, humming with spells.", "İçinde minik bir fırtına olan, büyüyle uğuldayan cam küre." },
             { "A golden leech: whatever it drinks turns to coin.", "Altın bir sülük: içtiği her şey sikkeye döner." },
 
+            // ---- Replacing an item (2026-11-08)
+            { "REPLACE AN ITEM", "BİR EŞYAYI DEĞİŞTİR" },
+            { "Choose the item {0} replaces", "{0} hangi eşyanın yerine geçsin?" },
+            { "LEVEL {0}", "SEVİYE {0}" },
+
             // ---- Item lore
             { "Twin vault blades bound to the Warden by a Tether rune; they circle and cut whatever comes close.", "Bir Halat runuyla Bekçi'ye bağlı ikiz mahzen bıçakları; döner ve yaklaşanı keserler." },
             { "Splinters of a cracked Heartstone ward that burst outwards whenever the Warden takes flight.", "Çatlamış bir Kalp Taşı korumasının kıymıkları; Bekçi havalandıkça dışa doğru fırlarlar." },
