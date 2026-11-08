@@ -25,8 +25,6 @@ namespace Hookfall.World
         [SerializeField] private Vector4 rarityWeights = new Vector4(0f, 45f, 40f, 15f);   // unused since 2026-11-08: always Legendary
         [Tooltip("Enemies within this distance are destroyed when the cache opens.")]
         [SerializeField] private float clearRadius = 45f;
-        [Tooltip("Legendary picks the cache gives, one after another.")]
-        [SerializeField] private int picks = 3;
 
         private PlayerStats stats;
         private CombatSystem combat;
@@ -68,13 +66,13 @@ namespace Hookfall.World
             if (standing) HUD.InteractPrompt = Hookfall.Core.Loc.T("Opening the tower cache... hold your ground");
             if (progress < 1f) return;
 
-            // The long hold pays: every enemy close by is destroyed, then three Legendary picks (2026-11-08).
+            // The long hold pays: every enemy close by is destroyed, then one pick from three Legendary items (2026-11-08).
             foreach (Hookfall.Enemies.EnemyBase enemy in Hookfall.Enemies.EnemyBase.Active.ToArray())
                 if ((enemy.transform.position - transform.position).sqrMagnitude <= clearRadius * clearRadius) enemy.Die(true);
             Opened?.Invoke(transform.position, Rarity.Legendary);
             SetReady(false);
             HUD.Announce(Hookfall.Core.Loc.T("The Heartstone answers!"), new Color(1f, 0.62f, 0.15f));
-            ChestResultUI.OfferSeries(combat, stats, Rarity.Legendary, picks, Hookfall.Core.Loc.T("TOWER CACHE"));
+            ChestResultUI.OfferSeries(combat, stats, Rarity.Legendary, 1, Hookfall.Core.Loc.T("TOWER CACHE"));
         }
 
         private void SetReady(bool ready)

@@ -37,7 +37,7 @@ namespace Hookfall.UI
             for (int i = 0; i < count; i++)
             {
                 List<ChestReward> rolled = combat.RollChest(rarity);
-                string title = seriesTitle != null ? $"{seriesTitle}  ·  {i + 1}/{count}" : null;
+                string title = seriesTitle == null ? null : count > 1 ? $"{seriesTitle}  ·  {i + 1}/{count}" : seriesTitle;
                 if (Instance == null || !Instance.Show(rarity, rolled, choice => combat.Claim(choice, stats), title))
                 {
                     combat.Claim(rolled[0], stats);

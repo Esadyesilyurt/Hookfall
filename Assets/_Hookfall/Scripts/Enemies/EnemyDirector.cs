@@ -66,6 +66,8 @@ namespace Hookfall.Enemies
         [Header("Scaling")]
         [SerializeField] private float healthGrowthPerMinute = 0.15f;
         [SerializeField] private float damageGrowthPerMinute = 0.08f;
+        [Tooltip("Extra enemy damage per Warden level above 1, so lifesteal and armor do not make the horde harmless.")]
+        [SerializeField] private float damageGrowthPerLevel = 0.1f;
 
         [Header("Performance fallback (GDD 5.7)")]
         [SerializeField] private float minFps = 50f;
@@ -77,6 +79,7 @@ namespace Hookfall.Enemies
         private readonly Dictionary<EnemyBase, ObjectPool<EnemyBase>> pools = new Dictionary<EnemyBase, ObjectPool<EnemyBase>>();
         private ObjectPool<Boulder> boulders;
         private PlayerStats playerStats;
+        private Hookfall.Progression.XPSystem playerXP;
         private float spawnBudget;
         private int flockLeft;
         private Vector3 flockCentre;
@@ -97,6 +100,10 @@ namespace Hookfall.Enemies
         private float MinutesSurvived =>
             (GameManager.Instance != null ? GameManager.Instance.RunTime : Time.timeSinceLevelLoad) / 60f;
 
+        /// <summary>Enemy damage at spawn: grows with time and with the Warden's level.</summary>
+        private float DamageScaleAt(float minutes) =>
+            1f + damageGrowthPerMinute * minutes + damageGrowthPerLevel * ((playerXP != null ? playerXP.Level : 1) - 1);
+
         public static void RaiseHit(EnemyBase enemy, float damage) => Hit?.Invoke(enemy, damage);
         public static void RaiseSlam(Golem golem) => Slammed?.Invoke(golem);
 
@@ -106,6 +113,7 @@ namespace Hookfall.Enemies
             LowPerformance = false;
             nextEliteTime = eliteInterval;
             if (player != null) playerStats = player.GetComponent<PlayerStats>();
+            if (player != null) playerXP = player.GetComponent<Hookfall.Progression.XPSystem>();
             if (batPrefab == null) Debug.LogWarning("[Hookfall] EnemyDirector has no Bat prefab; no enemies will spawn.");
             boulders = new ObjectPool<Boulder>(
                 () => Instantiate(boulderPrefab, transform),
@@ -165,7 +173,7 @@ namespace Hookfall.Enemies
         {
             EnemyBase enemy = PoolFor(prefab).Get();
             enemy.transform.SetPositionAndRotation(position, Quaternion.identity);
-            enemy.Init(this, player, 1f + healthGrowthPerMinute * minutes, 1f + damageGrowthPerMinute * minutes);
+            enemy.Init(this, player, 1f + healthGrowthPerMinute * minutes, DamageScaleAt(minutes));
             return enemy;
         }
 
@@ -190,7 +198,7 @@ namespace Hookfall.Enemies
             if (island == null) return null;
             var golem = (Golem)PoolFor(golemPrefab).Get();
             PlaceGolem(golem, island);
-            golem.Init(this, player, 1f + healthGrowthPerMinute * minutes, 1f + damageGrowthPerMinute * minutes);
+            golem.Init(this, player, 1f + healthGrowthPerMinute * minutes, DamageScaleAt(minutes));
             return golem;
         }
 
