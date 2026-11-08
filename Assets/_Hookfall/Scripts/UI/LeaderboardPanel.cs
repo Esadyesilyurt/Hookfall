@@ -1,4 +1,5 @@
-// Hookfall - the main menu's global leaderboard: the top ten best watches, the player's own rank, and the name shown on
+// Hookfall - the main menu's global leaderboard: the top 20 best watches, the player's own score below them (without a
+// rank) when they are not in the top 20, and the name shown on
 // the board. Reloads every time it opens; says so plainly when the service cannot be reached.
 // AI disclosure: written with Claude (Anthropic) on 2026-11-08. Prompts and changes are recorded in Docs/PromptLog.md.
 using System;
@@ -13,19 +14,21 @@ namespace Hookfall.UI
 {
     public class LeaderboardPanel : MonoBehaviour
     {
+        public const int Shown = 20;
+
         private TextMeshProUGUI rows, mine, status;
         private TMP_InputField nameField;
 
         public static GameObject Build(Transform canvas, Action onBack)
         {
-            Image image = UIFactory.Panel(canvas, "Leaderboard", new Vector2(980f, 780f), UITheme.Panel);
+            Image image = UIFactory.Panel(canvas, "Leaderboard", new Vector2(980f, 1010f), UITheme.Panel);
             UIFactory.Column(image, 14f, 40, TextAnchor.UpperCenter);
             var panel = image.gameObject.AddComponent<LeaderboardPanel>();
 
             TextMeshProUGUI title = UIFactory.Sized(UIFactory.Text(image.transform, "Title", "GLOBAL LEADERBOARD", 42f, UITheme.Player, TextAlignmentOptions.Center, true), -1f, 56f);
             title.characterSpacing = 10f;
             UIFactory.Sized(UIFactory.Text(image.transform, "Header", "<pos=2%>RANK<pos=16%>WARDEN<pos=62%>WATCH<pos=80%>CHARACTER", 20f, UITheme.TextMuted, TextAlignmentOptions.Left), -1f, 28f);
-            panel.rows = UIFactory.Sized(UIFactory.Text(image.transform, "Rows", "", 26f, UITheme.Text, TextAlignmentOptions.TopLeft), -1f, 360f);
+            panel.rows = UIFactory.Sized(UIFactory.Text(image.transform, "Rows", "", 21f, UITheme.Text, TextAlignmentOptions.TopLeft), -1f, 560f);
             panel.mine = UIFactory.Sized(UIFactory.Text(image.transform, "Mine", "", 26f, UITheme.Gold, TextAlignmentOptions.Center, true), -1f, 36f);
 
             RectTransform nameRow = UIFactory.Rect(image.transform, "Name", Vector2.zero, Vector2.zero, Vector2.zero, Vector2.zero);
@@ -49,7 +52,7 @@ namespace Hookfall.UI
         {
             rows.text = "Loading...";
             mine.text = "";
-            var top = await Leaderboard.Current.TopAsync(10);
+            var top = await Leaderboard.Current.TopAsync(Shown);
             LeaderboardRow? me = await Leaderboard.Current.MineAsync();
             if (this == null) return;   // the menu closed while waiting
 
@@ -57,7 +60,9 @@ namespace Hookfall.UI
             foreach (LeaderboardRow row in top)
                 text.Append($"<pos=2%>#{row.Rank}<pos=16%>{row.Name}<pos=62%>{RunRecord.FormatTime(row.Seconds)}<pos=80%>{row.Character}\n");
             rows.text = top.Count > 0 ? text.ToString() : "No watches on the board yet.";
-            mine.text = me.HasValue ? $"You: #{me.Value.Rank}  ·  {RunRecord.FormatTime(me.Value.Seconds)}" : "You have no score on the board yet.";
+            mine.text = !me.HasValue ? "You have no score on the board yet."
+                : me.Value.Rank <= Shown ? "You are in the top 20."
+                : $"You  ·  {me.Value.Name}  ·  {RunRecord.FormatTime(me.Value.Seconds)}";   // no rank outside the top 20
             status.text = Leaderboard.Current.Status;
             string name = Leaderboard.Current.PlayerName;
             int hash = name.LastIndexOf('#');   // the service adds a #1234 tag to keep names unique

@@ -122,9 +122,9 @@ namespace Hookfall.UI
             await Leaderboard.LastSubmit;
             LeaderboardRow? me = await Leaderboard.Current.MineAsync();
             if (this == null) return;
-            rank.text = me.HasValue
-                ? $"Global rank #{me.Value.Rank}  ·  your best {RunRecord.FormatTime(me.Value.Seconds)}"
-                : Leaderboard.Current.Status;
+            rank.text = !me.HasValue ? Leaderboard.Current.Status
+                : me.Value.Rank <= LeaderboardPanel.Shown ? $"Global rank #{me.Value.Rank}  ·  your best {RunRecord.FormatTime(me.Value.Seconds)}"
+                : $"On the global leaderboard  ·  your best {RunRecord.FormatTime(me.Value.Seconds)}";   // ranks only inside the top 20
         }
 
         private void Stat(string icon, string label, string value)
