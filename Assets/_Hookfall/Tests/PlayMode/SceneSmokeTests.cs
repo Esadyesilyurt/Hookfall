@@ -1159,6 +1159,44 @@ namespace Hookfall.Tests
             LogAssert.NoUnexpectedReceived();
         }
 
+        /// <summary>Test codes typed in a run (2026-11-09): BOSSGEL calls the boss, BOSSOL kills it, and the run is marked.</summary>
+        [UnityTest]
+        public IEnumerator TestCodesCallAndKillTheBoss()
+        {
+            SceneManager.LoadScene("Arena");
+            yield return null;
+            KeepAlive(GameObject.Find("Player"));
+            var flags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+            Type codesType = Type.GetType("Hookfall.World.CheatCodes, Assembly-CSharp");
+            Type stageType = Type.GetType("Hookfall.World.StageDirector, Assembly-CSharp");
+            Type cutsceneType = Type.GetType("Hookfall.Feel.CutsceneDirector, Assembly-CSharp");
+            object codes = UnityEngine.Object.FindAnyObjectByType(codesType);
+            Assert.IsNotNull(codes, "The arena should listen for test codes");
+            void Enter(string text) { foreach (char c in text) codesType.GetMethod("OnText", flags).Invoke(codes, new object[] { c }); }
+            object stage = stageType.GetProperty("Instance").GetValue(null);
+
+            Enter("xxbossgel");
+            object boss = null;
+            float end = Time.realtimeSinceStartup + 20f;
+            while (Time.realtimeSinceStartup < end)
+            {
+                var cutscenes = UnityEngine.Object.FindAnyObjectByType(cutsceneType);
+                if (cutscenes != null) cutsceneType.GetField("skip", flags).SetValue(cutscenes, true);
+                boss = stageType.GetProperty("Boss").GetValue(stage);
+                if (boss != null && (bool)boss.GetType().GetProperty("Fighting").GetValue(boss) && Time.timeScale > 0f) break;
+                yield return null;
+            }
+            Assert.IsNotNull(boss, "BOSSGEL should call the boss");
+            Assert.IsTrue((bool)boss.GetType().GetProperty("Fighting").GetValue(boss), "The boss should be fighting after its entrance");
+
+            Enter("BossOl");
+            Assert.IsTrue((bool)boss.GetType().GetProperty("IsDead").GetValue(boss), "BOSSOL should kill the boss");
+            Assert.IsTrue((bool)codesType.GetProperty("Used").GetValue(null), "A run with a code keeps off the record");
+            yield return null;
+            Time.timeScale = 1f;
+            LogAssert.NoUnexpectedReceived();
+        }
+
         /// <summary>A Warden with only the Orbit Blades flying at 38 m/s across the big map still meets the horde: enemies
         /// keep up and come within reach (2026-11-09: they trailed 30 m behind, out of view, and the sky looked empty).</summary>
         [UnityTest]

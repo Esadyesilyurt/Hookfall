@@ -94,9 +94,13 @@ namespace Hookfall.Core
             if (State == RunState.Dead) return;
             EndReason = reason;
             int stage = Hookfall.World.StageDirector.Instance != null ? Hookfall.World.StageDirector.Instance.Stage : 1;
-            NewRecord = RunRecord.Submit(RunTime, playerXP != null ? playerXP.Level : 1, Kills, stage);
-            Hookfall.Player.CharacterRoster.RecordRun(playerXP != null ? playerXP.Level : 1, Kills, RunTime);
-            Hookfall.Online.Leaderboard.SubmitRun(RunTime, Hookfall.Player.CharacterRoster.ActiveId, stage);
+            NewRecord = false;
+            if (!Hookfall.World.CheatCodes.Used)   // a run that used a test code counts for nothing
+            {
+                NewRecord = RunRecord.Submit(RunTime, playerXP != null ? playerXP.Level : 1, Kills, stage);
+                Hookfall.Player.CharacterRoster.RecordRun(playerXP != null ? playerXP.Level : 1, Kills, RunTime);
+                Hookfall.Online.Leaderboard.SubmitRun(RunTime, Hookfall.Player.CharacterRoster.ActiveId, stage);
+            }
             SetState(RunState.Dead);
             Debug.Log($"[Hookfall] Run over ({reason}). Stage {stage}, time {RunTime:F1} s, kills {Kills}.");
             RunEnded?.Invoke();
