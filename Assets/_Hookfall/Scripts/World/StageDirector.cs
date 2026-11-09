@@ -3,6 +3,7 @@
 // wyverns and elites can follow the Warden up there (the boss zone). Its death raises an island with a portal where it
 // stood and offers a Legendary pick; stepping into the portal starts the next stage: a new map, the Warden back to
 // level 1 at the foot of the tower with their items, stats and gold, and enemies that start stronger and grow faster.
+// On 2026-11-09 the boss moved 30 m higher and three islands began circling it, which the hook catches and the Warden can land on.
 // AI disclosure: written with Claude (Anthropic) on 2026-11-08. Prompts and changes are recorded in Docs/PromptLog.md.
 using System;
 using System.Collections;
@@ -68,12 +69,20 @@ namespace Hookfall.World
         [SerializeField] private float rewardsPerStage = 1.5f;
 
         [Header("Boss arena")]
-        [SerializeField] private Vector3 arenaCentre = new Vector3(0f, 78f, 0f);
+        [Tooltip("Where the boss stands: 78 m up until 2026-11-09, raised on Esad's request.")]
+        [SerializeField] private Vector3 arenaCentre = new Vector3(0f, 108f, 0f);
         [SerializeField] private int arenaIslands = 6;
         [SerializeField] private float arenaRing = 30f;
         [Tooltip("Island tops relative to the boss (min, max).")]
         [SerializeField] private Vector2 arenaIslandHeight = new Vector2(-24f, -14f);
         [SerializeField] private Vector2 arenaIslandWidth = new Vector2(11f, 15f);
+        [Header("Islands circling the boss (2026-11-09): hookable, the Warden can land on them")]
+        [SerializeField] private int orbitIslands = 3;
+        [SerializeField] private float orbitRing = 34f;
+        [Tooltip("Their tops relative to the boss.")]
+        [SerializeField] private float orbitHeight = -6f;
+        [SerializeField] private float orbitIslandWidth = 13f;
+        [SerializeField] private float orbitDegreesPerSecond = 6f;
         [Tooltip("The plain horde cannot rise above this far below the boss inside the arena column.")]
         [SerializeField] private float zoneFloorBelowBoss = 30f;
         [SerializeField] private float zoneRadius = 85f;
@@ -236,6 +245,13 @@ namespace Hookfall.World
                 float r = arenaRing + Random.Range(-3f, 5f);
                 Vector3 top = arenaCentre + new Vector3(Mathf.Cos(a) * r, Random.Range(arenaIslandHeight.x, arenaIslandHeight.y), Mathf.Sin(a) * r);
                 islands.BuildExtraIsland(arena.transform, top, Random.Range(arenaIslandWidth.x, arenaIslandWidth.y), IslandKind.Boss, true);
+            }
+            for (int i = 0; i < orbitIslands; i++)
+            {
+                float a = (start + 60f + i * 360f / orbitIslands) * Mathf.Deg2Rad;
+                Vector3 top = arenaCentre + new Vector3(Mathf.Cos(a) * orbitRing, orbitHeight, Mathf.Sin(a) * orbitRing);
+                Island island = islands.BuildExtraIsland(arena.transform, top, orbitIslandWidth, IslandKind.Boss, false);
+                island.gameObject.AddComponent<OrbitingIsland>().Init(arenaCentre, orbitDegreesPerSecond);
             }
             if (sky != null) sky.BuildBossAccess(arena.transform, arenaCentre + Vector3.up * arenaIslandHeight.x, arenaRing, start + 180f / arenaIslands);
             Random.state = previous;

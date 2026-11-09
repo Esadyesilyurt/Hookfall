@@ -1197,6 +1197,51 @@ namespace Hookfall.Tests
             LogAssert.NoUnexpectedReceived();
         }
 
+        /// <summary>The boss stands higher, with three islands circling it that carry a Warden standing on them (2026-11-09).</summary>
+        [UnityTest]
+        public IEnumerator BossIslandsCircleAndCarryTheWarden()
+        {
+            SceneManager.LoadScene("Arena");
+            yield return null;
+            GameObject player = GameObject.Find("Player");
+            KeepAlive(player);
+            var flags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+            Type stageType = Type.GetType("Hookfall.World.StageDirector, Assembly-CSharp");
+            Type cutsceneType = Type.GetType("Hookfall.Feel.CutsceneDirector, Assembly-CSharp");
+            Type orbitType = Type.GetType("Hookfall.World.OrbitingIsland, Assembly-CSharp");
+            Type islandType = Type.GetType("Hookfall.World.Island, Assembly-CSharp");
+            object stage = stageType.GetProperty("Instance").GetValue(null);
+            stageType.GetMethod("SummonBoss").Invoke(stage, null);
+            object boss = null;
+            float end = Time.realtimeSinceStartup + 20f;
+            while (Time.realtimeSinceStartup < end)
+            {
+                KeepAlive(player);
+                var cutscenes = UnityEngine.Object.FindAnyObjectByType(cutsceneType);
+                if (cutscenes != null) cutsceneType.GetField("skip", flags).SetValue(cutscenes, true);
+                boss = stageType.GetProperty("Boss").GetValue(stage);
+                if (boss != null && (bool)boss.GetType().GetProperty("Fighting").GetValue(boss) && Time.timeScale > 0f) break;
+                yield return null;
+            }
+            Assert.IsNotNull(boss, "The boss should rise");
+            Assert.Greater(((Component)boss).transform.position.y, 100f, "The boss stands higher than before (78 m)");
+
+            UnityEngine.Object[] orbits = UnityEngine.Object.FindObjectsByType(orbitType, FindObjectsSortMode.None);
+            Assert.AreEqual(3, orbits.Length, "Three islands circle the boss");
+            var ring = (Component)orbits[0];
+            Vector3 start = ring.transform.position;
+            Teleport(player, (Vector3)islandType.GetProperty("Top").GetValue(ring.GetComponent(islandType)) + Vector3.up * 1.2f);
+
+            end = Time.realtimeSinceStartup + 2.5f;
+            while (Time.realtimeSinceStartup < end) { KeepAlive(player); yield return null; }
+            Assert.Greater(Vector3.Distance(start, ring.transform.position), 3f, "The island should move along its circle");
+            Type controllerType = Type.GetType("Hookfall.Player.PlayerController, Assembly-CSharp");
+            object current = controllerType.GetProperty("CurrentIsland").GetValue(player.GetComponent(controllerType));
+            Assert.AreSame(ring.GetComponent(islandType), current, "The Warden should still stand on the moving island");
+            Time.timeScale = 1f;
+            LogAssert.NoUnexpectedReceived();
+        }
+
         /// <summary>A Warden with only the Orbit Blades flying at 38 m/s across the big map still meets the horde: enemies
         /// keep up and come within reach (2026-11-09: they trailed 30 m behind, out of view, and the sky looked empty).</summary>
         [UnityTest]
