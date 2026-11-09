@@ -3,7 +3,8 @@
 // Right click: the Zip, a power swing with its own cooldown and charges: a stiffer, faster swing that, held for about
 // one swing, starts reeling the Warden up towards the anchor to close the distance (reworked 2026-11-08).
 // AI disclosure: written with Claude (Anthropic) on 2026-11-04 as part of the midterm project skeleton,
-// extended on 2026-11-07 with the hook projectile and the Zip, reworked on 2026-11-08 for faster swings. Prompts and changes are recorded in Docs/PromptLog.md.
+// extended on 2026-11-07 with the hook projectile and the Zip, reworked on 2026-11-08 for faster swings; on 2026-11-09
+// the anchor follows what it caught, so the rope holds on the boss's orbiting islands. Prompts and changes are recorded in Docs/PromptLog.md.
 using System;
 using Hookfall.World;
 using UnityEngine;
@@ -67,6 +68,9 @@ namespace Hookfall.Player
         private PlayerStats stats;
         private SpringJoint joint;
         private Vector3 anchorPoint;
+        // What the hook caught and where on it, so the anchor moves with an island that moves.
+        private Transform anchorBody;
+        private Vector3 anchorLocal;
         private Vector3 headPosition;
         private bool travelling;
         private bool zipThrow;
@@ -111,9 +115,10 @@ namespace Hookfall.Player
 
         private void Update()
         {
-            HasTargetInRange = TryFindTarget(MaxRange, out _);
-            HasZipTarget = TryFindTarget(ZipRange, out _);
+            HasTargetInRange = TryFindTarget(MaxRange, out _, out _);
+            HasZipTarget = TryFindTarget(ZipRange, out _, out _);
             RechargeZip(Time.deltaTime);
+            FollowAnchor();
 
             // The hook head flies on even with no mouse (a gamepad, or a test driving the hook).
             if (travelling)
@@ -141,8 +146,16 @@ namespace Hookfall.Player
                 Release();   // without a mouse (tests, gamepad) the power swing runs until zipMaxTime
         }
 
+        private void FollowAnchor()
+        {
+            if (anchorBody == null || (!travelling && joint == null)) return;
+            anchorPoint = anchorBody.TransformPoint(anchorLocal);
+            if (joint != null) joint.connectedAnchor = anchorPoint;
+        }
+
         private void FixedUpdate()
         {
+            FollowAnchor();
             if (joint == null) return;
             float dt = Time.fixedDeltaTime;
             Rigidbody body = controller.Body;
@@ -220,9 +233,10 @@ namespace Hookfall.Player
         public static bool IsHookable(Collider collider) =>
             collider.GetComponentInParent<Island>() != null || collider.GetComponentInParent<HookAnchor>() != null;
 
-        private bool TryFindTarget(float range, out Vector3 point)
+        private bool TryFindTarget(float range, out Vector3 point, out Transform target)
         {
             point = default;
+            target = null;
             if (aimSource == null) return false;
 
             float rayLength = range + Vector3.Distance(aimSource.position, transform.position);
@@ -238,18 +252,21 @@ namespace Hookfall.Player
                 best = hit.distance;
                 found = IsHookable(hit.collider) && Vector3.Distance(transform.position, hit.point) <= range;
                 point = hit.point;
+                target = hit.collider.transform;
             }
             return found;
         }
 
         private void TryThrow(bool zip)
         {
-            if (!TryFindTarget(zip ? ZipRange : MaxRange, out Vector3 point)) return;
+            if (!TryFindTarget(zip ? ZipRange : MaxRange, out Vector3 point, out Transform target)) return;
             Release();
             if (zip) zipCharges--;
 
             lastThrowTime = Time.time;
             anchorPoint = point;
+            anchorBody = target;
+            anchorLocal = target.InverseTransformPoint(point);
             headPosition = transform.position;
             travelling = true;
             zipThrow = zip;

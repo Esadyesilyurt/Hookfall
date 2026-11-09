@@ -191,7 +191,8 @@ Bridge passives (Rare, two schools each): Steamforged Gauntlet (Flame, Frost), T
 | Boss bar | Gold earned on the stage (spending on chests does not slow it): 1000 on stage 1 (1500 until 2026-11-09, never reached in play), x1.6 per stage | StageDirector |
 | Enemies per stage | Health x2.5, damage x1.8, growth per minute and per level 35% faster, spawns x1.2, XP and gold per kill x1.5 (each once per stage after the first); waves and elite timers follow the stage clock | StageDirector, EnemyDirector |
 | New stage | New map; the Warden back to level 1 at the foot of the tower with full health; items, item levels, stats and gold kept; the chest price keeps rising; the tower cache waits its full time | StageDirector |
-| Boss arena | The boss 78 m above the tower; six islands at 30 m around it, 14-24 m below it; three updrafts and eight hook anchors lead up | StageDirector, SkyFeatures |
+| Boss arena | The boss 108 m above the tower (78 until 2026-11-09); six islands at 30 m around it, 14-24 m below it; three updrafts and eight hook anchors lead up | StageDirector, SkyFeatures |
+| Circling islands | Three 13 m islands at 34 m from the boss, 6 m below it, circle it at 6 degrees per second (a lap a minute); the hook holds on them and a Warden standing on one is carried along (2026-11-09) | StageDirector, OrbitingIsland, GrappleHook, PlayerController |
 | Boss zone | Inside 85 m of the arena's axis the plain horde cannot rise above 30 m below the boss; wyverns and elites can | StageDirector, EnemyBase |
 | Boss | 14000 health x the stage's health; never moves, immune to freeze, not killed by Heartstone Nova (10% of its health) or the tower cache; touching it hurts (20) and throws the Warden off | EnemyPrefabs, Boss |
 | Shard volley | Every 3 s (0.5 s warning: the core flares): 6 shards in a 30 degree fan, 34 m/s, turning 38 degrees/s towards the Warden, 16 damage; islands block them | Boss |

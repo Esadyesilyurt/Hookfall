@@ -156,6 +156,8 @@ namespace Hookfall.Player
             float fallSpeed = -Body.linearVelocity.y;
             CurrentIsland = FindIslandBelow();
             IsAirborne = CurrentIsland == null;
+            if (CurrentIsland != null && CurrentIsland.TryGetComponent(out OrbitingIsland orbit))
+                Body.position += orbit.LastStep;   // the boss's circling islands carry the Warden along (2026-11-09)
             if (wasAirborne && !IsAirborne) Landed?.Invoke(fallSpeed);
             overspeedCap = Mathf.MoveTowards(overspeedCap, 0f, overspeedDecay * Time.fixedDeltaTime);
             if (!IsAirborne)
