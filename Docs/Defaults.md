@@ -200,6 +200,7 @@ Bridge passives (Rare, two schools each): Steamforged Gauntlet (Flame, Frost), T
 | After the boss | It crumbles in slow motion, its gold and XP fly to the Warden, an island with the portal rises where it stood, then one pick from three Legendary items | StageDirector |
 | Cutscenes | Entrance about 5 s (camera to the arena, islands rise, the boss falls, lands and roars, name card); portal about 4.5 s (dive into the ring, white, the next stage's card); Space, Enter or Esc skips | CutsceneDirector |
 | Record and board | The best run is the latest stage, then the longest time; the leaderboard score is (stage - 1) x 100000 + seconds, so old scores stay stage 1 | RunRecord, Leaderboard |
+| Test codes | Typed during a run: BOSSGEL calls the boss now, BOSSOL kills it while it fights; a run that used one saves nothing (record, unlocks, leaderboard) (2026-11-09) | CheatCodes, GameManager |
 
 ### Map size (2026-11-08: twice as wide)
 | Value | Default | Where |

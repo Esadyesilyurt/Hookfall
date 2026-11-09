@@ -440,6 +440,7 @@ namespace Hookfall.Core
             { "Boss {0} / {1} gold", "Boss {0} / {1} altın" },
             { "The portal is open", "Portal açık" },
             { "Boss", "Boss" },
+            { "Test code: boss killed", "Test kodu: boss öldürüldü" },
             { "Portal", "Portal" },
             { "ENRAGED", "ÖFKELENDİ" },
             { "Abyss Colossus", "Uçurum Devi" },

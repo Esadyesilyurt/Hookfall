@@ -135,6 +135,7 @@ namespace Hookfall.World
         {
             Instance = this;
             ZoneActive = false;
+            if (GetComponent<CheatCodes>() == null) gameObject.AddComponent<CheatCodes>();   // BOSSGEL / BOSSOL test codes
             wallet = player.GetComponent<GoldWallet>();
             xp = player.GetComponent<XPSystem>();
             stats = player.GetComponent<PlayerStats>();
