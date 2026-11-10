@@ -23,7 +23,7 @@ sprite('Panel', 160, 160, [52, 52, 52, 52], (() => {
   const m = 10, r = 20, w = 160 - m * 2;
   return grad('pb', [[0, '#1E2D4D'], [0.55, '#152039'], [1, '#0E172C']]) + grad('pr', [[0, '#8FB0E6'], [0.4, '#4A6699'], [1, '#2A3C66']]) + blur('ps', 5) +
     `<rect x="${m}" y="${m + 5}" width="${w}" height="${w}" rx="${r}" fill="#03060F" fill-opacity="0.55" filter="url(#ps)"/>` +
-    `<rect x="${m + 1.5}" y="${m + 1.5}" width="${w - 3}" height="${w - 3}" rx="${r - 1.5}" fill="url(#pb)" fill-opacity="0.96" stroke="url(#pr)" stroke-width="3"/>` +
+    `<rect x="${m + 1.5}" y="${m + 1.5}" width="${w - 3}" height="${w - 3}" rx="${r - 1.5}" fill="url(#pb)" fill-opacity="0.985" stroke="url(#pr)" stroke-width="3"/>` +
     `<rect x="${m + 6.5}" y="${m + 6.5}" width="${w - 13}" height="${w - 13}" rx="${r - 6.5}" fill="none" stroke="#060B18" stroke-opacity="0.55" stroke-width="1.5"/>` +
     `<path d="M${m + r + 2} ${m + 5} H${160 - m - r - 2}" stroke="#DCEBFF" stroke-opacity="0.35" stroke-width="1.5" stroke-linecap="round"/>` +
     [[m + 16, m + 16], [160 - m - 16, m + 16], [m + 16, 160 - m - 16], [160 - m - 16, 160 - m - 16]].map(([x, y]) =>

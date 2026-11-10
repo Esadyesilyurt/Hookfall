@@ -335,6 +335,14 @@ namespace Hookfall.UI
             return button;
         }
 
+        /// <summary>A centred row for a panel's buttons, so a column does not stretch them to its full width.</summary>
+        public static RectTransform ButtonBar(Transform parent, float height = 66f)
+        {
+            RectTransform bar = Item(parent, "Buttons", -1f, height);
+            Row(bar, 24f, 0).childForceExpandHeight = false;
+            return bar;
+        }
+
         /// <summary>A one-line text box (the leaderboard name).</summary>
         public static TMP_InputField InputField(Transform parent, string placeholder, float width, float height, int characterLimit = 20)
         {

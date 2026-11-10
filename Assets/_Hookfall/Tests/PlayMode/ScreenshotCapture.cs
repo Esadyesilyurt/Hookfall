@@ -36,6 +36,19 @@ namespace Hookfall.Tests
             menu.GetType().GetMethod("OnPlay", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).Invoke(menu, null);
             yield return new WaitForSecondsRealtime(1f);
             yield return Grab("menu_characters");
+            // Another character's detail view, then every panel of the menu.
+            var menuFlags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+            Type menuType = menu.GetType();
+            var roster = (Array)menuType.GetField("characters", menuFlags).GetValue(menu);
+            menuType.GetMethod("Pick", menuFlags).Invoke(menu, new object[] { roster.GetValue(Mathf.Min(4, roster.Length - 1)) });
+            yield return new WaitForSecondsRealtime(0.5f);
+            yield return Grab("menu_character_other");
+            foreach (string panel in new[] { "settings", "leaderboard", "creditsPanel", "intro" })
+            {
+                menuType.GetMethod("Show", menuFlags).Invoke(menu, new[] { menuType.GetField(panel, menuFlags).GetValue(menu) });
+                yield return new WaitForSecondsRealtime(panel == "intro" ? 2.2f : 0.8f);
+                yield return Grab("menu_" + panel);
+            }
 
             SceneManager.LoadScene("Arena");
             yield return null;
@@ -75,10 +88,42 @@ namespace Hookfall.Tests
                 yield return null;
             }
             object gm = gmType.GetProperty("Instance").GetValue(null);
+            // A fuller build for the pause menu and the run-end screen: a few chests' worth of items.
+            Type combatType0 = Type.GetType("Hookfall.Combat.CombatSystem, Assembly-CSharp");
+            Type rarityType0 = Type.GetType("Hookfall.Combat.Rarity, Assembly-CSharp");
+            for (int i = 0; i < 9; i++)
+                combatType0.GetMethod("Grant").Invoke(player.GetComponent(combatType0), new[] { Enum.ToObject(rarityType0, i % 4), (object)player.GetComponent(Type.GetType("Hookfall.Player.PlayerStats, Assembly-CSharp")) });
             gmType.GetMethod("SetPaused").Invoke(gm, new object[] { true });
             yield return new WaitForSecondsRealtime(0.6f);
             yield return Grab("ui_pause");
+            Type pauseType = Type.GetType("Hookfall.UI.PauseMenuUI, Assembly-CSharp");
+            var pause = UnityEngine.Object.FindAnyObjectByType(pauseType);
+            var selectTab = (Action<int>)pauseType.GetField("selectTab", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(pause);
+            string[] tabs = { "stats", "synergies", "controls" };
+            for (int i = 0; i < tabs.Length; i++)
+            {
+                selectTab(i + 1);
+                yield return new WaitForSecondsRealtime(0.3f);
+                yield return Grab("ui_pause_" + tabs[i]);
+            }
+            selectTab(0);
             gmType.GetMethod("SetPaused").Invoke(gm, new object[] { false });
+            // A few seconds of flight with the new items, so the HUD shot and the damage list have something to show.
+            float fly = Time.realtimeSinceStartup + 5f;
+            while (Time.realtimeSinceStartup < fly)
+            {
+                Type statsTypeF = Type.GetType("Hookfall.Player.PlayerStats, Assembly-CSharp");
+                Component statsF = player.GetComponent(statsTypeF);
+                statsTypeF.GetProperty("CurrentHealth").SetValue(statsF, statsTypeF.GetProperty("MaxHealth").GetValue(statsF));
+                if (player.transform.position.y < 6f)
+                {
+                    player.transform.position = new Vector3(-6f, 14f, -18f);
+                    player.GetComponent<Rigidbody>().linearVelocity = new Vector3(22f, 4f, 10f);
+                }
+                if (Time.timeScale == 0f) levelUpType.GetMethod("Pick").Invoke(levelUp, new object[] { 0 });
+                yield return null;
+            }
+            yield return Grab("arena_build");
 
             // An Epic chest's three cards.
             Type chestUiType = Type.GetType("Hookfall.UI.ChestResultUI, Assembly-CSharp");

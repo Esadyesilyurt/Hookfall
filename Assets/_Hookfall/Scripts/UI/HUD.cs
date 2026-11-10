@@ -216,8 +216,9 @@ namespace Hookfall.UI
             timeText.fontStyle = FontStyles.Bold;
             timeText.fontSharedMaterial = UISkin.BodyShadow;
 
-            stageText = UIFactory.Title(UIFactory.Rect(c, "Stage", TopCentre, TopCentre, new Vector2(0f, -118f), new Vector2(700f, 30f)), "Text", "", 21f, UITheme.Text);
-            UIFactory.Stretch((RectTransform)stageText.transform);
+            stageText = UIFactory.Text(UIFactory.Rect(c, "Stage", TopCentre, TopCentre, new Vector2(0f, -118f), new Vector2(700f, 30f)), "", 23f, UITheme.Text, TextAlignmentOptions.Center, true);
+            stageText.fontStyle = FontStyles.Bold;
+            stageText.characterSpacing = 8f;
 
             // The boss meter: gold in, the boss at the end of it.
             bossMeter = UIFactory.Rect(c, "Boss Meter", TopCentre, TopCentre, new Vector2(0f, -150f), new Vector2(420f, 34f));
@@ -368,7 +369,8 @@ namespace Hookfall.UI
         private static void Hint(Transform parent, string key, string label)
         {
             UIFactory.KeyCap(parent, key, 32f);
-            TextMeshProUGUI text = UIFactory.Text(parent, label, label, 19f, UITheme.TextMuted, TextAlignmentOptions.Left, true);
+            TextMeshProUGUI text = UIFactory.Text(parent, label, label, 20f, UITheme.Text, TextAlignmentOptions.Left, true);
+            text.fontStyle = FontStyles.Bold;
             text.textWrappingMode = TextWrappingModes.NoWrap;
         }
 

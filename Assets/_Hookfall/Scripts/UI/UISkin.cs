@@ -114,7 +114,7 @@ namespace Hookfall.UI
         {
             if (font == Body) return BodyOutline;
             if (font == Display) return DisplayOutline;
-            if (blackOutline == null) blackOutline = Outlined(font, 0.18f, 0.08f);
+            if (blackOutline == null) blackOutline = Outlined(font, 0.13f, 0.04f);
             return blackOutline;
         }
 

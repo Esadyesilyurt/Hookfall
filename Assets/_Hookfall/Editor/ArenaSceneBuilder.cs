@@ -74,6 +74,7 @@ namespace Hookfall.EditorTools
             camGo.AddComponent<AudioListener>();
             FeelSetup.EnablePostProcessing(cam);
             camGo.transform.SetPositionAndRotation(new Vector3(0f, 14f, -46f), Quaternion.Euler(8f, 0f, 0f));
+            camGo.AddComponent<MenuCameraDrift>();   // a slow sway around the tower (2026-11-10)
 
             var generator = new GameObject("IslandGenerator").AddComponent<IslandGenerator>();
             WireIslandGenerator(generator, null);

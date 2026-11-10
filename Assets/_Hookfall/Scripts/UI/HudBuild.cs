@@ -22,7 +22,7 @@ namespace Hookfall.UI
 
         public HudBuild(Transform canvas, Vector2 position)
         {
-            column = UIFactory.Rect(canvas, "Build", new Vector2(1f, 1f), new Vector2(1f, 1f), position, new Vector2(320f, 420f), new Vector2(1f, 1f));
+            column = UIFactory.Rect(canvas, "Build", new Vector2(1f, 1f), new Vector2(1f, 1f), position, new Vector2(360f, 440f), new Vector2(1f, 1f));
             VerticalLayoutGroup layout = UIFactory.Column(column, 6f, 0, TextAnchor.UpperRight);
             layout.childForceExpandWidth = false;
             int count = SchoolInfo.All.Length;
@@ -32,8 +32,8 @@ namespace Hookfall.UI
             for (int i = 0; i < count; i++)
             {
                 School school = SchoolInfo.All[i];
-                RectTransform row = UIFactory.Item(column, school.ToString(), -1f, 34f);
-                UIFactory.Image(row, new Color(0.04f, 0.06f, 0.12f, 0.6f), UISkin.Chip);
+                RectTransform row = UIFactory.Item(column, school.ToString(), -1f, 36f);
+                UIFactory.Image(row, new Color(0.04f, 0.06f, 0.12f, 0.78f), UISkin.Chip);
                 HorizontalLayoutGroup line = UIFactory.Row(row, 5f, 0, TextAnchor.MiddleRight);
                 line.padding = new RectOffset(12, 8, 2, 2);
                 line.childForceExpandHeight = false;
@@ -42,15 +42,17 @@ namespace Hookfall.UI
                 pips[i] = new Image[SynergySystem.SecondTier];
                 for (int p = 0; p < pips[i].Length; p++)
                 {
-                    pips[i][p] = UIFactory.Image(UIFactory.Item(row, "Pip", 13f, 13f), Color.white, UISkin.Pip);
+                    pips[i][p] = UIFactory.Image(UIFactory.Item(row, "Pip", 16f, 16f), Color.white, UISkin.Pip);
                     if (p == SynergySystem.FirstTier - 1) UIFactory.Item(row, "Gap", 3f, 4f);   // the two sets read apart
                 }
-                UIFactory.Icon(row, UISkin.Icon(school), 28f);
+                UIFactory.Icon(row, UISkin.Icon(school), 30f);
                 rows[i] = row.gameObject;
                 row.gameObject.SetActive(false);
             }
-            duos = UIFactory.Sized(UIFactory.Text(column, "Duos", "", 19f, UITheme.Gold, TextAlignmentOptions.TopRight, true), 320f, 130f);
+            duos = UIFactory.Sized(UIFactory.Text(column, "Duos", "", 20f, UITheme.Gold, TextAlignmentOptions.TopRight, true), 360f, 150f);
             duos.fontStyle = FontStyles.Bold;
+            duos.textWrappingMode = TextWrappingModes.NoWrap;
+            duos.margin = new Vector4(0f, 0f, 6f, 0f);
             duos.lineSpacing = -6f;
         }
 
@@ -71,7 +73,7 @@ namespace Hookfall.UI
                 if (count == 0) continue;
                 Color color = SchoolInfo.Color(school);
                 for (int p = 0; p < pips[i].Length; p++)
-                    pips[i][p].color = p < count ? color : new Color(1f, 1f, 1f, 0.16f);
+                    pips[i][p].color = p < count ? color : new Color(1f, 1f, 1f, 0.24f);
                 extra[i].text = count > SynergySystem.SecondTier ? "+" + (count - SynergySystem.SecondTier) : "";
             }
             var text = new System.Text.StringBuilder();
