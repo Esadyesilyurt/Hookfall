@@ -721,6 +721,10 @@ def main():
     import hookfall_boss
     hookfall_boss.install(globals())
 
+    # More enemies and the second boss (2026-11-10).
+    import hookfall_enemies
+    hookfall_enemies.install(globals())
+
     argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
     out_dir = os.path.abspath(argv[0]) if argv else os.path.abspath("Assets/_Hookfall/Art/Models")
     prev_dir = os.path.abspath(argv[1]) if len(argv) > 1 else os.path.join(out_dir, "..", "..", "..", "..", "Docs", "ModelPreviews")
@@ -775,6 +779,7 @@ def main():
         "Portal": lambda: hookfall_boss.portal(out_dir, prev_dir),
         "Icons": lambda: icons(os.path.join(out_dir, "..", "UI", "Resources", "Icons"), prev_dir),
     }
+    jobs.update(hookfall_enemies.jobs(out_dir, prev_dir))
     for name, job in jobs.items():
         if not wanted or name in wanted:
             job()

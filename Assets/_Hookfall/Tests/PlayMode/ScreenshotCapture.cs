@@ -147,6 +147,28 @@ namespace Hookfall.Tests
             overview.transform.SetPositionAndRotation(new Vector3(14f, 10f, -22f), Quaternion.LookRotation(new Vector3(-14f, 2f, 22f)));
             Render(overview, "tower_close");
 
+            // The horde's kinds lined up in open sky, at full size at once (their spawn pop is skipped).
+            var hidden = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+            Type directorType = Type.GetType("Hookfall.Enemies.EnemyDirector, Assembly-CSharp");
+            Type enemyBaseType = Type.GetType("Hookfall.Enemies.EnemyBase, Assembly-CSharp");
+            var director = (Component)UnityEngine.Object.FindAnyObjectByType(directorType);
+            Vector3 line = new Vector3(60f, 74f, 60f);
+            string[] kinds = { "batPrefab", "blightpuffPrefab", "razorwingPrefab", "venomwingPrefab", "jellyPrefab", "wyvernPrefab" };
+            var lineUp = new System.Collections.Generic.List<Component>();
+            for (int i = 0; i < kinds.Length; i++)
+            {
+                object prefab = directorType.GetField(kinds[i], hidden).GetValue(director);
+                var enemy = (Component)directorType.GetMethod("SpawnFlyer", hidden).Invoke(director, new[] { prefab, (object)(line + new Vector3((i - 2.5f) * 4.6f, 0f, 0f)), 0f });
+                enemyBaseType.GetField("spawnTimer", hidden).SetValue(enemy, 0f);
+                enemy.transform.rotation = Quaternion.LookRotation(new Vector3(0.35f, 0f, 1f));
+                Transform model = enemy.transform.Find("Visual");
+                if (model != null) model.localScale = Vector3.one;
+                lineUp.Add(enemy);
+            }
+            overview.transform.SetPositionAndRotation(line + new Vector3(3f, 2.5f, 15f), Quaternion.LookRotation(new Vector3(-3f, -3.2f, -15f)));
+            Render(overview, "enemies_lineup");
+            foreach (Component enemy in lineUp) enemyBaseType.GetMethod("Die").Invoke(enemy, new object[] { false });
+
             // A chest with its spotlight: spawn one now and look at it from 30 m.
             Type spawnerType = Type.GetType("Hookfall.World.ChestSpawner, Assembly-CSharp");
             var spawner = (Component)UnityEngine.Object.FindAnyObjectByType(spawnerType);

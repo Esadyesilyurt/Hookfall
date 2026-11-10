@@ -110,6 +110,121 @@ namespace Hookfall.EditorTools
             return SavePrefab(root, Folder + "/PF_Boulder.prefab").GetComponent<Boulder>();
         }
 
+        // ---------------------------------------------------------------- the wider horde (2026-11-10)
+
+        /// <summary>The formation flyer: quick, light, with wide turns (a low acceleration).</summary>
+        public static Razorwing Razorwing()
+        {
+            var root = new GameObject("PF_Razorwing");
+            var bird = root.AddComponent<Razorwing>();
+            GameObject visual = Flyer(root, "Razorwing", "M_Razor", new Vector3(0.4f, 0.35f, 1.5f), 1.3f);
+            Stats(bird, "Razorwing", 14f, 26f, 8f, 2f, 1, 0.8f);
+            SetFloat(bird, "knockback", 4f);
+            SetFloat(bird, "acceleration", 46f);       // wide arcs: it sweeps through, it does not cling
+            SetFloat(bird, "separationRadius", 2.2f);
+            Wings(bird, visual.transform, 9f, 22f);
+            NoShadows(root);
+            return SavePrefab(root, Folder + "/PF_Razorwing.prefab").GetComponent<Razorwing>();
+        }
+
+        /// <summary>The one that bursts: little health, no bite, the burst is its attack.</summary>
+        public static Blightpuff Blightpuff()
+        {
+            var root = new GameObject("PF_Blightpuff");
+            var puff = root.AddComponent<Blightpuff>();
+            GameObject visual = Flyer(root, "Blightpuff", "M_Puff", new Vector3(1f, 1f, 1f), 0.5f);
+            Stats(puff, "Blightpuff", 6f, 20f, 0f, 2f, 2, 0.75f);
+            SetFloat(puff, "knockback", 5f);
+            Wings(puff, visual.transform, 22f, 30f);
+            NoShadows(root);
+            return SavePrefab(root, Folder + "/PF_Blightpuff.prefab").GetComponent<Blightpuff>();
+        }
+
+        /// <summary>A wasp's venom: the boulder's flight with a glowing ball and a trail, and no rock burst when it ends.</summary>
+        public static Boulder VenomGlob()
+        {
+            var root = new GameObject("PF_VenomGlob");
+            var shot = root.AddComponent<Boulder>();
+            SetFloat(shot, "hitRadius", 1.1f);
+            SetFloat(shot, "spinSpeed", 0f);
+            var serialized = new SerializedObject(shot);
+            serialized.FindProperty("quiet").boolValue = true;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            GameObject ball = Part(root.transform, "Visual", PrimitiveType.Sphere, Vector3.zero, Vector3.one * 0.55f, Mat("M_Venom"));
+            ball.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            Hookfall.Core.Layers.SetRecursive(root, Hookfall.Core.Layers.NoOutline);
+            var trail = root.AddComponent<TrailRenderer>();
+            trail.sharedMaterial = Mat("M_Venom");
+            trail.time = 0.22f;
+            trail.startWidth = 0.4f;
+            trail.endWidth = 0f;
+            trail.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            return SavePrefab(root, Folder + "/PF_VenomGlob.prefab").GetComponent<Boulder>();
+        }
+
+        /// <summary>The spitter: holds its distance, so it needs no bite.</summary>
+        public static Venomwing Venomwing(Boulder glob)
+        {
+            var root = new GameObject("PF_Venomwing");
+            var wasp = root.AddComponent<Venomwing>();
+            GameObject visual = Flyer(root, "Venomwing", "M_Wasp", new Vector3(0.6f, 0.55f, 1.6f), 1.3f);
+            Stats(wasp, "Venomwing", 30f, 21f, 0f, 3f, 2, 0.9f);
+            SetFloat(wasp, "knockback", 3f);
+            SetFloat(wasp, "hitPunch", 0.2f);
+            SetRef(wasp, "spitPrefab", glob);
+            SetRef(wasp, "tail", FindDeep(visual.transform, "Tail"));
+            Wings(wasp, visual.transform, 30f, 16f);
+            NoShadows(root);
+            return SavePrefab(root, Folder + "/PF_Venomwing.prefab").GetComponent<Venomwing>();
+        }
+
+        /// <summary>The slow, tough one that hangs in the way.</summary>
+        public static GloomJelly GloomJelly()
+        {
+            var root = new GameObject("PF_GloomJelly");
+            var jelly = root.AddComponent<GloomJelly>();
+            GameObject visual = Flyer(root, "GloomJelly", "M_Jelly", new Vector3(3.2f, 1.4f, 3.2f), 0f);
+            Stats(jelly, "Gloom Jelly", 90f, 6f, 0f, 6f, 4, 1.7f);
+            SetFloat(jelly, "knockback", 0.6f);
+            SetFloat(jelly, "hitPunch", 0.12f);
+            SetFloat(jelly, "acceleration", 12f);
+            SetFloat(jelly, "separationRadius", 3.4f);
+            SetFloat(jelly, "bankAngle", 8f);
+            SetFloat(jelly, "bobHeight", 0.35f);
+            SetFloat(jelly, "bobSpeed", 1.6f);
+            var serialized = new SerializedObject(jelly);
+            SerializedProperty list = serialized.FindProperty("tentacles");
+            list.arraySize = 0;
+            for (int i = 1; i <= 6; i++)
+            {
+                Transform tentacle = FindDeep(visual.transform, "Tentacle_" + i);
+                if (tentacle == null) continue;
+                list.arraySize++;
+                list.GetArrayElementAtIndex(list.arraySize - 1).objectReferenceValue = tentacle;
+            }
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            NoShadows(root);
+            return SavePrefab(root, Folder + "/PF_GloomJelly.prefab").GetComponent<GloomJelly>();
+        }
+
+        /// <summary>The model under a flyer, or a stand-in body of the same size when the model is missing.</summary>
+        private static GameObject Flyer(GameObject root, string model, string material, Vector3 size, float wingSpan)
+        {
+            GameObject visual = InstantiateModel(model, root.transform);
+            if (visual != null) return visual;
+            visual = new GameObject("Visual");
+            visual.transform.SetParent(root.transform, false);
+            Part(visual.transform, "Body", PrimitiveType.Sphere, Vector3.zero, size, Mat(material));
+            Part(visual.transform, "Eye", PrimitiveType.Sphere, new Vector3(0f, size.y * 0.15f, size.z * 0.45f), new Vector3(size.x * 0.5f, 0.1f, 0.1f), Mat("M_EnemyEye"));
+            if (wingSpan > 0f)
+                foreach (int side in new[] { -1, 1 })
+                {
+                    Transform wing = Pivot(visual.transform, side < 0 ? "Wing_L" : "Wing_R", new Vector3(side * size.x * 0.4f, 0f, 0f));
+                    Part(wing, "Membrane", PrimitiveType.Cube, new Vector3(side * wingSpan * 0.5f, 0f, 0f), new Vector3(wingSpan, 0.04f, size.z * 0.5f), Mat(material));
+                }
+            return visual;
+        }
+
         /// <summary>The Abyss Colossus: the Blender model with its parts wired, a kinematic body the Warden cannot fly
         /// through (World layer, so the camera stays out too) and a light in its core.</summary>
         public static Boss Boss()

@@ -351,6 +351,13 @@ MonoBehaviour:
   flapAngle: 45
   knockback: 0
   hitPunch: 0.08
+  bankAngle: 30
+  bobHeight: 0.12
+  bobSpeed: 3.2
+  spawnTime: 0.25
+  deathTime: 0.16
+  shieldShare: 0.6
+  swiftFactor: 1.45
   range: 35
   aimTime: 0.4
   throwCooldown: 1.5

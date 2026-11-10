@@ -45,6 +45,7 @@ namespace Hookfall.Enemies
 
         protected override IEnemyState DefaultState => Idle;
         protected override bool CanGetStuck => false;
+        protected override bool Flies => false;   // it stands on its island: no banking or bobbing
 
         protected override void Awake()
         {

@@ -10,6 +10,12 @@ namespace Hookfall.Enemies
         [SerializeField] private float hitRadius = 1.3f;
         [SerializeField] private float lifetime = 3f;
         [SerializeField] private float spinSpeed = 360f;
+        [Tooltip("Set for a shot that is not stone (a wasp's venom): no rock burst or crack when it ends.")]
+        [SerializeField] private bool quiet;
+
+        /// <summary>The prefab this shot was pooled from (set by the EnemyDirector).</summary>
+        public Boulder SourcePrefab { get; set; }
+        public bool Quiet => quiet;
 
         private EnemyDirector director;
         private PlayerStats target;
