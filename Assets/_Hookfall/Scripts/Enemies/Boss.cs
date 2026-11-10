@@ -302,7 +302,7 @@ namespace Hookfall.Enemies
             float flat = new Vector2(p.x - ringCentre.x, p.z - ringCentre.z).magnitude;
             if (Mathf.Abs(flat - ringRadius) > ringThickness || Mathf.Abs(p.y - ringCentre.y) > ringHeight) return;
             ringHit = true;
-            PlayerStats.TakeDamage(slamDamage * DamageScale);
+            PlayerStats.TakeDamageFrom(slamDamage * DamageScale, ringCentre);
             Vector3 away = new Vector3(p.x - ringCentre.x, 0f, p.z - ringCentre.z).normalized;
             Player.Body.linearVelocity += away * 14f + Vector3.up * 6f;
         }
@@ -320,7 +320,7 @@ namespace Hookfall.Enemies
             Player.Body.linearVelocity = push * bodyPush + Vector3.up * 5f;
             if (bodyTimer > 0f) return;
             bodyTimer = 0.8f;
-            PlayerStats.TakeDamage(bodyDamage * DamageScale);
+            PlayerStats.TakeDamageFrom(bodyDamage * DamageScale, transform.position);
         }
 
         private void CheckCalls()

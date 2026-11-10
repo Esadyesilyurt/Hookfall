@@ -1,9 +1,17 @@
-// Hookfall - the in-run HUD (GDD 9): XP bar with a level badge, health bar with a damage trail, watch-time plaque,
-// gold and kills, crosshair with the Zip cooldown ring and charges, the ATTACKS ON/OFF pill, item slots with icons
-// and level pips, control hints, the tower cache marker and the storm warning. Built in uGUI from code.
+// Hookfall - the in-run HUD (GDD 9). Screen edges only, the centre stays free for the horde:
+//   top edge      XP bar; top left the Warden's portrait with the level, health with a damage trail, shield and revive;
+//   top centre    watch time, the stage and its boss meter (gold), the boss's health while it fights, announcements;
+//   top right     gold and kills, the build's schools and duos (HudBuild);
+//   centre        crosshair with the Zip ring, the ATTACKS ON/OFF pill, the interact prompt, the charge bar,
+//                 red wedges towards whatever hit the Warden (HudDamageRing);
+//   bottom        item and passive slots (left), jump, dash and Zip with their keys (centre), key hints (right);
+//   world         badges for chests, the tower cache and the objective, on the screen edge when out of view (HudMarkers).
+// Built in uGUI from code.
 // AI disclosure: written with Claude (Anthropic) on 2026-11-04 as an IMGUI placeholder, rewritten on 2026-11-07 in
 // uGUI and again the same day with the UI skin and icons; the stage, the boss bar, the boss's health and an objective
-// marker were added on 2026-11-08. Prompts and changes are recorded in Docs/PromptLog.md.
+// marker were added on 2026-11-08; rebuilt on 2026-11-10 with the new skin, fonts, portrait, abilities, world markers
+// and damage wedges. Prompts and changes are recorded in Docs/PromptLog.md.
+using System.Collections.Generic;
 using Hookfall.Combat;
 using Hookfall.Core;
 using Hookfall.Player;
@@ -29,7 +37,6 @@ namespace Hookfall.UI
         private static string announceText;
         private static Color announceColor;
         private static float announceTime = -999f;
-        private TextMeshProUGUI announce;
 
         /// <summary>A big line across the screen for a moment: power-ups, duos, the tower cache.</summary>
         public static void Announce(string text, Color color)
@@ -38,220 +45,336 @@ namespace Hookfall.UI
             announceColor = color;
             announceTime = Time.unscaledTime;
         }
+
         /// <summary>Set by the tower cache while it waits on the tower; null hides the marker.</summary>
         public static Vector3? TowerCacheMarker;
         /// <summary>0..1 while the tower cache is being opened, otherwise negative.</summary>
         public static float TowerCacheProgress = -1f;
 
+        /// <summary>Set with InteractPrompt when the line is a status, not something a key does (the tower cache opening).</summary>
+        public static bool InteractWithoutKey;
+
         private static Vector3? objective;
-        private static string objectiveLabel;
+        private static string objectiveLabel, objectiveIcon = "Boss";
         private static Color objectiveColor;
 
-        /// <summary>Where the run goes next (the boss, the portal); null hides the marker.</summary>
-        public static void SetObjective(Vector3? position, string label, Color color)
+        /// <summary>Where the run goes next (the boss, the portal); null hides the marker. icon names its badge's icon.</summary>
+        public static void SetObjective(Vector3? position, string label, Color color, string icon = "Boss")
         {
             objective = position;
             objectiveLabel = label;
             objectiveColor = color;
+            objectiveIcon = icon;
         }
 
-        private GameObject root;
-        private RectTransform xpFill, healthFill, trailFill, cacheMarker, cacheArrow, cacheProgressFill, levelBadge, attackRect;
-        private TextMeshProUGUI synergyText;
-        private TextMeshProUGUI stageText, bossNameText, objectiveText;
-        private RectTransform bossGoldFill, bossHealthFill, bossTrailFill, bossBar, objectiveMarker, objectiveArrow;
-        private Image objectivePanel;
-        private float bossTrail = 1f;
-        private SynergySystem synergy;
-        private int synergyHash = -1;
-        private TextMeshProUGUI levelText, healthText, timeText, goldText, killsText, attackText, promptText, stormText;
-        private Image crosshair, zipRing, attackBack, xpGlow;
-        private RectTransform promptRow;
-        private readonly Image[] zipPips = new Image[3];
+        private static readonly Vector2 TopLeft = new Vector2(0f, 1f), TopCentre = new Vector2(0.5f, 1f), TopRight = new Vector2(1f, 1f),
+            BottomLeft = Vector2.zero, BottomCentre = new Vector2(0.5f, 0f), BottomRight = new Vector2(1f, 0f), Middle = new Vector2(0.5f, 0.5f);
+
         private const int SlotCount = CombatSystem.MaxItems + CombatSystem.MaxPassives;   // attack slots, then passive slots
+
+        private GameObject root;
+        private PlayerController controller;
+        private SynergySystem synergy;
+        private ChestSpawner chests;
+        private HudMarkers markers;
+        private HudBuild build;
+        private HudDamageRing damageRing;
+
+        private UIBar xpBar, healthBar, bossGoldBar, bossBar, chargeBar;
+        private Image portrait, xpGlow, crosshair, zipRing, attackBack;
+        private RectTransform levelBadge, attackRect, promptRow, statusRow, bossBlock, bossMeter;
+        private TextMeshProUGUI levelText, healthText, timeText, goldText, killsText, attackText, promptText, stormText, announce;
+        private TextMeshProUGUI stageText, bossGoldText, bossNameText, shieldText, reviveText;
+        private GameObject shieldChip, reviveChip, promptKey;
+        private readonly Image[] zipPips = new Image[3];
+
         private readonly Image[] slotIcons = new Image[SlotCount];
         private readonly Image[] slotFrames = new Image[SlotCount];
+        private readonly RectTransform[] slotRects = new RectTransform[SlotCount];
         private readonly TextMeshProUGUI[] slotGlyphs = new TextMeshProUGUI[SlotCount];
         private readonly RectTransform[] slotPips = new RectTransform[SlotCount];
         private readonly ItemBase[] slotItem = new ItemBase[SlotCount];
         private readonly int[] slotLevel = new int[SlotCount];
-        private float trail = 1f;
-        private int shownLevel = 1;
-        private float levelFlash, attackPulse;
+        private readonly float[] slotPunch = new float[SlotCount];
+
+        // Jump, dash, Zip: an icon each, lit while a charge is left.
+        private Image jumpIcon, dashIcon, zipIcon, zipCooldown;
+        private readonly List<Image> jumpPips = new List<Image>(), dashPips = new List<Image>();
+
+        private int shownLevel = 1, shownGold = -1, shownKills = -1;
+        private float levelFlash, attackPulse, goldPunch, killsPunch;
         private bool lastAttacks;
+        private bool duoHooked;
 
         private void Awake()
         {
             Canvas canvas = UIFactory.Canvas(transform, "HUD Canvas", 0);
             root = canvas.gameObject;
             Transform c = canvas.transform;
+            if (hook != null) controller = hook.GetComponent<PlayerController>();
+            if (combat != null) synergy = combat.GetComponent<SynergySystem>();
 
-            // Top edge: XP bar with a glow that flashes on level-up, and the level badge.
-            xpFill = UIFactory.Bar(c, "XP Bar", new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0f, -10f), new Vector2(-260f, 16f),
-                UITheme.Track, UITheme.Xp, new Vector2(0.5f, 1f));
-            var xpRect = (RectTransform)xpFill.parent;
-            xpRect.offsetMin = new Vector2(130f, xpRect.offsetMin.y);   // starts right of the level badge
-            xpRect.offsetMax = new Vector2(-24f, xpRect.offsetMax.y);
-            xpGlow = UIFactory.Image(UIFactory.Rect(xpFill.parent, "Glow", Vector2.zero, Vector2.one, Vector2.zero, new Vector2(40f, 40f)), new Color(0.4f, 0.95f, 1f, 0f), UISkin.Glow);
-            levelBadge = UIFactory.Diamond(c, null, "", 104f, UITheme.Player);
-            levelBadge.anchorMin = levelBadge.anchorMax = new Vector2(0f, 1f);
-            levelBadge.anchoredPosition = new Vector2(70f, -62f);
-            levelText = UIFactory.Text(levelBadge, "Level", "1", 40f, UITheme.Text, TextAlignmentOptions.Center, true);
+            // Soft shades so the edge rows read over a bright sky.
+            RectTransform topShade = UIFactory.Rect(c, "Top Shade", TopLeft, TopRight, Vector2.zero, new Vector2(0f, 170f), new Vector2(0.5f, 1f));
+            UIFactory.Image(topShade, new Color(0.02f, 0.04f, 0.1f, 0.42f), UISkin.ShadeDown);
+            RectTransform bottomShade = UIFactory.Rect(c, "Bottom Shade", BottomLeft, BottomRight, new Vector2(0f, 95f), new Vector2(0f, 190f));
+            UIFactory.Image(bottomShade, new Color(0.02f, 0.04f, 0.1f, 0.36f), UISkin.ShadeDown);
+            bottomShade.localRotation = Quaternion.Euler(0f, 0f, 180f);   // the shade sprite is dark at its top
+
+            markers = new HudMarkers(c);
+            BuildVitals(c);
+            BuildCentreTop(c);
+            BuildCounters(c);
+            build = new HudBuild(c, new Vector2(-26f, -112f));
+            BuildCentre(c);
+            BuildSlots(c);
+            BuildAbilities(c);
+            BuildHints(c);
+            damageRing = new HudDamageRing(c);
+
+            announce = UIFactory.Title(UIFactory.Rect(c, "Announce", TopCentre, TopCentre, new Vector2(0f, -262f), new Vector2(1500f, 84f)),
+                "Text", "", 54f, UITheme.Gold);
+            UIFactory.Stretch((RectTransform)announce.transform);
+            announce.gameObject.SetActive(false);
+        }
+
+        private void Start()
+        {
+            chests = FindAnyObjectByType<ChestSpawner>();
+            Sprite face = UISkin.Icon(CharacterRoster.ActiveId);
+            portrait.sprite = face;
+            portrait.enabled = face != null;
+            if (stats != null) stats.Damaged += OnDamaged;
+        }
+
+        private void OnDestroy()
+        {
+            if (stats != null) stats.Damaged -= OnDamaged;
+        }
+
+        private void OnDamaged(float amount)
+        {
+            if (stats.LastDamageSource.HasValue && Camera.main != null) damageRing.Hit(stats.LastDamageSource.Value, Camera.main.transform);
+        }
+
+        // ---------------------------------------------------------------- building
+
+        /// <summary>Top left: portrait with the level badge, the XP bar along the top edge, health, shield and revive.</summary>
+        private void BuildVitals(Transform c)
+        {
+            xpBar = UIBar.Create(c, "XP Bar", TopLeft, Vector2.zero, Vector2.zero, UITheme.Xp, false, new Vector2(0.5f, 1f));
+            RectTransform xpRect = xpBar.Rect;
+            xpRect.anchorMin = TopLeft;
+            xpRect.anchorMax = TopRight;
+            xpRect.offsetMin = new Vector2(150f, -26f);   // starts right of the portrait
+            xpRect.offsetMax = new Vector2(-26f, -10f);
+            xpGlow = UIFactory.Image(UIFactory.Rect(xpRect, "Glow", Vector2.zero, Vector2.one, Vector2.zero, new Vector2(60f, 50f)), new Color(0.4f, 0.95f, 1f, 0f), UISkin.GlowFrame);
+
+            RectTransform medal = UIFactory.Rect(c, "Portrait", TopLeft, TopLeft, new Vector2(26f, -22f), new Vector2(112f, 112f), TopLeft);
+            UIFactory.Image(medal, new Color(0.07f, 0.11f, 0.2f, 0.95f), UISkin.Circle);
+            portrait = UIFactory.Image(UIFactory.Centre(medal, "Face", new Vector2(0f, -4f), new Vector2(104f, 104f)), Color.white);
+            portrait.preserveAspect = true;
+            UIFactory.Image(UIFactory.Fill(medal, "Frame"), UITheme.Player, UISkin.CircleFrame);
+            levelBadge = UIFactory.Rect(medal, "Level", BottomRight, BottomRight, new Vector2(4f, -4f), new Vector2(58f, 58f));
+            UIFactory.Image(UIFactory.Fill(levelBadge, "Fill"), Color.white, UISkin.DiamondFill);
+            UIFactory.Image(UIFactory.Fill(levelBadge, "Frame"), UITheme.Gold, UISkin.Diamond);
+            levelText = UIFactory.Text(levelBadge, "Value", "1", 25f, UITheme.Text, TextAlignmentOptions.Center, true);
             UIFactory.Stretch((RectTransform)levelText.transform);
             levelText.fontStyle = FontStyles.Bold;
 
-            // Health under the badge: heart, bar with a white damage trail, numbers.
-            RectTransform healthBar = UIFactory.Rect(c, "Health", new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(150f, -44f), new Vector2(380f, 30f), new Vector2(0f, 1f));
-            UIFactory.Image(healthBar, UITheme.Track, UISkin.Pill);
-            trailFill = UIFactory.Rect(healthBar, "Trail", Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero, new Vector2(0f, 0.5f));
-            UIFactory.Image(trailFill, new Color(1f, 0.92f, 0.85f, 0.9f), UISkin.Pill);
-            healthFill = UIFactory.Rect(healthBar, "Fill", Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero, new Vector2(0f, 0.5f));
-            UIFactory.Image(healthFill, UITheme.Health, UISkin.Pill);
-            UIFactory.Image(UIFactory.Fill(healthBar, "Frame"), new Color(1f, 1f, 1f, 0.35f), UISkin.PillFrame);
-            healthText = UIFactory.Text(healthBar, "Value", "100 / 100", 20f, UITheme.Text, TextAlignmentOptions.Center, true);
-            UIFactory.Stretch((RectTransform)healthText.transform);
-            Image heart = UIFactory.Icon(c, UISkin.Icon("Health"), 44f);
+            healthBar = UIBar.Create(c, "Health", TopLeft, new Vector2(150f, -36f), new Vector2(430f, 34f), UITheme.Health, true, TopLeft);
+            Image heart = UIFactory.Icon(healthBar.transform, UISkin.Icon("Health"), 30f);
             var heartRect = (RectTransform)heart.transform;
-            heartRect.anchorMin = heartRect.anchorMax = new Vector2(0f, 1f);
-            heartRect.anchoredPosition = new Vector2(146f, -59f);   // caps the left end of the bar
+            heartRect.anchorMin = heartRect.anchorMax = new Vector2(0f, 0.5f);
+            heartRect.anchoredPosition = new Vector2(22f, 0f);
+            healthText = UIFactory.Text(healthBar.transform, "Value", "100 / 100", 21f, UITheme.Text, TextAlignmentOptions.Center, true);
+            UIFactory.Stretch((RectTransform)healthText.transform);
+            healthText.fontStyle = FontStyles.Bold;
 
-            // Top centre: watch time plaque.
-            Image timePlaque = UIFactory.Panel(c, "Time", new Vector2(250f, 70f), UITheme.Panel);
-            var timeRect = (RectTransform)timePlaque.transform;
-            timeRect.anchorMin = timeRect.anchorMax = new Vector2(0.5f, 1f);
-            timeRect.anchoredPosition = new Vector2(0f, -66f);
-            Image hourglass = UIFactory.Icon(timePlaque.transform, UISkin.Icon("Timer"), 40f);
-            ((RectTransform)hourglass.transform).anchoredPosition = new Vector2(-82f, 0f);
-            timeText = UIFactory.Text(timePlaque.transform, "Value", "00:00", 42f, UITheme.Text, TextAlignmentOptions.Center, true);
-            var timeTextRect = (RectTransform)timeText.transform;
-            UIFactory.Stretch(timeTextRect);
-            timeTextRect.offsetMin = new Vector2(36f, 0f);
+            // Under the bar: what stands between the Warden and death besides health.
+            statusRow = UIFactory.Rect(c, "Status", TopLeft, TopLeft, new Vector2(152f, -76f), new Vector2(430f, 32f), TopLeft);
+            HorizontalLayoutGroup row = UIFactory.Row(statusRow, 8f, 0, TextAnchor.MiddleLeft);
+            row.childForceExpandHeight = false;
+            RectTransform shield = UIFactory.Chip(statusRow, UISkin.Icon("WardShell"), "1", UITheme.Player, 32f, 20f);
+            shieldChip = shield.gameObject;
+            shieldText = shield.GetComponentInChildren<TextMeshProUGUI>();
+            RectTransform revive = UIFactory.Chip(statusRow, UISkin.Icon("PhoenixFeather"), "1", UITheme.Gold, 32f, 20f);
+            reviveChip = revive.gameObject;
+            reviveText = revive.GetComponentInChildren<TextMeshProUGUI>();
+        }
+
+        /// <summary>Top centre: the watch time, the stage with its boss meter, and the boss's health while it fights.</summary>
+        private void BuildCentreTop(Transform c)
+        {
+            Image time = UIFactory.Plaque(c, "Time", TopCentre, new Vector2(0f, -34f), new Vector2(236f, 66f), TopCentre);
+            Image hourglass = UIFactory.Icon(time.transform, UISkin.Icon("Timer"), 40f);
+            ((RectTransform)hourglass.transform).anchoredPosition = new Vector2(-78f, 0f);
+            timeText = UIFactory.Text(time.transform, "Value", "00:00", 42f, UITheme.Text);
+            var timeRect = (RectTransform)timeText.transform;
+            UIFactory.Stretch(timeRect);
+            timeRect.offsetMin = new Vector2(40f, 0f);
             timeText.fontStyle = FontStyles.Bold;
-            // Under the time: the stage and the boss bar, which fills with the gold earned on the stage (2026-11-08).
-            stageText = UIFactory.Text(UIFactory.Rect(c, "Stage", new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -120f), new Vector2(640f, 30f)),
-                "", 22f, UITheme.Text, TextAlignmentOptions.Center, true);
-            bossGoldFill = UIFactory.Bar(c, "Boss Bar", new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -144f), new Vector2(320f, 12f),
-                UITheme.Track, new Color(1f, 0.35f, 0.85f));
+            timeText.fontSharedMaterial = UISkin.BodyShadow;
+
+            stageText = UIFactory.Text(UIFactory.Rect(c, "Stage", TopCentre, TopCentre, new Vector2(0f, -118f), new Vector2(700f, 30f)), "", 23f, UITheme.Text, TextAlignmentOptions.Center, true);
+            stageText.fontStyle = FontStyles.Bold;
+            stageText.characterSpacing = 8f;
+
+            // The boss meter: gold in, the boss at the end of it.
+            bossMeter = UIFactory.Rect(c, "Boss Meter", TopCentre, TopCentre, new Vector2(0f, -150f), new Vector2(420f, 34f));
+            bossGoldBar = UIBar.Create(bossMeter, "Bar", Middle, Vector2.zero, new Vector2(330f, 16f), UITheme.Enemy);
+            Image coin = UIFactory.Icon(bossMeter, UISkin.Icon("Gold"), 30f);
+            ((RectTransform)coin.transform).anchoredPosition = new Vector2(-186f, 0f);
+            Image skull = UIFactory.Icon(bossMeter, UISkin.Icon("Boss"), 38f);
+            ((RectTransform)skull.transform).anchoredPosition = new Vector2(190f, 0f);
+            bossGoldText = UIFactory.Text(UIFactory.Centre(bossMeter, "Value", new Vector2(0f, -20f), new Vector2(330f, 22f)), "", 17f, UITheme.Text, TextAlignmentOptions.Center, true);
+            bossGoldText.fontStyle = FontStyles.Bold;
+
             // The boss's health across the top while it fights.
-            bossBar = UIFactory.Rect(c, "Boss Health", new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -186f), new Vector2(820f, 26f));
-            UIFactory.Image(bossBar, UITheme.Track, UISkin.Pill);
-            bossTrailFill = UIFactory.Rect(bossBar, "Trail", Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero, new Vector2(0f, 0.5f));
-            UIFactory.Image(bossTrailFill, new Color(1f, 0.92f, 0.85f, 0.9f), UISkin.Pill);
-            bossHealthFill = UIFactory.Rect(bossBar, "Fill", Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero, new Vector2(0f, 0.5f));
-            UIFactory.Image(bossHealthFill, new Color(0.9f, 0.22f, 0.62f), UISkin.Pill);
-            UIFactory.Image(UIFactory.Fill(bossBar, "Frame"), new Color(1f, 1f, 1f, 0.4f), UISkin.PillFrame);
+            bossBlock = UIFactory.Rect(c, "Boss", TopCentre, TopCentre, new Vector2(0f, -150f), new Vector2(900f, 70f), TopCentre);
+            bossNameText = UIFactory.Title(UIFactory.Rect(bossBlock, "Name", TopCentre, TopCentre, new Vector2(0f, -18f), new Vector2(900f, 40f)), "Text", "", 30f,
+                new Color(1f, 0.82f, 0.96f), TextAlignmentOptions.Center, true, true);
+            UIFactory.Stretch((RectTransform)bossNameText.transform);
+            bossNameText.characterSpacing = 10f;
+            bossBar = UIBar.Create(bossBlock, "Health", TopCentre, new Vector2(0f, -40f), new Vector2(860f, 26f), new Color(0.9f, 0.24f, 0.66f), true, TopCentre);
+            bossBar.trailSpeed = 0.4f;
             foreach (float mark in new[] { 0.7f, 0.35f })   // where it calls its escort
-                UIFactory.Image(UIFactory.Rect(bossBar, "Mark", new Vector2(mark, 0f), new Vector2(mark, 1f), Vector2.zero, new Vector2(3f, 0f)), new Color(1f, 1f, 1f, 0.6f));
-            bossNameText = UIFactory.Text(UIFactory.Rect(bossBar, "Name", new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0f, 20f), new Vector2(0f, 34f)),
-                "", 26f, new Color(1f, 0.8f, 0.95f), TextAlignmentOptions.Center, true);
-            bossNameText.fontStyle = FontStyles.Bold;
-            bossNameText.characterSpacing = 6f;
-            stormText = UIFactory.Text(UIFactory.Rect(c, "Storm", new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -300f), new Vector2(900f, 40f)),
+                UIFactory.Image(UIFactory.Rect(bossBar.transform, "Mark", new Vector2(mark, 0f), new Vector2(mark, 1f), Vector2.zero, new Vector2(3f, 0f)), new Color(1f, 1f, 1f, 0.7f));
+            bossBlock.gameObject.SetActive(false);
+
+            stormText = UIFactory.Text(UIFactory.Rect(c, "Storm", TopCentre, TopCentre, new Vector2(0f, -330f), new Vector2(900f, 40f)),
                 "The storm pushes you back", 28f, new Color(0.7f, 0.82f, 1f), TextAlignmentOptions.Center, true);
+            stormText.fontStyle = FontStyles.Bold;
+        }
 
-            // Top right: gold and kills.
-            announce = UIFactory.Text(UIFactory.Rect(c, "Announce", new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -230f), new Vector2(1400f, 80f)),
-                "", 54f, UITheme.Gold, TextAlignmentOptions.Center, true);
-            announce.fontStyle = FontStyles.Bold;
-            announce.characterSpacing = 6f;
+        /// <summary>Top right: gold and kills.</summary>
+        private void BuildCounters(Transform c)
+        {
+            Image counters = UIFactory.Plaque(c, "Counters", TopRight, new Vector2(-26f, -34f), new Vector2(330f, 66f), TopRight);
+            goldText = Counter(counters.transform, "Gold", -128f, UITheme.Gold);
+            killsText = Counter(counters.transform, "Kills", 30f, UITheme.Text);
+        }
 
-            // Under the counters: the schools the build is made of, and how far each set is.
-            synergyText = UIFactory.Text(UIFactory.Rect(c, "Synergies", new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-24f, -170f), new Vector2(360f, 260f), new Vector2(1f, 1f)),
-                "", 22f, UITheme.Text, TextAlignmentOptions.TopRight, true);
+        private static TextMeshProUGUI Counter(Transform parent, string icon, float x, Color color)
+        {
+            Image image = UIFactory.Icon(parent, UISkin.Icon(icon), 38f);
+            ((RectTransform)image.transform).anchoredPosition = new Vector2(x, 0f);
+            TextMeshProUGUI text = UIFactory.Text(UIFactory.Centre(parent, icon, new Vector2(x + 76f, 0f), new Vector2(104f, 44f)), "0", 32f, color, TextAlignmentOptions.Left);
+            text.fontStyle = FontStyles.Bold;
+            text.fontSharedMaterial = UISkin.BodyShadow;
+            text.textWrappingMode = TextWrappingModes.NoWrap;
+            UIFactory.FitText(text, 18f);
+            return text;
+        }
 
-            Image counters = UIFactory.Panel(c, "Counters", new Vector2(250f, 110f), UITheme.Panel);
-            var countersRect = (RectTransform)counters.transform;
-            countersRect.anchorMin = countersRect.anchorMax = new Vector2(1f, 1f);
-            countersRect.anchoredPosition = new Vector2(-150f, -96f);
-            goldText = Counter(counters.transform, "Gold", 22f, UITheme.Gold);
-            killsText = Counter(counters.transform, "Kills", -26f, UITheme.Text);
-
-            // Centre: crosshair, Zip ring and charges, attack pill, prompt.
-            RectTransform cross = UIFactory.Centre(c, "Crosshair", Vector2.zero, new Vector2(46f, 46f));
-            crosshair = UIFactory.Image(cross, Color.white, UISkin.Crosshair);
-            RectTransform ring = UIFactory.Centre(c, "Zip Ring", Vector2.zero, new Vector2(92f, 92f));
+        /// <summary>Centre: crosshair, Zip ring and charges, attack pill, prompt, charge bar.</summary>
+        private void BuildCentre(Transform c)
+        {
+            RectTransform ring = UIFactory.Centre(c, "Zip Ring", Vector2.zero, new Vector2(96f, 96f));
             zipRing = UIFactory.Image(ring, UITheme.Player, UISkin.Ring);
             zipRing.type = Image.Type.Filled;
             zipRing.fillMethod = Image.FillMethod.Radial360;
             zipRing.fillOrigin = (int)Image.Origin360.Top;
             zipRing.fillClockwise = true;
+            RectTransform cross = UIFactory.Centre(c, "Crosshair", Vector2.zero, new Vector2(52f, 52f));
+            crosshair = UIFactory.Image(cross, Color.white, UISkin.Crosshair);
             for (int i = 0; i < zipPips.Length; i++)
             {
-                RectTransform pip = UIFactory.Centre(c, "Zip Charge", new Vector2((i - 1) * 16f, -60f), new Vector2(11f, 11f));
-                zipPips[i] = UIFactory.Image(pip, UITheme.Player, UISkin.Dot);
+                RectTransform pip = UIFactory.Centre(c, "Zip Charge", new Vector2((i - 1) * 15f, -62f), new Vector2(11f, 11f));
+                zipPips[i] = UIFactory.Image(pip, UITheme.Player, UISkin.Pip);
             }
-            attackRect = UIFactory.Centre(c, "Attack Pill", new Vector2(0f, -96f), new Vector2(230f, 40f));
-            attackBack = UIFactory.Image(attackRect, UITheme.Panel, UISkin.Pill);
-            attackText = UIFactory.Text(attackRect, "Label", "ATTACKS OFF", 20f, UITheme.TextMuted);   // a child: the pill already has an Image
+            attackRect = UIFactory.Centre(c, "Attack Pill", new Vector2(0f, -98f), new Vector2(206f, 34f));
+            attackBack = UIFactory.Image(attackRect, UITheme.PanelDeep, UISkin.Pill);
+            attackText = UIFactory.Text(attackRect, "Label", "ATTACKS OFF", 18f, UITheme.TextMuted);   // a child: the pill already has an Image
             UIFactory.Stretch((RectTransform)attackText.transform);
             attackText.fontStyle = FontStyles.Bold;
             attackText.characterSpacing = 4f;
 
-            promptRow = UIFactory.Centre(c, "Prompt", new Vector2(0f, -160f), new Vector2(700f, 50f));
+            promptRow = UIFactory.Centre(c, "Prompt", new Vector2(0f, -164f), new Vector2(760f, 50f));
             UIFactory.Row(promptRow, 14f, 0);
-            UIFactory.KeyCap(promptRow, "E");
-            promptText = UIFactory.Sized(UIFactory.Text(promptRow, "Text", "", 26f, UITheme.Gold, TextAlignmentOptions.Left, true), 560f, 46f);
+            promptKey = UIFactory.KeyCap(promptRow, "E").gameObject;
+            promptText = UIFactory.Text(promptRow, "Text", "", 26f, UITheme.Gold, TextAlignmentOptions.Left, true);
+            promptText.fontStyle = FontStyles.Bold;
+            promptText.textWrappingMode = TextWrappingModes.NoWrap;
 
-            // Bottom left: six item slots with icons and level pips, and six smaller passive slots above them.
+            chargeBar = UIBar.Create(c, "Charge", Middle, new Vector2(0f, -214f), new Vector2(380f, 18f), UITheme.Gold);
+        }
+
+        /// <summary>Bottom left: six item slots with icons and level pips, and six smaller passive slots above them.</summary>
+        private void BuildSlots(Transform c)
+        {
             for (int i = 0; i < SlotCount; i++)
             {
                 bool passive = i >= CombatSystem.MaxItems;
                 int column = passive ? i - CombatSystem.MaxItems : i;
-                float size = passive ? 66f : 94f;
-                Vector2 position = passive ? new Vector2(24f + column * 74f, 128f) : new Vector2(24f + column * 102f, 24f);
-                RectTransform slot = UIFactory.Rect(c, $"Slot {i + 1}", Vector2.zero, Vector2.zero, position, new Vector2(size, size), Vector2.zero);
-                slotFrames[i] = UIFactory.Image(slot, UITheme.Panel, UISkin.Card);
-                RectTransform iconRect = UIFactory.Centre(slot, "Icon", new Vector2(0f, size * 0.06f), new Vector2(size * 0.64f, size * 0.64f));
+                float size = passive ? 62f : 88f;
+                Vector2 centre = passive ? new Vector2(26f + size / 2f + column * 68f, 152f) : new Vector2(26f + size / 2f + column * 94f, 26f + size / 2f);
+                RectTransform slot = UIFactory.Rect(c, $"Slot {i + 1}", BottomLeft, BottomLeft, centre, new Vector2(size, size));
+                slotRects[i] = slot;
+                UIFactory.Image(slot, Color.white, UISkin.Slot);
+                slotFrames[i] = UIFactory.Image(UIFactory.Fill(slot, "Frame"), new Color(1f, 1f, 1f, 0.2f), UISkin.SlotFrame);
+                RectTransform iconRect = UIFactory.Centre(slot, "Icon", new Vector2(0f, size * 0.07f), new Vector2(size * 0.68f, size * 0.68f));
                 slotIcons[i] = UIFactory.Image(iconRect, Color.white);
                 slotIcons[i].preserveAspect = true;
-                // Items with no icon yet show their first letter instead.
+                slotIcons[i].enabled = false;
+                // Items with no icon show their first letter instead.
                 slotGlyphs[i] = UIFactory.Text(UIFactory.Centre(slot, "Glyph", new Vector2(0f, size * 0.06f), new Vector2(size, size * 0.6f)), "", size * 0.4f, UITheme.Text, TextAlignmentOptions.Center, true);
                 slotLevel[i] = -1;
             }
-
-            // Bottom right: control hints.
-            RectTransform hints = UIFactory.Rect(c, "Hints", new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-24f, 24f), new Vector2(560f, 40f), new Vector2(1f, 0f));
-            UIFactory.Row(hints, 10f, 0, TextAnchor.MiddleRight);
-            Hint(hints, "LMB", "Hook");
-            Hint(hints, "RMB", "Zip");
-            Hint(hints, "Esc", "Pause");
-
-            // Tower cache marker that slides along the screen edge towards the tower.
-            Image marker = UIFactory.Panel(c, "Tower Cache Marker", new Vector2(270f, 64f), UITheme.Panel);
-            cacheMarker = (RectTransform)marker.transform;
-            Image cacheIcon = UIFactory.Icon(cacheMarker, UISkin.Icon("Gold"), 36f);
-            ((RectTransform)cacheIcon.transform).anchoredPosition = new Vector2(-100f, 0f);
-            TextMeshProUGUI cacheText = UIFactory.Text(cacheMarker, "Label", "Tower cache ready", 22f, UITheme.Gold);
-            UIFactory.Stretch((RectTransform)cacheText.transform);
-            ((RectTransform)cacheText.transform).offsetMin = new Vector2(40f, 0f);
-            cacheArrow = UIFactory.Centre(cacheMarker, "Arrow", Vector2.zero, new Vector2(40f, 40f));
-            UIFactory.Text(cacheArrow, ">", 40f, UITheme.Gold, TextAlignmentOptions.Center, true).fontStyle = FontStyles.Bold;
-            // The objective marker (the boss, the portal): over its target on screen, on the screen edge when not.
-            objectivePanel = UIFactory.Panel(c, "Objective Marker", new Vector2(190f, 52f), UITheme.Panel);
-            objectiveMarker = (RectTransform)objectivePanel.transform;
-            objectiveText = UIFactory.Text(objectiveMarker, "Label", "", 24f, UITheme.Text);
-            UIFactory.Stretch((RectTransform)objectiveText.transform);
-            objectiveText.fontStyle = FontStyles.Bold;
-            objectiveArrow = UIFactory.Centre(objectiveMarker, "Arrow", Vector2.zero, new Vector2(36f, 36f));
-            UIFactory.Text(objectiveArrow, ">", 36f, UITheme.Text, TextAlignmentOptions.Center, true).fontStyle = FontStyles.Bold;
-            cacheProgressFill = UIFactory.Bar(c, "Cache Progress", new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, -210f), new Vector2(380f, 18f),
-                UITheme.Track, UITheme.Gold);
         }
 
-        private static TextMeshProUGUI Counter(Transform parent, string icon, float y, Color color)
+        /// <summary>Bottom centre: what the Warden can still do in this flight, each with its key.</summary>
+        private void BuildAbilities(Transform c)
         {
-            Image image = UIFactory.Icon(parent, UISkin.Icon(icon), 40f);
-            ((RectTransform)image.transform).anchoredPosition = new Vector2(-80f, y);
-            TextMeshProUGUI text = UIFactory.Text(UIFactory.Centre(parent, icon, new Vector2(24f, y), new Vector2(160f, 44f)), "0", 32f, color, TextAlignmentOptions.Right, true);
-            text.fontStyle = FontStyles.Bold;
-            return text;
+            RectTransform row = UIFactory.Rect(c, "Abilities", BottomCentre, BottomCentre, new Vector2(0f, 26f), new Vector2(520f, 96f), BottomCentre);
+            jumpIcon = Ability(row, -150f, "Jump", "Space", jumpPips, 3);
+            dashIcon = Ability(row, 0f, "Dash", "Shift", dashPips, 3);
+            zipIcon = Ability(row, 150f, "Zip", "RMB", null, 0);
+            zipCooldown = UIFactory.Image(UIFactory.Centre(zipIcon.transform.parent, "Cooldown", Vector2.zero, new Vector2(66f, 66f)), new Color(0.02f, 0.04f, 0.1f, 0.78f), UISkin.Circle);
+            zipCooldown.type = Image.Type.Filled;
+            zipCooldown.fillMethod = Image.FillMethod.Radial360;
+            zipCooldown.fillOrigin = (int)Image.Origin360.Top;
+            zipCooldown.fillClockwise = false;
+        }
+
+        private static Image Ability(Transform row, float x, string icon, string key, List<Image> pips, int maxPips)
+        {
+            RectTransform holder = UIFactory.Centre(row, icon, new Vector2(x, 14f), new Vector2(66f, 66f));
+            UIFactory.Image(holder, new Color(0.05f, 0.08f, 0.16f, 0.85f), UISkin.Circle);
+            Image image = UIFactory.Image(UIFactory.Centre(holder, "Icon", Vector2.zero, new Vector2(44f, 44f)), Color.white, UISkin.Icon(icon));
+            image.preserveAspect = true;
+            UIFactory.Image(UIFactory.Fill(holder, "Frame"), new Color(1f, 1f, 1f, 0.35f), UISkin.CircleFrame);
+            RectTransform cap = UIFactory.KeyCap(holder, key, 26f);
+            cap.anchoredPosition = new Vector2(0f, -44f);
+            if (pips != null)
+                for (int i = 0; i < maxPips; i++)
+                {
+                    RectTransform pip = UIFactory.Centre(holder, "Charge", new Vector2(42f, 18f - i * 15f), new Vector2(12f, 12f));
+                    pips.Add(UIFactory.Image(pip, UITheme.Player, UISkin.Pip));
+                }
+            return image;
+        }
+
+        /// <summary>Bottom right: the keys that are not shown anywhere else.</summary>
+        private static void BuildHints(Transform c)
+        {
+            RectTransform hints = UIFactory.Rect(c, "Hints", BottomRight, BottomRight, new Vector2(-26f, 26f), new Vector2(520f, 36f), BottomRight);
+            HorizontalLayoutGroup row = UIFactory.Row(hints, 10f, 0, TextAnchor.MiddleRight);
+            row.childForceExpandHeight = false;
+            Hint(hints, "LMB", "Hook");
+            Hint(hints, "E", "Open");
+            Hint(hints, "Esc", "Pause");
         }
 
         private static void Hint(Transform parent, string key, string label)
         {
-            UIFactory.KeyCap(parent, key, 34f);
-            UIFactory.Sized(UIFactory.Text(parent, label, label, 20f, UITheme.TextMuted, TextAlignmentOptions.Left, true), 70f, 34f);
+            UIFactory.KeyCap(parent, key, 32f);
+            TextMeshProUGUI text = UIFactory.Text(parent, label, label, 20f, UITheme.Text, TextAlignmentOptions.Left, true);
+            text.fontStyle = FontStyles.Bold;
+            text.textWrappingMode = TextWrappingModes.NoWrap;
         }
+
+        // ---------------------------------------------------------------- drawing
 
         private void LateUpdate()
         {
@@ -261,45 +384,61 @@ namespace Hookfall.UI
 
             if (xp != null)
             {
-                UIFactory.SetFill(xpFill, xp.CurrentXP / Mathf.Max(1f, xp.XPToNextLevel));
+                xpBar.Set(xp.CurrentXP / Mathf.Max(1f, xp.XPToNextLevel));
                 if (xp.Level != shownLevel) { shownLevel = xp.Level; levelFlash = 1f; }
                 levelText.text = xp.Level.ToString();
             }
             levelFlash = Mathf.MoveTowards(levelFlash, 0f, dt * 1.5f);
             xpGlow.color = new Color(0.4f, 0.95f, 1f, levelFlash);
-            levelBadge.localScale = Vector3.one * (1f + levelFlash * 0.25f);
+            levelBadge.localScale = Vector3.one * (1f + levelFlash * 0.35f);
 
             if (stats != null)
             {
                 float health = stats.CurrentHealth / Mathf.Max(1f, stats.MaxHealth);
-                UIFactory.SetFill(healthFill, health);
-                trail = health < trail ? Mathf.MoveTowards(trail, health, dt * 0.6f) : health;
-                UIFactory.SetFill(trailFill, trail);
+                healthBar.Set(health);
+                healthBar.FillImage.color = health < 0.3f ? Color.Lerp(UITheme.Health, Color.white, 0.25f + 0.25f * Mathf.Sin(Time.unscaledTime * 9f)) : UITheme.Health;
                 healthText.text = $"{stats.CurrentHealth:0} / {stats.MaxHealth:0}";
+                if (shieldChip.activeSelf != stats.ShieldCharges > 0) shieldChip.SetActive(stats.ShieldCharges > 0);
+                if (stats.ShieldCharges > 0) shieldText.text = stats.ShieldCharges.ToString();
+                if (reviveChip.activeSelf != stats.Revives > 0) reviveChip.SetActive(stats.Revives > 0);
+                if (stats.Revives > 0) reviveText.text = stats.Revives.ToString();
             }
             if (gm != null)
             {
                 timeText.text = RunRecord.FormatTime(gm.RunTime);
-                killsText.text = gm.Kills.ToString();
+                if (gm.Kills != shownKills) { if (shownKills >= 0) killsPunch = 1f; shownKills = gm.Kills; killsText.text = gm.Kills.ToString(); }
             }
-            if (gold != null) goldText.text = gold.Gold.ToString();
+            if (gold != null && gold.Gold != shownGold) { if (shownGold >= 0 && gold.Gold > shownGold) goldPunch = 1f; shownGold = gold.Gold; goldText.text = gold.Gold.ToString(); }
+            goldPunch = Mathf.MoveTowards(goldPunch, 0f, dt * 5f);
+            killsPunch = Mathf.MoveTowards(killsPunch, 0f, dt * 5f);
+            goldText.transform.localScale = Vector3.one * (1f + goldPunch * 0.22f);
+            killsText.transform.localScale = Vector3.one * (1f + killsPunch * 0.16f);
 
             DrawCrosshair(dt);
             DrawAttackPill(dt);
+            DrawAbilities();
 
             bool prompt = !string.IsNullOrEmpty(InteractPrompt);
             promptRow.gameObject.SetActive(prompt);
-            if (prompt) promptText.text = InteractPrompt;
+            if (prompt)
+            {
+                promptText.text = InteractPrompt;
+                if (promptKey.activeSelf == InteractWithoutKey) promptKey.SetActive(!InteractWithoutKey);
+            }
             InteractPrompt = null;
+            InteractWithoutKey = false;
+
+            chargeBar.gameObject.SetActive(TowerCacheProgress >= 0f);
+            if (TowerCacheProgress >= 0f) chargeBar.Set(TowerCacheProgress);
 
             float storm = StormWall.Pressure;
             stormText.gameObject.SetActive(storm > 0.15f);
             stormText.alpha = 0.6f + 0.4f * Mathf.Sin(Time.unscaledTime * 6f);
 
-            DrawSlots();
-            DrawCacheMarker();
-            DrawStage(dt);
-            DrawObjective();
+            DrawSlots(dt);
+            DrawStage();
+            DrawMarkers();
+            damageRing.Tick(dt);
 
             float age = Time.unscaledTime - announceTime;
             announce.gameObject.SetActive(age < 2.6f);
@@ -309,7 +448,7 @@ namespace Hookfall.UI
                 Color c = announceColor;
                 c.a = Mathf.Clamp01((2.6f - age) / 0.6f);
                 announce.color = c;
-                announce.transform.localScale = Vector3.one * (1f + 0.15f * Mathf.Clamp01(1f - age * 4f));
+                announce.transform.localScale = Vector3.one * (1f + 0.18f * Mathf.Clamp01(1f - age * 4f));
             }
         }
 
@@ -317,14 +456,14 @@ namespace Hookfall.UI
         {
             bool inRange = hook != null && hook.HasTargetInRange;
             bool zipTarget = hook != null && hook.HasZipTarget && hook.ZipCharges > 0;
-            crosshair.color = inRange ? UITheme.Player : new Color(1f, 1f, 1f, 0.55f);
+            crosshair.color = inRange ? UITheme.Player : new Color(1f, 1f, 1f, 0.6f);
             crosshair.rectTransform.localScale = Vector3.one * Mathf.MoveTowards(crosshair.rectTransform.localScale.x, inRange ? 1.15f : 0.9f, dt * 3f);
             if (hook == null) return;
             zipRing.fillAmount = hook.ZipCharges > 0 ? 1f : hook.ZipRecharge01;
-            zipRing.color = hook.ZipCharges > 0 ? new Color(0.3f, 0.95f, 1f, zipTarget ? 0.9f : 0.45f) : new Color(1f, 1f, 1f, 0.3f);
+            zipRing.color = hook.ZipCharges > 0 ? new Color(0.3f, 0.95f, 1f, zipTarget ? 0.9f : 0.4f) : new Color(1f, 1f, 1f, 0.3f);
             for (int i = 0; i < zipPips.Length; i++)
             {
-                zipPips[i].gameObject.SetActive(i < hook.ZipMaxCharges);
+                zipPips[i].gameObject.SetActive(hook.ZipMaxCharges > 1 && i < hook.ZipMaxCharges);
                 zipPips[i].color = i < hook.ZipCharges ? UITheme.Player : new Color(1f, 1f, 1f, 0.25f);
             }
         }
@@ -335,53 +474,63 @@ namespace Hookfall.UI
             if (attacks != lastAttacks) { attackPulse = 1f; lastAttacks = attacks; }
             attackPulse = Mathf.MoveTowards(attackPulse, 0f, dt * 4f);
             attackRect.localScale = Vector3.one * (1f + attackPulse * 0.18f);
-            attackText.text = Hookfall.Core.Loc.T(attacks ? "ATTACKS ON" : "ATTACKS OFF");
-            attackText.color = attacks ? new Color(0.05f, 0.12f, 0.16f) : UITheme.TextMuted;
-            attackBack.color = attacks ? UITheme.Player : new Color(0.12f, 0.15f, 0.2f, 0.85f);
+            attackText.text = Loc.T(attacks ? "ATTACKS ON" : "ATTACKS OFF");
+            attackText.color = attacks ? UITheme.TextDark : UITheme.TextMuted;
+            attackBack.color = attacks ? UITheme.Player : UITheme.PanelDeep;
         }
 
-        private void DrawSynergies()
+        private void DrawAbilities()
         {
-            if (synergy == null && combat != null)
+            if (controller != null)
             {
-                synergy = combat.GetComponent<SynergySystem>();
-                if (synergy != null) synergy.DuoUnlocked += duo => Announce(Hookfall.Core.Loc.F("DUO: {0}", DuoInfo.Name(duo)), UITheme.Gold);
+                Charges(jumpIcon, jumpPips, controller.AirJumpsLeft, controller.AirJumps);
+                Charges(dashIcon, dashPips, controller.DashesLeft, controller.AirDashes);
             }
-            if (synergy == null) return;
-            int hash = 0;
-            foreach (School school in SchoolInfo.All) hash = hash * 7 + Mathf.Min(synergy.Count(school), 5);
-            if (hash == synergyHash) return;   // rebuild the text only when a count changes
-            synergyHash = hash;
-            var text = new System.Text.StringBuilder();
-            foreach (School school in SchoolInfo.All)
-            {
-                int count = synergy.Count(school);
-                if (count == 0) continue;
-                string next = count < SynergySystem.FirstTier ? "/2" : count < SynergySystem.SecondTier ? "/4" : "  " + Hookfall.Core.Loc.T("MAX");
-                text.Append($"{SchoolInfo.Colored(school)}  <b>{count}</b>{next}\n");
-            }
-            foreach (Duo duo in DuoInfo.All)
-                if (synergy.HasDuo(duo)) text.Append($"<color=#FFD24D>+ {DuoInfo.Name(duo)}</color>\n");
-            synergyText.text = text.ToString();
+            if (hook == null) return;
+            bool ready = hook.ZipCharges > 0;
+            zipIcon.color = ready ? Color.white : new Color(1f, 1f, 1f, 0.45f);
+            zipCooldown.fillAmount = ready ? 0f : 1f - hook.ZipRecharge01;
         }
 
-        private void DrawSlots()
+        private static void Charges(Image icon, List<Image> pips, int left, int max)
         {
-            DrawSynergies();
+            icon.color = left > 0 ? Color.white : new Color(1f, 1f, 1f, 0.3f);
+            for (int i = 0; i < pips.Count; i++)
+            {
+                bool shown = max > 1 && i < max;
+                if (pips[i].gameObject.activeSelf != shown) pips[i].gameObject.SetActive(shown);
+                if (shown) pips[i].color = i < left ? UITheme.Player : new Color(1f, 1f, 1f, 0.22f);
+            }
+        }
+
+        private void DrawSlots(float dt)
+        {
+            if (synergy != null && !duoHooked)
+            {
+                duoHooked = true;
+                synergy.DuoUnlocked += duo => Announce(Loc.F("DUO: {0}", DuoInfo.Name(duo)), UITheme.Gold);
+            }
+            build.Refresh(synergy);
             for (int i = 0; i < SlotCount; i++)
             {
+                if (slotPunch[i] > 0f)
+                {
+                    slotPunch[i] = Mathf.MoveTowards(slotPunch[i], 0f, dt * 4f);
+                    slotRects[i].localScale = Vector3.one * (1f + slotPunch[i] * 0.3f);
+                }
                 ItemBase item = SlotItem(i);
                 int level = item != null ? item.Level : 0;
                 if (slotItem[i] == item && slotLevel[i] == level) continue;   // redraw only when the slot changes
+                if (slotLevel[i] >= 0 && item != null) slotPunch[i] = 1f;     // a new item or a new level: a little jump
                 slotItem[i] = item;
                 slotLevel[i] = level;
                 slotIcons[i].sprite = UISkin.Icon(item);
                 slotIcons[i].enabled = item != null && slotIcons[i].sprite != null;
                 slotGlyphs[i].text = item != null && slotIcons[i].sprite == null ? item.DisplayName.Substring(0, 1) : "";
-                slotFrames[i].color = item != null ? Color.Lerp(UITheme.PanelLight, UITheme.ForRarity(item.Rarity), 0.35f) : new Color(0.15f, 0.19f, 0.26f, 0.7f);
+                slotFrames[i].color = item != null ? UITheme.ForRarity(item.Rarity) : new Color(1f, 1f, 1f, 0.2f);
                 if (slotPips[i] != null) Destroy(slotPips[i].gameObject);
                 slotPips[i] = item != null
-                    ? UIFactory.Pips(slotFrames[i].transform, item.Level, ItemBase.MaxLevel, i < CombatSystem.MaxItems ? 10f : 7f, UITheme.Player, new Color(1f, 1f, 1f, 0.2f))
+                    ? UIFactory.Pips(slotRects[i], item.Level, ItemBase.MaxLevel, i < CombatSystem.MaxItems ? 11f : 8f, UITheme.Player, new Color(1f, 1f, 1f, 0.22f))
                     : null;
             }
         }
@@ -398,90 +547,66 @@ namespace Hookfall.UI
         }
 
         /// <summary>The stage, the gold the boss still needs, and the boss's health while it fights.</summary>
-        private void DrawStage(float dt)
+        private void DrawStage()
         {
             StageDirector stage = StageDirector.Instance;
             bool gathering = stage != null && stage.Current == StageDirector.Phase.Gathering;
-            stageText.gameObject.SetActive(stage != null);
-            bossGoldFill.parent.gameObject.SetActive(gathering);
-            if (stage != null)
-            {
-                string text = Hookfall.Core.Loc.F("STAGE {0}", stage.Stage);
-                if (gathering) text += "  ·  " + Hookfall.Core.Loc.F("Boss {0} / {1} gold", Mathf.Min(stage.GoldProgress, stage.GoldTarget), stage.GoldTarget);
-                else if (stage.Current == StageDirector.Phase.Portal) text += "  ·  " + Hookfall.Core.Loc.T("The portal is open");
-                if (stageText.text != text) stageText.text = text;
-                if (gathering) UIFactory.SetFill(bossGoldFill, stage.GoldProgress / (float)Mathf.Max(1, stage.GoldTarget));
-            }
             Hookfall.Enemies.Boss boss = stage != null ? stage.Boss : null;
             bool fight = boss != null && boss.Fighting && !boss.IsDead;
-            bossBar.gameObject.SetActive(fight);
-            if (!fight) { bossTrail = 1f; return; }
-            float health = boss.Health / Mathf.Max(1f, boss.MaxHealth);
-            UIFactory.SetFill(bossHealthFill, health);
-            bossTrail = health < bossTrail ? Mathf.MoveTowards(bossTrail, health, dt * 0.4f) : health;
-            UIFactory.SetFill(bossTrailFill, bossTrail);
-            string name = Hookfall.Core.Loc.Upper(stage.BossName) + (boss.Raging ? "  ·  " + Hookfall.Core.Loc.T("ENRAGED") : "");
+            stageText.gameObject.SetActive(stage != null && !fight);
+            bossMeter.gameObject.SetActive(gathering);
+            if (bossBlock.gameObject.activeSelf != fight)
+            {
+                bossBlock.gameObject.SetActive(fight);
+                if (fight) bossBar.Set(1f, true);
+            }
+            if (stage == null) return;
+
+            string text = Loc.F("STAGE {0}", stage.Stage);
+            if (stage.Current == StageDirector.Phase.Portal) text += "  ·  " + Loc.T("The portal is open");
+            if (stageText.text != text) stageText.text = text;
+            if (gathering)
+            {
+                bossGoldBar.Set(stage.GoldProgress / (float)Mathf.Max(1, stage.GoldTarget));
+                string goldLine = Mathf.Min(stage.GoldProgress, stage.GoldTarget) + " / " + stage.GoldTarget;
+                if (bossGoldText.text != goldLine) bossGoldText.text = goldLine;
+            }
+            if (!fight) return;
+            bossBar.Set(boss.Health / Mathf.Max(1f, boss.MaxHealth));
+            string name = Loc.Upper(stage.BossName) + (boss.Raging ? "  ·  " + Loc.T("ENRAGED") : "");
             if (bossNameText.text != name) bossNameText.text = name;
         }
 
-        private void DrawObjective()
+        /// <summary>Badges for the nearest chests, the tower cache and the objective.</summary>
+        private void DrawMarkers()
         {
-            bool show = objective.HasValue && Camera.main != null;
-            objectiveMarker.gameObject.SetActive(show);
-            if (!show) return;
-            if (objectiveText.text != objectiveLabel) objectiveText.text = objectiveLabel;
-            objectiveText.color = objectiveColor;
-            objectivePanel.color = new Color(0.08f, 0.1f, 0.16f, 0.85f);
+            markers.Begin();
             Camera cam = Camera.main;
-            Vector3 local = cam.transform.InverseTransformPoint(objective.Value);
-            var canvasRect = (RectTransform)objectiveMarker.parent;
-            Vector2 half = canvasRect.rect.size * 0.5f - new Vector2(130f, 80f);
-            bool onScreen = false;
-            if (local.z > 0f)
+            if (cam != null && chests != null)
             {
-                Vector3 viewport = cam.WorldToViewportPoint(objective.Value);
-                Vector2 p = new Vector2((viewport.x - 0.5f) * canvasRect.rect.width, (viewport.y - 0.5f) * canvasRect.rect.height);
-                if (Mathf.Abs(p.x) < half.x && Mathf.Abs(p.y) < half.y)
+                // The three nearest chests; dim while the Warden cannot pay for one.
+                Vector3 p = cam.transform.position;
+                Chest a = null, b = null, third = null;
+                float da = float.MaxValue, db = float.MaxValue, dc = float.MaxValue;
+                foreach (Chest chest in chests.Chests)
                 {
-                    onScreen = true;
-                    objectiveMarker.anchoredPosition = p + new Vector2(0f, 60f);
-                    objectiveArrow.localRotation = Quaternion.Euler(0f, 0f, -90f);
-                    objectiveArrow.anchoredPosition = new Vector2(0f, -40f);
+                    if (chest == null) continue;
+                    float d = (chest.transform.position - p).sqrMagnitude;
+                    if (d < da) { third = b; dc = db; b = a; db = da; a = chest; da = d; }
+                    else if (d < db) { third = b; dc = db; b = chest; db = d; }
+                    else if (d < dc) { third = chest; dc = d; }
                 }
+                float alpha = chests.CanAfford ? 1f : 0.5f;
+                Sprite icon = UISkin.Icon("Chest");
+                if (a != null) markers.Show(a.transform.position + Vector3.up * 2f, icon, UITheme.Gold, 14f, null, alpha);
+                if (b != null) markers.Show(b.transform.position + Vector3.up * 2f, icon, UITheme.Gold, 14f, null, alpha * 0.8f);
+                if (third != null) markers.Show(third.transform.position + Vector3.up * 2f, icon, UITheme.Gold, 14f, null, alpha * 0.6f);
             }
-            if (onScreen) return;
-            Vector2 dir = new Vector2(local.x, local.y);
-            if (local.z < 0f) dir = -dir;
-            if (dir.sqrMagnitude < 0.0001f) dir = Vector2.up;
-            dir.Normalize();
-            float scale = Mathf.Min(half.x / Mathf.Max(0.001f, Mathf.Abs(dir.x)), half.y / Mathf.Max(0.001f, Mathf.Abs(dir.y)));
-            objectiveMarker.anchoredPosition = dir * scale;
-            objectiveArrow.localRotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg);
-            objectiveArrow.anchoredPosition = dir * 120f;
-        }
-
-        private void DrawCacheMarker()
-        {
-            bool showMarker = TowerCacheMarker.HasValue && Camera.main != null;
-            cacheMarker.gameObject.SetActive(showMarker);
-            cacheProgressFill.parent.gameObject.SetActive(TowerCacheProgress >= 0f);
-            if (TowerCacheProgress >= 0f) UIFactory.SetFill(cacheProgressFill, TowerCacheProgress);
-            if (!showMarker) return;
-
-            // Point along the screen edge towards the tower, even when it is behind the camera.
-            Vector3 local = Camera.main.transform.InverseTransformPoint(TowerCacheMarker.Value);
-            Vector2 dir = new Vector2(local.x, local.y);
-            if (local.z < 0f) dir = -dir;
-            if (dir.sqrMagnitude < 0.0001f) dir = Vector2.up;
-            dir.Normalize();
-
-            var canvasRect = (RectTransform)cacheMarker.parent;
-            Vector2 half = canvasRect.rect.size * 0.5f - new Vector2(160f, 90f);
-            float scale = Mathf.Min(half.x / Mathf.Max(0.001f, Mathf.Abs(dir.x)), half.y / Mathf.Max(0.001f, Mathf.Abs(dir.y)));
-            bool onScreen = local.z > 0f && Mathf.Abs(local.x / local.z) < 0.9f && Mathf.Abs(local.y / local.z) < 0.5f;
-            cacheMarker.anchoredPosition = onScreen ? new Vector2(half.x, 0f) : dir * scale;
-            cacheArrow.localRotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg);
-            cacheArrow.anchoredPosition = dir * 155f;
+            if (TowerCacheMarker.HasValue)
+                markers.Show(TowerCacheMarker.Value, UISkin.Icon("Tower"), UITheme.ForRarity(Rarity.Legendary), 10f, Loc.T("Tower cache ready"));
+            if (objective.HasValue)
+                markers.Show(objective.Value, UISkin.Icon(objectiveIcon), objectiveColor, 0f, objectiveLabel);
+            markers.End();
         }
     }
 }

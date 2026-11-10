@@ -42,7 +42,10 @@ namespace Hookfall.Feel
                 tmp.fontSize = 6f;
                 tmp.alignment = TextAlignmentOptions.Center;
                 tmp.fontStyle = FontStyles.Bold;
-                if (fontMaterial != null) tmp.fontSharedMaterial = fontMaterial;
+                // The skin's own font with its outline; the wired material is only the fallback (2026-11-10).
+                tmp.font = Hookfall.UI.UISkin.Body;
+                if (tmp.font != TMP_Settings.defaultFontAsset) tmp.fontSharedMaterial = Hookfall.UI.UISkin.BodyOutline;
+                else if (fontMaterial != null) tmp.fontSharedMaterial = fontMaterial;
                 tmp.textWrappingMode = TextWrappingModes.NoWrap;
                 go.SetActive(false);
                 numbers.Add(new Number { text = tmp, age = lifetime });

@@ -118,7 +118,7 @@ namespace Hookfall.Enemies
         {
             Vector3 offset = Player.transform.position - transform.position;
             if (offset.magnitude <= slamRadius * transform.localScale.x && PlayerStats != null)
-                PlayerStats.TakeDamage(slamDamage * DamageScale);
+                PlayerStats.TakeDamageFrom(slamDamage * DamageScale, transform.position);
         }
 
         public void ShowAimLine(bool show, Vector3 target)

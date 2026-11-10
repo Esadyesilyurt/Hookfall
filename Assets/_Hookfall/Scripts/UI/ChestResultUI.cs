@@ -76,12 +76,12 @@ namespace Hookfall.UI
             Instance = this;
             Canvas canvas = UIFactory.Canvas(transform, "Chest Canvas", 25);
             root = canvas.gameObject;
-            UIFactory.Image(UIFactory.Fill(canvas.transform, "Dim"), new Color(0.02f, 0.04f, 0.08f, 0.72f));
+            UIFactory.Dim(canvas.transform, 0.66f);
             rays = UIFactory.Centre(canvas.transform, "Rays", new Vector2(0f, 300f), new Vector2(900f, 900f));
             raysImage = UIFactory.Image(rays, Color.white, UISkin.Rays);
-            title = UIFactory.Text(UIFactory.Centre(canvas.transform, "Title", new Vector2(0f, 330f), new Vector2(900f, 90f)),
-                "CHEST", 64f, UITheme.Gold, TextAlignmentOptions.Center, true);
-            title.fontStyle = FontStyles.Bold;
+            title = UIFactory.Title(UIFactory.Centre(canvas.transform, "Title", new Vector2(0f, 330f), new Vector2(1300f, 96f)),
+                "Text", "CHEST", 68f, UITheme.Gold, TextAlignmentOptions.Center, true, true);
+            UIFactory.Stretch((RectTransform)title.transform);
             title.characterSpacing = 12f;
             UIPop.Add(title, 0f, 1.4f);
             subtitle = UIFactory.Text(UIFactory.Centre(canvas.transform, "Subtitle", new Vector2(0f, 270f), new Vector2(1200f, 40f)),
@@ -155,9 +155,9 @@ namespace Hookfall.UI
             {
                 ItemBase item = replaceOptions[i];
                 int captured = i;
-                string value = SchoolInfo.Line(item.Schools) + "\n" + string.Join("\n", item.StatLines());
+                string value = string.Join("\n", item.StatLines());
                 cards.Add(UIFactory.ChoiceCard(cardRow, i, UITheme.ForRarity(item.Rarity), UISkin.Icon(item), item.DisplayName,
-                    Loc.F("LEVEL {0}", item.Level), value, item.Summary, () => Pick(captured)).gameObject);
+                    Loc.F("LEVEL {0}", item.Level), value, item.Summary, () => Pick(captured), item.Schools).gameObject);
             }
             shownAt = Time.unscaledTime;
         }
@@ -191,16 +191,16 @@ namespace Hookfall.UI
                 if (choice.IsNewItem)
                 {
                     tag = Loc.F("NEW  ·  {0}", kind);
-                    value = SchoolInfo.Line(choice.Item.Schools) + "\n" + string.Join("\n", choice.Item.StatLines());
+                    value = string.Join("\n", choice.Item.StatLines());
                 }
                 else
                 {
                     tag = Loc.F("LEVEL {0} → {1}", choice.Item.Level, Mathf.Min(choice.Item.Level + choice.LevelsGained, ItemBase.MaxLevel));
-                    value = SchoolInfo.Line(choice.Item.Schools) + "\n" + choice.Item.DescribeNextLevel();
+                    value = choice.Item.DescribeNextLevel();
                 }
             }
             int captured = index;
-            return UIFactory.ChoiceCard(cardRow, index, color, icon, name, tag, value, detail, () => Pick(captured)).gameObject;
+            return UIFactory.ChoiceCard(cardRow, index, color, icon, name, tag, value, detail, () => Pick(captured), choice.Item != null ? choice.Item.Schools : null).gameObject;
         }
 
         private void Update()

@@ -96,6 +96,9 @@ namespace Hookfall.Player
         public event System.Action Dashed;
         public event System.Action LedgeClimbed;
         public int AirJumpsLeft => airJumpsLeft;
+        /// <summary>Double jumps and dashes per flight (the character's, plus what items add).</summary>
+        public int AirJumps => airJumps;
+        public int AirDashes => airDashes;
         public int DashesLeft => dashesLeft;
         /// <summary>True for a moment after touching an island side, while a wall jump is possible.</summary>
         public bool TouchingWall => Time.time - lastWallTime < wallJumpGrace;

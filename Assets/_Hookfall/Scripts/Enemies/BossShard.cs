@@ -76,7 +76,7 @@ namespace Hookfall.Enemies
             }
             transform.SetPositionAndRotation(to, Quaternion.LookRotation(velocity));
             if ((target - to).sqrMagnitude > HitRadius * HitRadius) return;
-            if (stats != null) stats.TakeDamage(damage);
+            if (stats != null) stats.TakeDamageFrom(damage, to - velocity.normalized * 10f);
             Break(to);
         }
 
