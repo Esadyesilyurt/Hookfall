@@ -14,6 +14,15 @@ Read this first in every session. The full design is in the GDD (Claude Docs art
 - No AI API, LLM or online model runs inside the game. In-game AI is our own C#.
 - No AI-generated audio.
 
+## Environment
+
+- Unity 6000.4.0f1, Universal Render Pipeline (URP 17.4).
+- UI: uGUI (Canvas) with TextMeshPro (part of `com.unity.ugui` 2.0.0), built from code by `UIFactory`. UI Toolkit is not used for game UI.
+- `Assets/_Hookfall/`: `Art/` (models, materials, textures, shader graphs), `Audio/`, `Data/` (ScriptableObjects), `Editor/` (builders and setup menus), `Prefabs/`, `Scenes/` (generated), `Scripts/<System>/`, `Tests/PlayMode/`.
+- The game is 3D: no 2D sprites, so no Pixels Per Unit standard is set. Decide one before any 2D art (UI sprites, PixelLab output) goes in.
+- Dev tools: MCP for Unity (`com.coplaydev.unity-mcp`, Window > MCP For Unity), Context7, PixelLab MCP (art only, never audio), the `unity` and `unity-coding-skills` plugins. Packages added for UI work: Unity UI Extensions (uGUI), UI Toolkit Extensions, PrimeTween (OpenUPM).
+- Kütüphane/API dokümanı gerektiğinde her zaman Context7 kullan.
+
 ## Code conventions
 
 - All game content lives in `Assets/_Hookfall/`. Scripts in `Scripts/<System>/`, namespace `Hookfall.<System>`.
