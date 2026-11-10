@@ -98,7 +98,7 @@ namespace Hookfall.Tests
             Component combat = player.GetComponent(combatType);
             Component stats = player.GetComponent(statsType);
             var grant = combatType.GetMethod("Grant");
-            for (int i = 0; i < 40; i++) grant.Invoke(combat, new[] { Enum.ToObject(rarityType, 2), (object)stats });
+            for (int i = 0; i < 200; i++) grant.Invoke(combat, new[] { Enum.ToObject(rarityType, 2), (object)stats });   // 40 left a 6% chance of five attack items
             var items = (ICollection)combatType.GetProperty("Items").GetValue(combat);
             int passives = 0;
             foreach (Component item in items) if ((bool)item.GetType().GetProperty("IsPassive").GetValue(item)) passives++;

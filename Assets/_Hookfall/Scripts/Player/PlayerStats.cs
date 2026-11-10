@@ -99,6 +99,17 @@ namespace Hookfall.Player
         }
 
         public event Action<float> Damaged;
+        /// <summary>Where the hit that raised Damaged came from, when the attacker said so (the HUD points at it).</summary>
+        public Vector3? LastDamageSource { get; private set; }
+        private Vector3? damageSource;
+
+        /// <summary>Damage from a known place: an enemy's bite, a boulder's flight path.</summary>
+        public void TakeDamageFrom(float amount, Vector3 source)
+        {
+            damageSource = source;
+            TakeDamage(amount);
+            damageSource = null;
+        }
         /// <summary>The character's health at the start of a run (CharacterLoadout); also fills health.</summary>
         public void ScaleMaxHealth(float multiplier)
         {
@@ -172,6 +183,7 @@ namespace Hookfall.Player
 
             float damage = Mathf.Max(1f, amount - armor);
             CurrentHealth = Mathf.Max(0f, CurrentHealth - damage);
+            LastDamageSource = damageSource;
             Damaged?.Invoke(damage);
             if (IsDead && Revives > 0)
             {

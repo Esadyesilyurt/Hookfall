@@ -63,7 +63,11 @@ namespace Hookfall.World
             bool standing = !player.IsAirborne && Vector3.Distance(player.transform.position, transform.position) <= openDistance;
             progress = standing ? progress + Time.deltaTime / openTime : Mathf.Max(0f, progress - decayPerSecond * Time.deltaTime / openTime);
             HUD.TowerCacheProgress = progress > 0f ? progress : -1f;
-            if (standing) HUD.InteractPrompt = Hookfall.Core.Loc.T("Opening the tower cache... hold your ground");
+            if (standing)
+            {
+                HUD.InteractPrompt = Hookfall.Core.Loc.T("Opening the tower cache... hold your ground");
+                HUD.InteractWithoutKey = true;
+            }
             if (progress < 1f) return;
 
             // The long hold pays: every enemy close by is destroyed (never the boss), then one pick from three Legendary items (2026-11-08).

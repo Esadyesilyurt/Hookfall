@@ -180,7 +180,7 @@ namespace Hookfall.World
                     if (audioManager != null) audioManager.KeepMusicFull();
                     break;
                 case Phase.Portal:
-                    HUD.SetObjective(Portal != null ? Portal.Centre : (Vector3?)null, Loc.T("Portal"), PortalColor);
+                    HUD.SetObjective(Portal != null ? Portal.Centre : (Vector3?)null, Loc.T("Portal"), PortalColor, "Portal");
                     break;
             }
         }

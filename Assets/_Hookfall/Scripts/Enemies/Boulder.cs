@@ -45,7 +45,7 @@ namespace Hookfall.Enemies
             transform.Rotate(Vector3.right, spinSpeed * dt, Space.Self);
             if (target != null && (target.transform.position - to).sqrMagnitude < hitRadius * hitRadius)
             {
-                target.TakeDamage(damage);
+                target.TakeDamageFrom(damage, to - velocity.normalized * 10f);   // where it flew in from
                 director.ReleaseBoulder(this, true);
             }
         }

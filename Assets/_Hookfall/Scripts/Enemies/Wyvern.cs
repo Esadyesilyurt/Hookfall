@@ -57,7 +57,7 @@ namespace Hookfall.Enemies
         {
             if (!DashArmed || PlayerStats == null) return;
             if (DistanceToPlayer > dashHitDistance) return;
-            PlayerStats.TakeDamage(Damage);
+            PlayerStats.TakeDamageFrom(Damage, transform.position);
             DashArmed = false;
         }
     }

@@ -14,7 +14,7 @@ namespace Hookfall.Enemies.States
         public void Enter()
         {
             timer = bat.BiteRecovery;
-            if (bat.PlayerStats != null && !bat.Frozen) bat.PlayerStats.TakeDamage(bat.Damage);   // a frozen bat cannot bite
+            if (bat.PlayerStats != null && !bat.Frozen) bat.PlayerStats.TakeDamageFrom(bat.Damage, bat.transform.position);   // a frozen bat cannot bite
         }
 
         public void Exit() { }

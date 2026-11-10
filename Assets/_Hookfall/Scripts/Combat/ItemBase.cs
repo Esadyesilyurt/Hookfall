@@ -37,6 +37,8 @@ namespace Hookfall.Combat
         public string DisplayName => Loc.T(displayName);
         public string Lore => Loc.T(lore);
         public string Summary => Loc.T(summary);
+        /// <summary>Damage this item has dealt in the run with its own hits (the run-end screen ranks items by it).</summary>
+        public float DamageDealt { get; private set; }
         public int Level => level;
         public bool IsMaxed => level >= MaxLevel;
         public Rarity Rarity => rarity;
@@ -60,6 +62,7 @@ namespace Hookfall.Combat
         {
             if (enemy == null || enemy.IsDead) return;
             if (Synergy != null) Synergy.OnItemHit(this, enemy, damage);
+            DamageDealt += damage;
             enemy.TakeDamage(damage);
         }
 
