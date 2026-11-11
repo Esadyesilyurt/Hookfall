@@ -1249,6 +1249,48 @@ namespace Hookfall.Tests
             LogAssert.NoUnexpectedReceived();
         }
 
+        /// <summary>2026-11-12: healing from fighting is capped per second however large the lifesteal, and the hook
+        /// takes hold of a boss.</summary>
+        [UnityTest]
+        public IEnumerator CombatHealingIsCappedAndBossesTakeTheHook()
+        {
+            SceneManager.LoadScene("Arena");
+            yield return null;
+            GameObject player = GameObject.Find("Player");
+            KeepAlive(player);
+            var flags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+            Type statsType = Type.GetType("Hookfall.Player.PlayerStats, Assembly-CSharp");
+            Component stats = player.GetComponent(statsType);
+            yield return new WaitForSeconds(1.2f);   // the heal budget fills in a second
+            float max = (float)statsType.GetProperty("MaxHealth").GetValue(stats);
+            statsType.GetProperty("CurrentHealth").SetValue(stats, 10f);
+            statsType.GetMethod("HealFromCombat").Invoke(stats, new object[] { 1000000f });
+            float after = (float)statsType.GetProperty("CurrentHealth").GetValue(stats);
+            Assert.Greater(after, 10f, "Fighting should heal");
+            Assert.LessOrEqual(after, 10f + max * 0.04f + 2f, "Fighting should heal at most 4% of max health in a second");
+
+            Type stageType = Type.GetType("Hookfall.World.StageDirector, Assembly-CSharp");
+            Type cutsceneType = Type.GetType("Hookfall.Feel.CutsceneDirector, Assembly-CSharp");
+            object stage = stageType.GetProperty("Instance").GetValue(null);
+            stageType.GetMethod("SummonBoss").Invoke(stage, null);
+            Component boss = null;
+            float end = Time.realtimeSinceStartup + 20f;
+            while (Time.realtimeSinceStartup < end)
+            {
+                KeepAlive(player);
+                var cutscenes = UnityEngine.Object.FindAnyObjectByType(cutsceneType);
+                if (cutscenes != null) cutsceneType.GetField("skip", flags).SetValue(cutscenes, true);
+                boss = (Component)stageType.GetProperty("Boss").GetValue(stage);
+                if (boss != null && (bool)boss.GetType().GetProperty("Fighting").GetValue(boss) && Time.timeScale > 0f) break;
+                yield return null;
+            }
+            Assert.IsNotNull(boss, "The boss should rise");
+            Type hookType = Type.GetType("Hookfall.Player.GrappleHook, Assembly-CSharp");
+            Assert.IsTrue((bool)hookType.GetMethod("IsHookable").Invoke(null, new object[] { boss.GetComponent<Collider>() }), "The hook should catch a boss");
+            Time.timeScale = 1f;
+            LogAssert.NoUnexpectedReceived();
+        }
+
         /// <summary>The boss of stage 2 is the Tempest Wyrm (2026-11-11): it rises, flies its circle with its body behind
         /// it, dives at the Warden, and dying hands the stage over like the Colossus does.</summary>
         [UnityTest]

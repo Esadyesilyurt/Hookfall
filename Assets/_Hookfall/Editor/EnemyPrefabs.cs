@@ -245,7 +245,7 @@ namespace Hookfall.EditorTools
                 Transform r = Pivot(visual.transform, "Arm_R", new Vector3(5.4f, 2.8f, 0f));
                 Part(r, "Arm", PrimitiveType.Cube, new Vector3(0f, -3.5f, 0.5f), new Vector3(2.4f, 7f, 2.4f), Mat("M_Golem"));
             }
-            Stats(boss, "Abyss Colossus", 14000f, 0f, 20f, 160f, 120, 7f);   // a mid-run build killed 9000 in 51 s, 12000 in 57 s
+            Stats(boss, "Abyss Colossus", 10000f, 0f, 20f, 160f, 120, 7f);   // 14000 until 2026-11-12: the fight was only long. A mid-run build killed 9000 in 51 s, 12000 in 57 s
             SetFloat(boss, "knockback", 0f);
             SetFloat(boss, "hitPunch", 0.02f);
             var serialized = new SerializedObject(boss);
@@ -307,7 +307,7 @@ namespace Hookfall.EditorTools
                 Transform t = FindDeep(visual.transform, part);
                 if (t != null) t.localScale *= 2.2f;
             }
-            Stats(wyrm, "Tempest Wyrm", 12000f, 0f, 20f, 160f, 120, 6f);   // less than the Colossus: it does not hold still
+            Stats(wyrm, "Tempest Wyrm", 8000f, 0f, 20f, 160f, 120, 6f);   // less than the Colossus: it does not hold still
             SetFloat(wyrm, "knockback", 0f);
             SetFloat(wyrm, "hitPunch", 0.02f);
             var serialized = new SerializedObject(wyrm);

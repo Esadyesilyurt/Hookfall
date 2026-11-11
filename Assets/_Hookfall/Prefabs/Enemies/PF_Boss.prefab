@@ -328,7 +328,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Hookfall.Enemies.Boss
   displayName: Abyss Colossus
-  maxHealth: 14000
+  maxHealth: 10000
   moveSpeed: 0
   contactDamage: 20
   xpReward: 160
@@ -402,8 +402,8 @@ MonoBehaviour:
   callAt:
   - 0.7
   - 0.35
-  calledWyverns: 5
-  calledBats: 10
+  calledWyverns: 3
+  calledBats: 6
   rageBelow: 0.3
   rageSpeedUp: 1.45
   rageExtraShards: 2
