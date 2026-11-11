@@ -67,8 +67,10 @@ namespace Hookfall.Enemies
         {
             ShowAimLine(false, Vector3.zero);
             ShowSlamRing(false);
-            ArmRaise = 0f;
+            ArmRaise = armAngle = armVelocity = 0f;
         }
+
+        private float armAngle, armVelocity;
 
         protected override void OnDied(bool killed)
         {
@@ -86,9 +88,11 @@ namespace Hookfall.Enemies
             if (flat.sqrMagnitude > 0.01f)
                 transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(flat), deltaTime * 6f);
 
-            float angle = Mathf.Lerp(0f, -150f, ArmRaise);
-            if (armLeft != null) armLeft.localRotation = Quaternion.Euler(angle, 0f, 0f);
-            if (armRight != null) armRight.localRotation = Quaternion.Euler(angle, 0f, 0f);
+            // The arms follow on a spring: they heave up, and after a throw they swing down past rest and settle.
+            armVelocity += ((Mathf.Lerp(0f, -150f, ArmRaise) - armAngle) * 200f - armVelocity * 15f) * deltaTime;
+            armAngle += armVelocity * deltaTime;
+            if (armLeft != null) armLeft.localRotation = Quaternion.Euler(armAngle, 0f, 0f);
+            if (armRight != null) armRight.localRotation = Quaternion.Euler(armAngle, 0f, 0f);
         }
 
         public bool PlayerOnMyIsland => HomeIsland != null && Player.CurrentIsland == HomeIsland;
@@ -117,6 +121,7 @@ namespace Hookfall.Enemies
 
         public void DoSlam()
         {
+            Squash(0.4f);   // the whole body lands with the fists
             Vector3 offset = Player.transform.position - transform.position;
             if (offset.magnitude <= slamRadius * transform.localScale.x && PlayerStats != null)
                 PlayerStats.TakeDamageFrom(slamDamage * DamageScale, transform.position);

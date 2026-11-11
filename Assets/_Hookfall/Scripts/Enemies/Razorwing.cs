@@ -42,6 +42,9 @@ namespace Hookfall.Enemies
         public float StrafeSpeed =>
             Mathf.Max(strafeSpeed * SpeedTrait, Player.Speed * 1.1f) * (Player.IsAirborne ? 1f : frenzySpeedMultiplier);
 
+        // On its run the wings are held out like blades.
+        protected override float FlapScale => SlashArmed ? 0.15f : 1f;
+
         protected override IEnemyState DefaultState => Form;
 
         protected override void BuildStates()

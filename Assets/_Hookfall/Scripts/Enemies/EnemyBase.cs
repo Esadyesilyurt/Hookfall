@@ -112,7 +112,8 @@ namespace Hookfall.Enemies
         private Transform visual;
         private Quaternion visualRotation = Quaternion.identity;
         private Vector3 visualPosition;
-        private float punch, bank, jab, spawnTimer, dying;
+        private float punch, bank, pitch, jab, spawnTimer, dying;
+        private float flapClock, wingSpread = 1f, wingLift;
         // School statuses (SynergySystem applies them): timers in seconds, damage per second.
         private float burnTimer, burnDps, bleedTimer, bleedDps, chillTimer, chillSlow, shockTimer, freezeTimer, dotTimer;
         private Hookfall.Combat.SynergySystem synergy;
@@ -208,7 +209,7 @@ namespace Hookfall.Enemies
             baseGlow = Color.black;
             warning = false;
             flashTimer = 0f;
-            punch = bank = jab = dying = 0f;
+            punch = bank = pitch = jab = dying = 0f;
             spawnTimer = spawnTime;
             if (visual != null)
             {
@@ -519,6 +520,16 @@ namespace Hookfall.Enemies
         /// <summary>A quick lunge of the body towards the player and back (a bite, a sting).</summary>
         public void Jab(float distance = 0.6f) => jab = distance;
 
+        /// <summary>Squashes the body for a moment (a stomp, a heavy landing), like a hit does.</summary>
+        public void Squash(float amount) => punch = Mathf.Max(punch, amount);
+
+        /// <summary>How wide the wings beat right now (1 = the prefab's flap; a dash holds them almost still).</summary>
+        protected virtual float FlapScale => 1f;
+        /// <summary>Degrees both wings are raised on top of the beat (swept up in a dash).</summary>
+        protected virtual float WingRest => 0f;
+        /// <summary>Degrees the body pitches (negative rears up).</summary>
+        protected virtual float Pitch => 0f;
+
         private void Animate(float dt)
         {
             if (visual != null)
@@ -542,7 +553,8 @@ namespace Hookfall.Enemies
                     Vector3 turn = transform.InverseTransformDirection(desiredVelocity - Velocity);
                     bank = Mathf.Lerp(bank, Mathf.Clamp(-turn.x * 2.4f, -bankAngle, bankAngle), dt * 6f);
                     jab = Mathf.MoveTowards(jab, 0f, dt * 3.5f);
-                    visual.localRotation = Quaternion.Euler(0f, 0f, bank) * visualRotation;
+                    pitch = Mathf.Lerp(pitch, Pitch, dt * 10f);
+                    visual.localRotation = Quaternion.Euler(pitch, 0f, bank) * visualRotation;
                     visual.localPosition = visualPosition + new Vector3(0f, Mathf.Sin((Time.time + flapPhase) * bobSpeed) * bobHeight, jab);
                 }
             }
@@ -552,7 +564,11 @@ namespace Hookfall.Enemies
                 if (flashTimer <= 0f) ApplyGlow();
             }
             if (wingLeft == null || wingRight == null) return;
-            float angle = Mathf.Sin((Time.time + flapPhase) * flapSpeed) * flapAngle;
+            // The beat quickens with speed; the phase is summed so a change of pace never makes the wings jump.
+            flapClock += dt * flapSpeed * Mathf.Lerp(0.8f, 1.5f, Velocity.magnitude / Mathf.Max(1f, moveSpeed * 1.6f));
+            wingSpread = Mathf.Lerp(wingSpread, FlapScale, dt * 12f);
+            wingLift = Mathf.Lerp(wingLift, WingRest, dt * 12f);
+            float angle = Mathf.Sin(flapClock + flapPhase) * flapAngle * wingSpread + wingLift;
             wingLeft.localRotation = Quaternion.Euler(0f, 0f, angle);
             wingRight.localRotation = Quaternion.Euler(0f, 0f, -angle);
         }

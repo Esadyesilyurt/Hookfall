@@ -20,12 +20,14 @@ namespace Hookfall.Enemies.States
             windUpLeft = wyvern.Player.IsAirborne ? wyvern.WindUp : wyvern.WindUpOnIsland;
             wyvern.Stop();
             wyvern.SetWarning(true);
+            wyvern.WindingUp = true;
         }
 
         public void Exit()
         {
             wyvern.SetWarning(false);
             wyvern.DashArmed = false;
+            wyvern.WindingUp = false;
         }
 
         public void Tick(float deltaTime)
@@ -41,6 +43,7 @@ namespace Hookfall.Enemies.States
                 Vector3 direction = (target - wyvern.transform.position).normalized;
                 wyvern.SetVelocityNow(direction * wyvern.DashSpeed);
                 wyvern.SetWarning(false);
+                wyvern.WindingUp = false;
                 wyvern.DashArmed = true;
                 dashing = true;
                 dashLeft = wyvern.DashDuration;

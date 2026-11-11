@@ -772,12 +772,9 @@ def main():
         "EmberWitch": lambda: hookfall_characters.ember_witch(out_dir, prev_dir),
         "FrostSeer": lambda: hookfall_characters.frost_seer(out_dir, prev_dir),
         "StormHerald": lambda: hookfall_characters.storm_herald(out_dir, prev_dir),
-        "ItemIcons": lambda: hookfall_item_icons.item_icons(os.path.join(out_dir, "..", "UI", "Resources", "Icons"), prev_dir),
-        "BuildIcons": lambda: hookfall_item_icons.build_icons(os.path.join(out_dir, "..", "UI", "Resources", "Icons"), prev_dir),
-        "BridgeIcons": lambda: hookfall_item_icons.bridge_icons(os.path.join(out_dir, "..", "UI", "Resources", "Icons"), prev_dir),
+        # The item, stat and HUD icons are no longer rendered here: Tools/UI/make_ui.js draws them (2026-11-10).
         "Boss": lambda: hookfall_boss.boss(out_dir, prev_dir),
         "Portal": lambda: hookfall_boss.portal(out_dir, prev_dir),
-        "Icons": lambda: icons(os.path.join(out_dir, "..", "UI", "Resources", "Icons"), prev_dir),
     }
     jobs.update(hookfall_enemies.jobs(out_dir, prev_dir))
     for name, job in jobs.items():

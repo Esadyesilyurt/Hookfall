@@ -37,6 +37,13 @@ namespace Hookfall.Enemies
 
         /// <summary>True while dashing and the hit has not landed yet.</summary>
         public bool DashArmed { get; set; }
+        /// <summary>True during the wind-up before a dash: it rears up and beats its wings wide.</summary>
+        public bool WindingUp { get; set; }
+
+        // In the dash the wings are swept up and held; before it they beat wide and the body rears.
+        protected override float FlapScale => DashArmed ? 0.12f : WindingUp ? 1.7f : 1f;
+        protected override float WingRest => DashArmed ? 38f : 0f;
+        protected override float Pitch => WindingUp ? -28f : DashArmed ? 8f : 0f;
 
         protected override IEnemyState DefaultState => Chase;
 
@@ -50,7 +57,7 @@ namespace Hookfall.Enemies
             Recover = new WyvernRecoverState(this);
         }
 
-        protected override void OnSpawned() => DashArmed = false;
+        protected override void OnSpawned() => DashArmed = WindingUp = false;
 
         // The dash covers 3 m per think, so the hit is checked every frame.
         protected override void FrameUpdate(float deltaTime)

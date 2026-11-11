@@ -316,6 +316,120 @@ namespace Hookfall.Tests
             }
         }
 
+        /// <summary>Close-ups of the Warden's poses, to judge the procedural animation: standing, running, rising, falling,
+        /// gliding, the dash, the double-jump tuck, the landing squash and a swing on the rope.</summary>
+        [UnityTest]
+        public IEnumerator CaptureWardenPoses()
+        {
+            if (string.IsNullOrEmpty(Folder)) Assert.Ignore("Set HOOKFALL_SHOT_DIR to capture screenshots.");
+            Directory.CreateDirectory(Folder);
+            PlayerPrefs.SetString("hf_character", Environment.GetEnvironmentVariable("HOOKFALL_SHOT_CHARACTER") ?? "Warden");
+            SceneManager.LoadScene("Arena");
+            yield return null;
+            SceneSmokeTests.NoBoss();
+            var flags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+            GameObject player = GameObject.Find("Player");
+            var body = player.GetComponent<Rigidbody>();
+            Type statsType = Type.GetType("Hookfall.Player.PlayerStats, Assembly-CSharp");
+            Type hookType = Type.GetType("Hookfall.Player.GrappleHook, Assembly-CSharp");
+            Type animatorType = Type.GetType("Hookfall.Player.WardenAnimator, Assembly-CSharp");
+            Type directorType = Type.GetType("Hookfall.Enemies.EnemyDirector, Assembly-CSharp");
+            Component stats = player.GetComponent(statsType);
+            Component hook = player.GetComponent(hookType);
+            Component animator = player.GetComponentInChildren(animatorType);
+            // No horde in the pictures.
+            ((Behaviour)UnityEngine.Object.FindAnyObjectByType(directorType)).enabled = false;
+            statsType.GetMethod("SetAbyssKillHeight").Invoke(stats, new object[] { -100000f });
+
+            var shot = new GameObject("Pose Camera").AddComponent<Camera>();
+            shot.CopyFrom(Camera.main);
+            shot.fieldOfView = 30f;
+            void Snap(string name)
+            {
+                // Three quarters from the front right, level with the chest.
+                Vector3 forward = body.linearVelocity.sqrMagnitude > 1f ? Vector3.ProjectOnPlane(body.linearVelocity, Vector3.up).normalized : Vector3.forward;
+                if (forward.sqrMagnitude < 0.01f) forward = Vector3.forward;
+                Vector3 right = Vector3.Cross(Vector3.up, forward);
+                Vector3 centre = player.transform.position + Vector3.up * 0.1f;
+                Vector3 from = centre + right * 4.6f + forward * 2.6f + Vector3.up * 0.9f;
+                shot.transform.SetPositionAndRotation(from, Quaternion.LookRotation(centre - from));
+                Render(shot, "warden_" + name);
+            }
+            IEnumerator Fly(Vector3 velocity, float seconds)
+            {
+                float end = Time.time + seconds;
+                while (Time.time < end)
+                {
+                    statsType.GetProperty("CurrentHealth").SetValue(stats, statsType.GetProperty("MaxHealth").GetValue(stats));
+                    body.linearVelocity = velocity;
+                    yield return null;
+                }
+            }
+
+            // On the tower island: standing, then running.
+            yield return new WaitForSeconds(1.2f);
+            Snap("idle");
+            yield return Fly(new Vector3(6.5f, 0f, 0f), 0.42f);
+            Snap("run");
+
+            // In open sky.
+            Vector3 sky = new Vector3(50f, 70f, 50f);
+            body.position = sky; player.transform.position = sky;
+            yield return Fly(new Vector3(9f, 9f, 0f), 0.45f);
+            Snap("rise");
+            yield return Fly(new Vector3(6f, -15f, 0f), 0.45f);
+            Snap("fall");
+            body.position = sky; player.transform.position = sky;
+            yield return Fly(new Vector3(21f, 0f, 0f), 0.5f);
+            Snap("glide");
+            animatorType.GetMethod("OnDash", flags).Invoke(animator, null);
+            yield return Fly(new Vector3(21f, 0f, 0f), 0.09f);
+            Snap("dash");
+            yield return Fly(new Vector3(8f, 2f, 0f), 0.5f);
+            animatorType.GetMethod("OnTuck", flags).Invoke(animator, null);
+            yield return Fly(new Vector3(8f, 6f, 0f), 0.09f);
+            Snap("tuck");
+
+            // A swing: hook the tower from a clear spot and let the rope carry the Warden.
+            Vector3 target = new Vector3(0f, 14f, 0f);
+            Vector3 spot = Vector3.zero;
+            for (int i = 0; i < 72 && spot == Vector3.zero; i++)
+            {
+                float a = i * 25f * Mathf.Deg2Rad;
+                var p = new Vector3(Mathf.Cos(a) * 30f, 16f + (i % 4) * 4f, Mathf.Sin(a) * 30f);
+                if (Physics.CheckSphere(p, 3f, ~0, QueryTriggerInteraction.Ignore)) continue;
+                if (Physics.Raycast(p, (target - p).normalized, out RaycastHit hit, 40f, ~0, QueryTriggerInteraction.Ignore)
+                    && Vector3.Distance(hit.point, target) < 6f) spot = p;
+            }
+            if (spot != Vector3.zero)
+            {
+                body.position = spot; player.transform.position = spot;
+                body.linearVelocity = Vector3.Cross(Vector3.up, (target - spot).normalized) * 12f;
+                yield return new WaitForFixedUpdate();
+                var aim = new GameObject("Pose Aim").transform;
+                aim.position = player.transform.position;
+                aim.LookAt(target);
+                hookType.GetField("aimSource", flags).SetValue(hook, aim);
+                hookType.GetMethod("TryThrow", flags).Invoke(hook, new object[] { false });
+                float until = Time.time + 1.1f;
+                while (Time.time < until)
+                {
+                    statsType.GetProperty("CurrentHealth").SetValue(stats, statsType.GetProperty("MaxHealth").GetValue(stats));
+                    yield return null;
+                }
+                Snap("swing");
+                hookType.GetMethod("Release").Invoke(hook, null);
+            }
+
+            // Back on the island: the landing squash.
+            body.position = new Vector3(0f, 1.6f, -7f); player.transform.position = body.position;
+            body.linearVelocity = Vector3.zero;
+            yield return new WaitForSeconds(0.6f);
+            animatorType.GetMethod("OnLanded", flags).Invoke(animator, new object[] { 20f });
+            yield return new WaitForSeconds(0.06f);
+            Snap("land");
+        }
+
         private static void LookAt(Camera camera, Vector3 target, Vector3 offset) =>
             camera.transform.SetPositionAndRotation(target + offset, Quaternion.LookRotation(-offset));
 
