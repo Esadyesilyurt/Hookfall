@@ -1249,6 +1249,61 @@ namespace Hookfall.Tests
             LogAssert.NoUnexpectedReceived();
         }
 
+        /// <summary>The boss of stage 2 is the Tempest Wyrm (2026-11-11): it rises, flies its circle with its body behind
+        /// it, dives at the Warden, and dying hands the stage over like the Colossus does.</summary>
+        [UnityTest]
+        public IEnumerator SecondStageBossIsTheWyrm()
+        {
+            SceneManager.LoadScene("Arena");
+            yield return null;
+            GameObject player = GameObject.Find("Player");
+            KeepAlive(player);
+            var flags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+            Type stageType = Type.GetType("Hookfall.World.StageDirector, Assembly-CSharp");
+            Type cutsceneType = Type.GetType("Hookfall.Feel.CutsceneDirector, Assembly-CSharp");
+            Type levelUpType = Type.GetType("Hookfall.Progression.LevelUpSystem, Assembly-CSharp");
+            Component levelUp = player.GetComponent(levelUpType);
+            object stage = stageType.GetProperty("Instance").GetValue(null);
+            stageType.GetProperty("Stage").SetValue(stage, 2);
+            stageType.GetMethod("SummonBoss").Invoke(stage, null);
+            Component boss = null;
+            float end = Time.realtimeSinceStartup + 20f;
+            while (Time.realtimeSinceStartup < end)
+            {
+                KeepAlive(player);
+                var cutscenes = UnityEngine.Object.FindAnyObjectByType(cutsceneType);
+                if (cutscenes != null) cutsceneType.GetField("skip", flags).SetValue(cutscenes, true);
+                boss = (Component)stageType.GetProperty("Boss").GetValue(stage);
+                if (boss != null && (bool)boss.GetType().GetProperty("Fighting").GetValue(boss) && Time.timeScale > 0f) break;
+                yield return null;
+            }
+            Assert.IsNotNull(boss, "The boss should rise");
+            Assert.AreEqual("TempestWyrm", boss.GetType().Name, "Stage 2 belongs to the Wyrm");
+
+            // It flies, and within one dive interval it has dived (its mode is read by name).
+            Vector3 start = boss.transform.position;
+            var mode = boss.GetType().GetField("mode", flags);
+            bool dived = false;
+            float moved = 0f;
+            Vector3 hold = start + new Vector3(0f, 30f, 60f);
+            yield return Hold(player, levelUp, levelUpType, hold, 16f, () =>
+            {
+                moved = Mathf.Max(moved, Vector3.Distance(start, boss.transform.position));
+                dived |= mode.GetValue(boss).ToString() == "Dive";
+                return dived && moved > 20f;
+            });
+            Assert.Greater(moved, 20f, "The Wyrm should fly its circle");
+            Assert.IsTrue(dived, "The Wyrm should dive at the Warden");
+            Assert.IsNotNull(GameObject.Find("Wyrm Body"), "The Wyrm's body should trail behind its head");
+
+            boss.GetType().GetMethod("TakeDamage").Invoke(boss, new object[] { 100000000f, false });
+            yield return Hold(player, levelUp, levelUpType, hold, 3f, () => stageType.GetProperty("Boss").GetValue(stage) == null);
+            Assert.IsNull(stageType.GetProperty("Boss").GetValue(stage), "A dead Wyrm should hand the stage over");
+            Assert.IsNull(GameObject.Find("Wyrm Body"), "The Wyrm's body should go with it");
+            Time.timeScale = 1f;
+            LogAssert.NoUnexpectedReceived();
+        }
+
         /// <summary>A Warden with only the Orbit Blades flying at 38 m/s across the big map still meets the horde: enemies
         /// keep up and come within reach (2026-11-09: they trailed 30 m behind, out of view, and the sky looked empty).</summary>
         [UnityTest]

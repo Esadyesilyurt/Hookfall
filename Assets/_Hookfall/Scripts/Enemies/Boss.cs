@@ -4,6 +4,7 @@
 // calls wyverns and elite bats at 70% and 35% health and rages below 30%. Its attacks come faster while the Warden
 // stands on an island (Frenzy, GDD 5). Touching its body hurts and throws the Warden off. Telegraphs are short:
 // the core flares before a volley, the body glows red before a slam. The CutsceneDirector plays its entrance.
+// Since 2026-11-11 it is also the base of the second boss (TempestWyrm), which replaces Fight and Animate.
 // AI disclosure: written with Claude (Anthropic) on 2026-11-08. Prompts and changes are recorded in Docs/PromptLog.md.
 using Hookfall.Audio;
 using Hookfall.Core;
@@ -24,11 +25,11 @@ namespace Hookfall.Enemies
         private static readonly Color RingColor = new Color(1f, 0.25f, 0.45f);
 
         [Header("Parts (set by the prefab builder from the model)")]
-        [SerializeField] private Transform head;
-        [SerializeField] private Transform jaw;
+        [SerializeField] protected Transform head;
+        [SerializeField] protected Transform jaw;
         [SerializeField] private Transform armLeft;
         [SerializeField] private Transform armRight;
-        [SerializeField] private Transform core;
+        [SerializeField] protected Transform core;
         [SerializeField] private Transform[] orbitRocks;
         [SerializeField] private Material shardMaterial;
         [Tooltip("The particle material: shard trails and the shockwave ring.")]
@@ -39,8 +40,8 @@ namespace Hookfall.Enemies
         [Tooltip("The body as a vertical capsule around the origin (the core): radius and half height.")]
         [SerializeField] private float bodyRadius = 5.5f;
         [SerializeField] private float bodyHalfHeight = 8.5f;
-        [SerializeField] private float bodyDamage = 20f;
-        [SerializeField] private float bodyPush = 22f;
+        [SerializeField] protected float bodyDamage = 20f;
+        [SerializeField] protected float bodyPush = 22f;
 
         [Header("Shard volley")]
         [SerializeField] private float volleyInterval = 3.0f;
@@ -78,20 +79,26 @@ namespace Hookfall.Enemies
         private BossState state;
         private bool fighting;
         private Attack pending;
-        private float windUp, volleyTimer, slamTimer, bodyTimer;
+        private float windUp, volleyTimer, slamTimer;
+        protected float bodyTimer;
         private int nextCall;
-        private Transform effects;
+        protected Transform effects;
         private LineRenderer ring;
         private bool ringActive, ringHit;
         private float ringRadius;
         private Vector3 ringCentre;
-        private float age, volleyPose, slamPose, roarPose, roarTimer, flare;
+        private float volleyPose, slamPose, roarTimer;
+        protected float age, roarPose, flare;
         private int volleyArm;
         private Vector3[] orbitStart;
         private Vector3 coreScale = Vector3.one;
-        private VfxManager vfx;
-        private AudioManager audioManager;
-        private FeelDirector feel;
+        protected VfxManager vfx;
+        protected AudioManager audioManager;
+        protected FeelDirector feel;
+
+        /// <summary>The colour of its shots and bursts, and what it shouts when it calls its escort.</summary>
+        protected virtual Color ShardTint => ShardColor;
+        protected virtual string CallLine => "The Colossus calls the sky!";
 
         public override bool IsBoss => true;
         public override bool CanEnterBossZone => true;
@@ -183,7 +190,7 @@ namespace Hookfall.Enemies
             if (audioManager != null) audioManager.Play(SoundId.BossRoar, transform.position);
         }
 
-        public void BeginFight()
+        public virtual void BeginFight()
         {
             fighting = true;
             transform.localScale = Vector3.one;
@@ -196,7 +203,12 @@ namespace Hookfall.Enemies
             Animate(deltaTime);
             if (!fighting || deltaTime <= 0f || Player == null) return;
 
-            float speedUp = (Raging ? rageSpeedUp : 1f) * (Player.IsAirborne ? 1f : frenzySpeedUp);
+            Fight(deltaTime, (Raging ? rageSpeedUp : 1f) * (Player.IsAirborne ? 1f : frenzySpeedUp));
+        }
+
+        /// <summary>One frame of the fight; speedUp is rage and Frenzy together.</summary>
+        protected virtual void Fight(float deltaTime, float speedUp)
+        {
             TurnTowardsPlayer(deltaTime);
             CheckCalls();
             TouchDamage(deltaTime);
@@ -239,7 +251,7 @@ namespace Hookfall.Enemies
             else Slam();
         }
 
-        private void FireVolley()
+        protected void FireVolley()
         {
             volleyTimer = volleyInterval;
             volleyPose = 1f;
@@ -252,16 +264,16 @@ namespace Hookfall.Enemies
             {
                 float angle = count > 1 ? Mathf.Lerp(-volleySpread * 0.5f, volleySpread * 0.5f, i / (float)(count - 1)) : 0f;
                 Vector3 dir = Quaternion.AngleAxis(angle, Vector3.up) * aim;
-                BossShard shard = BossShard.Create(effects, shardMaterial, effectMaterial, ShardColor);
+                BossShard shard = BossShard.Create(effects, shardMaterial, effectMaterial, ShardTint);
                 shard.Launch(Player, from + dir * 1.5f, dir * shardSpeed, shardDamage * DamageScale, shardTurnRate, shardLife, ShardBroke);
             }
             if (audioManager != null) audioManager.Play(SoundId.BossVolley, from);
-            if (vfx != null) vfx.Burst(from, 18, ShardColor, 9f, 0.3f, 0.5f);
+            if (vfx != null) vfx.Burst(from, 18, ShardTint, 9f, 0.3f, 0.5f);
         }
 
         private void ShardBroke(Vector3 at)
         {
-            if (vfx != null) vfx.Burst(at, 10, ShardColor, 6f, 0.22f, 0.4f);
+            if (vfx != null) vfx.Burst(at, 10, ShardTint, 6f, 0.22f, 0.4f);
         }
 
         private void Slam()
@@ -325,14 +337,14 @@ namespace Hookfall.Enemies
             PlayerStats.TakeDamageFrom(bodyDamage * DamageScale, transform.position);
         }
 
-        private void CheckCalls()
+        protected void CheckCalls()
         {
             if (callAt == null || nextCall >= callAt.Length || Health > MaxHealth * callAt[nextCall]) return;
             nextCall++;
             bool elite = nextCall >= callAt.Length;
             Roar(1.4f);
             if (feel != null) feel.Shake(0.5f);
-            HUD.Announce(Loc.T("The Colossus calls the sky!"), ShardColor);
+            HUD.Announce(Loc.T(CallLine), ShardTint);
             if (Director == null) return;
             for (int i = 0; i < calledWyverns; i++)
                 Director.SpawnEscort(true, transform.position + Around(i, calledWyverns, 22f), elite);
@@ -349,7 +361,7 @@ namespace Hookfall.Enemies
         // ---------- Procedural animation ----------
 
         /// <summary>Breathing, orbiting rocks and the poses; also run by the entrance cutscene while time stands still.</summary>
-        public void Animate(float dt)
+        public virtual void Animate(float dt)
         {
             age += dt;
             roarTimer = Mathf.Max(0f, roarTimer - dt);

@@ -285,6 +285,57 @@ namespace Hookfall.EditorTools
             return SavePrefab(root, Folder + "/PF_Boss.prefab").GetComponent<Boss>();
         }
 
+        /// <summary>The second boss (2026-11-11): the Wyrm's head with its jaw; the one body segment and the tail are
+        /// templates the Wyrm strings out behind it when it spawns.</summary>
+        public static TempestWyrm Wyrm()
+        {
+            var root = new GameObject("PF_Wyrm");
+            var wyrm = root.AddComponent<TempestWyrm>();
+            GameObject visual = InstantiateModel("Wyrm", root.transform);
+            if (visual == null)
+            {
+                visual = new GameObject("Visual");
+                visual.transform.SetParent(root.transform, false);
+                Transform h = Pivot(visual.transform, "Head", Vector3.zero);
+                Part(h, "Skull", PrimitiveType.Sphere, new Vector3(0f, 0f, 1f), new Vector3(3f, 2.4f, 5f), Mat("M_Wyrm"));
+                Transform s = Pivot(visual.transform, "Segment", new Vector3(0f, 0f, -6f));
+                Part(s, "Ball", PrimitiveType.Sphere, Vector3.zero, Vector3.one * 3.4f, Mat("M_Wyrm"));
+            }
+            // The head becomes about 13 m long: a boss. On the parts, not on Visual: EnemyBase drives Visual's scale itself.
+            foreach (string part in new[] { "Head", "Segment", "Tail" })
+            {
+                Transform t = FindDeep(visual.transform, part);
+                if (t != null) t.localScale *= 2.2f;
+            }
+            Stats(wyrm, "Tempest Wyrm", 12000f, 0f, 20f, 160f, 120, 6f);   // less than the Colossus: it does not hold still
+            SetFloat(wyrm, "knockback", 0f);
+            SetFloat(wyrm, "hitPunch", 0.02f);
+            var serialized = new SerializedObject(wyrm);
+            serialized.FindProperty("flashColor").colorValue = new Color(0.3f, 0.36f, 0.42f);
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            Transform head = FindDeep(visual.transform, "Head");
+            SetRef(wyrm, "head", head);
+            SetRef(wyrm, "jaw", FindDeep(visual.transform, "Jaw"));
+            SetRef(wyrm, "core", null);
+            SetRef(wyrm, "segmentTemplate", FindDeep(visual.transform, "Segment"));
+            SetRef(wyrm, "tail", FindDeep(visual.transform, "Tail"));
+            SetRef(wyrm, "shardMaterial", Mat("M_Lightning"));
+            SetRef(wyrm, "effectMaterial", ToonSetup.ParticleMaterial());
+            var body = root.AddComponent<Rigidbody>();
+            body.isKinematic = true;
+            body.useGravity = false;
+            var sphere = root.AddComponent<SphereCollider>();
+            sphere.radius = 4.5f;
+            root.layer = Hookfall.Core.Layers.World;
+            var glow = new GameObject("Storm Light").AddComponent<Light>();
+            glow.transform.SetParent(root.transform, false);
+            glow.type = LightType.Point;
+            glow.color = new Color(0.45f, 0.9f, 1f);
+            glow.range = 32f;
+            glow.intensity = 4f;
+            return SavePrefab(root, Folder + "/PF_Wyrm.prefab").GetComponent<TempestWyrm>();
+        }
+
         /// <summary>The portal the boss leaves: the model, a collider on its dais to stand on, a light in the ring.</summary>
         public static Portal Portal()
         {

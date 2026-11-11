@@ -26,6 +26,7 @@ namespace Hookfall.UI
             ("Venomwing", "Venomwing", "Keeps to your flank and spits venom from range. It never comes close on its own."),
             ("GloomJelly", "Gloom Jelly", "Slow and tough. Its pulse shocks everything near it, and it leaves three young behind."),
             ("Boss", "Colossus", "The lord of a stage. Gather enough gold and it comes for the Heartstone."),
+            ("TempestWyrm", "Tempest Wyrm", "The lord of every second stage. It never holds still: strike the head, and move when it glows red."),
         };
 
         private readonly GameObject[] pages = new GameObject[TabNames.Length];
@@ -75,7 +76,7 @@ namespace Hookfall.UI
             foreach ((string type, string name, string lore) in Enemies)
             {
                 int kills = Codex.Kills(type);
-                Row(enemyRows, UISkin.Icon(type == "Boss" ? "Boss" : "Kills"), kills > 0 ? UITheme.Enemy : UITheme.TextMuted,
+                Row(enemyRows, UISkin.Icon(type == "Boss" || type == "TempestWyrm" ? "Boss" : "Kills"), kills > 0 ? UITheme.Enemy : UITheme.TextMuted,
                     kills > 0 ? Loc.T(name) : "???", kills > 0 ? Loc.F("{0} killed", kills) : "",
                     kills > 0 ? Loc.T(lore) : Loc.T("Not met yet"), kills > 0);
             }
