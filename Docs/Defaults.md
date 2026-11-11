@@ -188,7 +188,7 @@ Bridge passives (Rare, two schools each): Steamforged Gauntlet (Flame, Frost), T
 ### Stages and the boss (2026-11-08)
 | Value | Default | Where |
 | --- | --- | --- |
-| Boss bar | Gold earned on the stage (spending on chests does not slow it): 1000 on stage 1 (1500 until 2026-11-09, never reached in play), x1.6 per stage | StageDirector |
+| Boss bar | Gold earned on the stage (spending on chests does not slow it): 1400 on stage 1 (1500 until 2026-11-09, never reached in play; 1000 until 2026-11-11, when the flight chain and the wider horde tripled the gold: the probe earned 386 / 969 / 1836 at 2 / 4 / 6 min), x1.6 per stage | StageDirector |
 | Enemies per stage | Health x2.5, damage x1.8, growth per minute and per level 35% faster, spawns x1.2, XP and gold per kill x1.5 (each once per stage after the first); waves and elite timers follow the stage clock | StageDirector, EnemyDirector |
 | New stage | New map; the Warden back to level 1 at the foot of the tower with full health; items, item levels, stats and gold kept; the chest price keeps rising; the tower cache waits its full time | StageDirector |
 | Boss arena | The boss 108 m above the tower (78 until 2026-11-09); six islands at 30 m around it, 14-24 m below it; three updrafts and eight hook anchors lead up | StageDirector, SkyFeatures |
@@ -222,6 +222,24 @@ Bridge passives (Rare, two schools each): Steamforged Gauntlet (Flame, Frost), T
 | Elven Skybow | Two bolts from level 1, 13 damage every 1 s, slight homing (one bolt, 14, 1.1 s before) | ItemPrefabs |
 | Frost Wyrm's Breath | Aims at the nearest enemy, 10 damage every 1.3 s, reach 18 m (along the flight, 9, 1.4 s, 13 m before) | ShardBurst, ItemPrefabs |
 
+### The polish pass (2026-11-10 and 2026-11-11)
+| Value | Default | Where |
+| --- | --- | --- |
+| Fonts | Cinzel Bold and Black for titles, Barlow Semi Condensed Medium, SemiBold and Bold for everything else (SIL Open Font License 1.1); TMP font assets are made from the TTFs at run time | UISkin, Art/UI/Resources/Fonts |
+| Icons and skin | 120 icons and the UI skin drawn as SVG in `Tools/UI/` and rendered by headless Chrome; sprites at 100 pixels per unit | Tools/UI/make_ui.js, UISetup |
+| New flyers | Razorwing 14 health, 26 m/s, 8 damage, in flocks of 5-7 that hold formation, strafe and wheel; Blightpuff 6 health, bursts beside the Warden and hurts enemies too; Venomwing 30 health, keeps to the flank and spits; Gloom Jelly 90 health, pulses, leaves three young, at most 6 alive | EnemyPrefabs, Razorwing, Blightpuff, Venomwing, GloomJelly |
+| When they come | By the stage's minute, each later stage starting 2 minutes ahead: Blightpuffs from 1.5 min (5% of spawns, up to 12%), flocks from 2.5 min (2% up to 5%), Venomwings from 3.5 min (4% up to 10%), Jellies from 4.5 min (2% up to 5%) | EnemyDirector |
+| Elite traits | Every elite gets one: Shielded (a barrier takes the first blows), Swift, Explosive (bursts when it dies), Splitting (leaves two lesser ones); golems only Shielded or Explosive | EnemyDirector, EnemyBase, EliteAffix |
+| Flight chain | +1% XP and gold per kill in the chain, up to +75%; breaks on landing (attacks off), on a hit, or after 5 s without a kill; named at 10, 25, 50 and 75 kills (Gust, Gale, Storm, Tempest); shown from 3 kills | FlowChain, HudFlow |
+| Level-up cards | A card for an owned item is 3 times as likely as a card for one stat | LevelUpSystem |
+| Reroll, banish, skip | 2 rerolls and 2 banishes per run, shared by level-ups and chests; a banished card is not offered again in the run; skipping a level-up pays 8 gold; chests cannot be skipped; keys R, B, X | ChoiceTokens, ChoiceToolbar |
+| Shrines | 3 per stage on inner and outer islands at least 7 m wide, 4 s after the stage starts; standing within 3.5 m for 4 s gives 2 picks of the shrine's stat (random); progress drains at half speed away from it | ShrineSpawner |
+| First-run hints | Four lines on the first run only (hook, fly, air moves, chests); "hf_hints_done" in PlayerPrefs | HintGuide |
+| Shards and upgrades | A run pays its level + 2 per minute + 10 per stage cleared; eight upgrades of 3 levels at 40, 90 and 160 shards: a free pick of Max health, Damage, Max flight speed, Pickup radius, Luck or XP gain per level, or +1 reroll or +1 banish per level | MetaProgress, ShopPanel |
+| Codex | Enemies open at the first kill and count kills; items open once owned; schools and duos always open; saved at the end of a run | Codex, CodexPanel |
+| Stage skies | Stage 1 calm day, then golden evening, violet dusk, moonlit night, red storm, and round again; a change takes 2.5 s; the far scenery is tinted to the sky | Atmosphere, Backdrop |
+| Second boss | The Tempest Wyrm takes stages 2, 4, ...; the Colossus keeps 1, 3, ... under its names in order. 12000 health x the stage's; circles at 40 m and 20 m/s, 9 body pieces 6 m apart; lightning fan every 3.5 s; every 9 s a 0.5 s red warning, then a dive at 62 m/s that carries 28 m past the Warden (32 damage); touching the head or body 20 damage; same escorts and rage as the Colossus | TempestWyrm, StageDirector, EnemyPrefabs |
+
 ## Where the build differs from the GDD
 
 | GDD | What was built | Why |
@@ -230,7 +248,9 @@ Bridge passives (Rare, two schools each): Steamforged Gauntlet (Flame, Frost), T
 | Warden rigged and animated with Mixamo; enemies with simple rigs (8.3) | Models are split into parts (arms, legs, wings, cape, lid); `WardenAnimator`, `EnemyBase` and `Golem` animate them in code | Mixamo needs Esad's Adobe login; 300 Animators would also cost more than moving a few transforms |
 | Toon shader made in Shader Graph (8.1) | Shader Graph, generated from Unity's own Custom Lighting Toon sample and Unlit template by `Tools/ShaderGraph/make_graphs.js` | Keeps Shader Graph (Esad's choice) while the graph stays reproducible from a script |
 | Spawn zone beyond 150 m (7.1) | 60 m out of view, 90 m ahead | At 150 m bats need about 12 s to arrive, which empties the screen |
-| Own vector icons (8.3) | 3D symbols rendered in Blender as sprites, in diamond and card frames | Esad's choice on 2026-11-07 |
+| Own vector icons (8.3) | Vector icons since 2026-11-10: drawn as SVG by `Tools/UI/make_ui.js` (3D symbols rendered in Blender before) | Esad asked for better icons on 2026-11-10 |
+| No progress between runs; the goal is the player's own record (3) | Heartstone shards from every run buy small permanent upgrades in the menu; the record and the leaderboard are unchanged | Esad approved the upgrade shop on 2026-11-10 |
+| One boss is not in the GDD at all | Two stage bosses, the Colossus and the Tempest Wyrm, in turn | Esad asked for stages (2026-11-08) and approved a second boss (2026-11-10) |
 | Licensed sound and music (8.3) | Kenney CC0 recordings for the effects; wind, heartbeat and music synthesised in code by Tools/Audio/make_sfx.js | Esad's choices on 2026-11-08 (Docs/Credits.md); no AI audio model is used |
 | Hook values 4.1: spring 4.5, damper 7, max air speed 35, strafe 6 | A taut rope with a downhill pump, 1.8x air gravity, 40 m/s with capped boosts, strafe 12, a power-swing Zip, wall jumps, air tricks | Esad found the swing slow and islands hard to climb (2026-11-08) |
 | Spawn rate 2/s, +15% per minute, flocks of 4–8 (4.8) | 3/s, +20% per minute, flocks of 4–8, at most 120 alive | Esad found the first build too calm (2026-11-07: 5/s, flocks of 8–14, 300 alive), then far too crowded (2026-11-08: 2/s), then too empty on the doubled map (2026-11-09) |

@@ -58,7 +58,7 @@ namespace Hookfall.World
         [Tooltip("1500 until 2026-11-09, read off a probe circling the tower; Esad never reached it. A probe crossing the " +
                  "map at full speed (BalanceProbe.AcrossTheMap) puts 1000 at about 4 minutes for the Ember Witch and about " +
                  "8 for a Warden who never opens a chest.")]
-        [SerializeField] private int firstBossGold = 1000;
+        [SerializeField] private int firstBossGold = 1400;   // 1000 until 2026-11-11: with the flight chain and the wider horde the probe earned 969 in 4 min
         [SerializeField] private float bossGoldPerStage = 1.6f;
 
         [Header("Enemies on later stages (each multiplied once per stage after the first)")]
