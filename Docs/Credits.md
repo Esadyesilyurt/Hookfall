@@ -43,6 +43,10 @@ The one-shot effects are **Kenney recordings (CC0)**, copied in by `Tools/Audio/
 | Toon lighting subgraphs (`Art/Shaders/CustomLighting`) and the base of SG_Toon / SG_Outline | Unity Shader Graph package, Custom Lighting sample and Unlit template | Unity Companion License |
 | LiberationSans font (`TextMesh Pro`) | TextMesh Pro Essential Resources | SIL Open Font License |
 | Models (`Art/Models`) | Made with `Tools/Blender/hookfall_models.py` (Blender 5.2, scripted with Claude) | Own work |
-| UI icons (`Art/UI/Resources/Icons`) | Rendered by `Tools/Blender/hookfall_models_v2.py` | Own work |
-| UI skin (`Art/UI/Resources/UI`) | Drawn by `Editor/UISetup.cs` | Own work |
+| Cinzel Bold and Black (`Art/UI/Resources/Fonts`) | github.com/NDISCOVER/Cinzel. Copyright 2020 The Cinzel Project Authors | SIL Open Font License 1.1 |
+| Barlow Semi Condensed Medium, SemiBold and Bold (`Art/UI/Resources/Fonts`) | github.com/google/fonts (ofl/barlowsemicondensed). Copyright 2017 The Barlow Project Authors (https://github.com/jpt/barlow) | SIL Open Font License 1.1 |
+| UI icons (`Art/UI/Resources/Icons`) | Drawn as SVG by `Tools/UI/make_ui.js` (written with Claude), rendered by headless Chrome | Own work |
+| UI skin (`Art/UI/Resources/UI`) | Drawn as SVG by `Tools/UI/make_ui.js`, imported by `Editor/UISetup.cs` | Own work |
 | Game code | Written with Claude (Anthropic); see Docs/PromptLog.md | Own work |
+
+The SIL Open Font License asks that its text travels with the fonts: add each font's `OFL.txt` next to the TTF files before the game is distributed (not in the repository yet).
