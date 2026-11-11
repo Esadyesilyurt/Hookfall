@@ -75,6 +75,15 @@ namespace Hookfall.Tests
                 if (Time.timeScale == 0f) levelUpType.GetMethod("Pick").Invoke(levelUp, new object[] { 0 });
                 yield return null;
             }
+            // A flight chain for the shot: the meter needs a few frames to fade in.
+            Type flowType = Type.GetType("Hookfall.Progression.FlowChain, Assembly-CSharp");
+            Component flow = player.GetComponent(flowType);
+            for (int i = 0; i < 60; i++)
+            {
+                flowType.GetProperty("Count").SetValue(flow, 27);
+                flowType.GetField("timer", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(flow, 3.5f);
+                yield return null;
+            }
             yield return Grab("arena_play");
 
             // The screens: level-up, pause, run end.

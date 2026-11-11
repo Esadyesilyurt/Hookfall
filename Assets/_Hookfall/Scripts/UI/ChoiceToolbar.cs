@@ -16,6 +16,7 @@ namespace Hookfall.UI
         private readonly Button reroll, banish, skip;
         private readonly TextMeshProUGUI rerollLabel, banishLabel, skipLabel;
         private readonly Image banishImage;
+        private readonly Color banishColor;   // the button's own colour, to go back to after banish mode
         private readonly Action onReroll, onSkip;
 
         /// <summary>True while the next card picked is banished instead of taken.</summary>
@@ -26,15 +27,16 @@ namespace Hookfall.UI
         {
             this.onReroll = onReroll;
             this.onSkip = onSkip;
-            RectTransform row = UIFactory.Centre(canvas, "Tools", position, new Vector2(1100f, 60f));
+            RectTransform row = UIFactory.Centre(canvas, "Tools", position, new Vector2(1200f, 60f));
             UIFactory.Row(row, 22f, 0).childForceExpandHeight = false;
-            reroll = UIFactory.Button(row, "Reroll", () => onReroll(), 300f, 56f, null, UISkin.Icon("Reroll"));
-            banish = UIFactory.Button(row, "Banish", ToggleBanish, 300f, 56f, null, UISkin.Icon("Banish"));
+            reroll = UIFactory.Button(row, "Reroll", () => onReroll(), 340f, 56f, null, UISkin.Icon("Reroll"));
+            banish = UIFactory.Button(row, "Banish", ToggleBanish, 340f, 56f, null, UISkin.Icon("Banish"));
             banishImage = banish.GetComponent<Image>();
+            banishColor = banishImage.color;
             rerollLabel = reroll.GetComponentInChildren<TextMeshProUGUI>();
             banishLabel = banish.GetComponentInChildren<TextMeshProUGUI>();
             if (onSkip == null) return;
-            skip = UIFactory.Button(row, "Skip", () => onSkip(), 300f, 56f, null, UISkin.Icon("Skip"));
+            skip = UIFactory.Button(row, "Skip", () => onSkip(), 340f, 56f, null, UISkin.Icon("Skip"));
             skipLabel = skip.GetComponentInChildren<TextMeshProUGUI>();
         }
 
@@ -48,7 +50,7 @@ namespace Hookfall.UI
             if (banishes <= 0) Banishing = false;
             rerollLabel.text = Loc.F("[R]  Reroll  ·  {0}", rerolls);
             banishLabel.text = Banishing ? Loc.T("Pick a card to banish") : Loc.F("[B]  Banish  ·  {0}", banishes);
-            banishImage.color = Banishing ? UITheme.ButtonDanger : banish.colors.normalColor;
+            banishImage.color = Banishing ? UITheme.ButtonDanger : banishColor;
             if (skipLabel != null) skipLabel.text = Loc.F("[X]  Skip  ·  +{0} gold", tokens != null ? tokens.SkipGold : 0);
         }
 
