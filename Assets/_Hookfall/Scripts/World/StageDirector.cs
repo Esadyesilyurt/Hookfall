@@ -235,7 +235,7 @@ namespace Hookfall.World
             Boss.Bind(vfx, audioManager, feel);
             enemies.InitBoss(Boss);
             Boss.Face(player.transform.position);
-            if (beamMaterial != null) LightBeam.Build(Boss.transform, beamMaterial, 260f, 2.2f, new Color(BossColor.r, BossColor.g, BossColor.b, 0.28f));
+            if (beamMaterial != null && Boss.LandsHeavy) LightBeam.Build(Boss.transform, beamMaterial, 260f, 2.2f, new Color(BossColor.r, BossColor.g, BossColor.b, 0.28f));
             SetZone(true);
             BossArrived?.Invoke();
             if (cutscenes != null) yield return cutscenes.BossEntrance(Boss, arena.transform, arenaCentre, BossName, BossTitle);

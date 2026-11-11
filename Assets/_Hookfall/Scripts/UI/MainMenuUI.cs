@@ -35,13 +35,15 @@ namespace Hookfall.UI
 
         private static bool introShown;
         private GameObject select;
-        private GameObject main, settings, creditsPanel, intro, leaderboard, shop, codex;
+        private GameObject main, settings, creditsPanel, intro, leaderboard, codex;
 
         // Character select: the roster's tiles and the detail view of the one that is picked.
         private readonly List<Image> tileFrames = new List<Image>();
         private RectTransform detail;
         private Button startButton;
         private CharacterDefinition picked;
+        private GameObject shade;
+        private TextMeshProUGUI watcherName, watcherSchool;
 
         private void Awake()
         {
@@ -52,53 +54,70 @@ namespace Hookfall.UI
             Canvas canvas = UIFactory.Canvas(transform, "Menu Canvas", 0);
             Transform c = canvas.transform;
 
-            // A dark wash down the left side, so the menu reads over the bright sky.
-            RectTransform shade = UIFactory.Rect(c, "Shade", Vector2.zero, new Vector2(0f, 1f), Vector2.zero, new Vector2(1300f, 0f), new Vector2(0f, 0.5f));
-            UIFactory.Image(shade, new Color(0.02f, 0.05f, 0.12f, 0.92f), UISkin.ShadeRight);
+            // A dark wash down the left side for the screens that open over the scene; the main screen leaves the scene clear.
+            RectTransform shadeRect = UIFactory.Rect(c, "Shade", Vector2.zero, new Vector2(0f, 1f), Vector2.zero, new Vector2(1300f, 0f), new Vector2(0f, 0.5f));
+            UIFactory.Image(shadeRect, new Color(0.02f, 0.05f, 0.12f, 0.92f), UISkin.ShadeRight);
+            shade = shadeRect.gameObject;
 
+            // The main screen (2026-11-11): the watcher on the tower fills the view; the logo sits top left, the record
+            // top right, the watcher's name beside them, and the menu is one strip along the bottom edge.
             main = UIFactory.Fill(c, "Main").gameObject;
             Transform m = main.transform;
-            TextMeshProUGUI logo = UIFactory.Title(UIFactory.Rect(m, "Logo", new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(104f, -84f), new Vector2(1100f, 170f), new Vector2(0f, 1f)),
-                "HOOKFALL", 150f, Color.white, TextAlignmentOptions.Left, true, true);
+            RectTransform topShade = UIFactory.Rect(m, "Top Shade", new Vector2(0f, 1f), Vector2.one, Vector2.zero, new Vector2(0f, 330f), new Vector2(0.5f, 1f));
+            UIFactory.Image(topShade, new Color(0.02f, 0.04f, 0.1f, 0.55f), UISkin.ShadeDown);
+            RectTransform bottomShade = UIFactory.Rect(m, "Bottom Shade", Vector2.zero, new Vector2(1f, 0f), new Vector2(0f, 170f), new Vector2(0f, 340f));
+            UIFactory.Image(bottomShade, new Color(0.02f, 0.04f, 0.1f, 0.85f), UISkin.ShadeDown);
+            bottomShade.localRotation = Quaternion.Euler(0f, 0f, 180f);   // the shade sprite is dark at its top
+
+            TextMeshProUGUI logo = UIFactory.Title(UIFactory.Rect(m, "Logo", new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(70f, -44f), new Vector2(900f, 130f), new Vector2(0f, 1f)),
+                "HOOKFALL", 112f, Color.white, TextAlignmentOptions.Left, true, true);
             logo.characterSpacing = 10f;
             logo.enableVertexGradient = true;
-            logo.colorGradient = new VertexGradient(new Color(0.75f, 1f, 1f), new Color(0.75f, 1f, 1f), UITheme.Player, new Color(0.16f, 0.72f, 0.86f));
-            UIPop.Add(logo, 0f, 1.15f, new Vector2(-80f, 0f));
-            TextMeshProUGUI tagline = UIFactory.Text(UIFactory.Rect(m, "Tagline", new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(114f, -252f), new Vector2(1000f, 40f), new Vector2(0f, 1f)),
-                "Hold the watch above the abyss", 30f, UITheme.Text, TextAlignmentOptions.Left, true);
-            tagline.characterSpacing = 6f;
+            logo.colorGradient = new VertexGradient(new Color(1f, 0.97f, 0.86f), new Color(1f, 0.97f, 0.86f), UITheme.Gold, new Color(0.95f, 0.55f, 0.25f));
+            UIPop.Add(logo, 0f, 1.1f, new Vector2(-80f, 0f));
+            TextMeshProUGUI tagline = UIFactory.Text(UIFactory.Rect(m, "Tagline", new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(78f, -172f), new Vector2(900f, 36f), new Vector2(0f, 1f)),
+                "Hold the watch above the abyss", 26f, UITheme.Text, TextAlignmentOptions.Left, true);
+            tagline.characterSpacing = 8f;
             UIPop.Add(tagline, 0.15f, 1f, new Vector2(-60f, 0f));
 
-            RectTransform menu = UIFactory.Rect(m, "Menu", new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(110f, -110f), new Vector2(420f, 540f), new Vector2(0f, 0.5f));
-            UIFactory.Column(menu, 14f, 0, TextAnchor.UpperLeft);
-            UIFactory.Button(menu, "Play", OnPlay, -1f, 84f, UITheme.ButtonPrimary, UISkin.Icon("Play"));
-            UIFactory.Button(menu, "Upgrades", () => Show(shop), -1f, 62f, null, UISkin.Icon("Shard"));
-            UIFactory.Button(menu, "Codex", () => Show(codex), -1f, 62f, null, UISkin.Icon("Codex"));
-            UIFactory.Button(menu, "Leaderboard", () => Show(leaderboard), -1f, 62f, null, UISkin.Icon("Leaderboard"));
-            UIFactory.Button(menu, "Settings", () => Show(settings), -1f, 62f, null, UISkin.Icon("Settings"));
-            UIFactory.Button(menu, "Credits", () => Show(creditsPanel), -1f, 62f, null, UISkin.Icon("Credits"));
-            UIFactory.Button(menu, "Quit", Quit, -1f, 62f, UITheme.ButtonDanger, UISkin.Icon("Quit"));
-            UIPop.Add(menu, 0.25f, 0.9f, new Vector2(-60f, 0f));
-
-            // The record to beat, under the menu.
-            Image best = UIFactory.Plaque(m, "Best", Vector2.zero, new Vector2(110f, 70f), new Vector2(520f, 96f), Vector2.zero);
+            // The record to beat, top right.
+            Image best = UIFactory.Plaque(m, "Best", Vector2.one, new Vector2(-60f, -50f), new Vector2(500f, 92f), Vector2.one);
             HorizontalLayoutGroup bestRow = UIFactory.Row(best, 16f, 0, TextAnchor.MiddleLeft);
             bestRow.padding = new RectOffset(22, 20, 8, 8);
             bestRow.childForceExpandHeight = false;
-            UIFactory.Icon(best.transform, UISkin.Icon("Trophy"), 60f);
+            UIFactory.Icon(best.transform, UISkin.Icon("Trophy"), 56f);
             string record = RunRecord.HasRecord
                 ? Loc.F("<b>Best: stage {0} · {1}</b>\nLevel {2} · {3} kills", RunRecord.BestStage, RunRecord.FormatTime(RunRecord.BestTime), RunRecord.BestLevel, RunRecord.BestKills)
                 : "No watch held yet";
-            UIFactory.Sized(UIFactory.Text(best.transform, "Text", record, 24f, UITheme.Gold, TextAlignmentOptions.Left), 400f, 76f);
-            UIPop.Add(best, 0.4f, 0.9f, new Vector2(-60f, 0f));
+            UIFactory.Sized(UIFactory.Text(best.transform, "Text", record, 23f, UITheme.Gold, TextAlignmentOptions.Left), 380f, 74f);
+            UIPop.Add(best, 0.3f, 0.9f, new Vector2(60f, 0f));
 
-            TextMeshProUGUI foot = UIFactory.Text(UIFactory.Rect(m, "Foot", new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-30f, 24f), new Vector2(900f, 32f), new Vector2(1f, 0f)),
-                "Esad Yesilyurt  ·  Istanbul Kent University", 23f, UITheme.Text, TextAlignmentOptions.Right, true);
-            foot.fontStyle = FontStyles.Bold;
+            // Who keeps the watch: the name and school of the character on the tower, on the left at their height.
+            RectTransform who = UIFactory.Rect(m, "Watcher", new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(78f, -40f), new Vector2(700f, 190f), new Vector2(0f, 0.5f));
+            UIFactory.Column(who, 6f, 0, TextAnchor.MiddleLeft);
+            TextMeshProUGUI watchLabel = UIFactory.Sized(UIFactory.Text(who, "Label", "ON WATCH", 20f, UITheme.TextMuted, TextAlignmentOptions.Left, true), -1f, 26f);
+            watchLabel.characterSpacing = 10f;
+            watcherName = UIFactory.Sized(UIFactory.Title(who, "Name", "", 60f, UITheme.Text, TextAlignmentOptions.Left), -1f, 72f);
+            watcherSchool = UIFactory.Sized(UIFactory.Text(who, "School", "", 24f, UITheme.Text, TextAlignmentOptions.Left, true), -1f, 32f);
+            watcherSchool.fontStyle = FontStyles.Bold;
+            UIPop.Add(who, 0.35f, 0.9f, new Vector2(-60f, 0f));
+
+            // The menu: one strip along the bottom, Play in the middle of it.
+            RectTransform menu = UIFactory.Rect(m, "Menu", new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 52f), new Vector2(1800f, 96f), new Vector2(0.5f, 0f));
+            UIFactory.Row(menu, 16f, 0, TextAnchor.MiddleCenter).childForceExpandHeight = false;
+            UIFactory.Button(menu, "Codex", () => Show(codex), 250f, 66f, null, UISkin.Icon("Codex"));
+            UIFactory.Button(menu, "Leaderboard", () => Show(leaderboard), 280f, 66f, null, UISkin.Icon("Leaderboard"));
+            UIFactory.Button(menu, "Play", OnPlay, 400f, 92f, UITheme.ButtonPrimary, UISkin.Icon("Play"));
+            UIFactory.Button(menu, "Settings", () => Show(settings), 250f, 66f, null, UISkin.Icon("Settings"));
+            UIFactory.Button(menu, "Credits", () => Show(creditsPanel), 250f, 66f, null, UISkin.Icon("Credits"));
+            UIFactory.Button(menu, "Quit", Quit, 190f, 66f, UITheme.ButtonDanger, UISkin.Icon("Quit"));
+            UIPop.Add(menu, 0.2f, 0.9f, new Vector2(0f, -50f));
+
+            TextMeshProUGUI foot = UIFactory.Text(UIFactory.Rect(m, "Foot", new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 12f), new Vector2(900f, 26f), new Vector2(0.5f, 0f)),
+                "Esad Yesilyurt  ·  Istanbul Kent University", 18f, UITheme.TextMuted, TextAlignmentOptions.Center, true);
 
             settings = SettingsPanel.Build(c, () => Show(main));
             leaderboard = LeaderboardPanel.Build(c, () => Show(main));
-            shop = ShopPanel.Build(c, () => Show(main));
             codex = CodexPanel.Build(c, () => Show(main), items);
             select = BuildSelect(c);
 
@@ -131,9 +150,9 @@ namespace Hookfall.UI
         private void Show(GameObject panel)
         {
             main.SetActive(panel == main);
+            shade.SetActive(panel != main);
             settings.SetActive(panel == settings);
             leaderboard.SetActive(panel == leaderboard);
-            shop.SetActive(panel == shop);
             codex.SetActive(panel == codex);
             select.SetActive(panel == select);
             creditsPanel.SetActive(panel == creditsPanel);
@@ -220,6 +239,11 @@ namespace Hookfall.UI
         {
             picked = character;
             bool open = CharacterRoster.IsUnlocked(character);
+            // The tower shows who was picked, and the main screen names them.
+            MenuStage.Show(character.id);
+            watcherName.text = Loc.Upper(Loc.T(character.displayName));
+            watcherSchool.text = SchoolInfo.Name(character.affinity);
+            watcherSchool.color = SchoolInfo.Color(character.affinity);
             for (int i = 0; i < tileFrames.Count; i++)
                 tileFrames[i].color = characters[i] == character ? UITheme.Player : new Color(1f, 1f, 1f, 0.25f);
             startButton.interactable = open;

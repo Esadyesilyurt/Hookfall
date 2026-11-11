@@ -24,8 +24,6 @@ namespace Hookfall.Core
         public int Kills { get; private set; }
         public string EndReason { get; private set; } = "";
         public bool NewRecord { get; private set; }
-        /// <summary>Heartstone shards the run that just ended paid (MetaProgress).</summary>
-        public int ShardsEarned { get; private set; }
 
         public event Action<RunState> StateChanged;
         public event Action RunEnded;
@@ -103,8 +101,6 @@ namespace Hookfall.Core
                 NewRecord = RunRecord.Submit(RunTime, playerXP != null ? playerXP.Level : 1, Kills, stage);
                 Hookfall.Player.CharacterRoster.RecordRun(playerXP != null ? playerXP.Level : 1, Kills, RunTime);
                 Codex.Save();
-                ShardsEarned = Hookfall.Progression.MetaProgress.Reward(playerXP != null ? playerXP.Level : 1, stage, RunTime);
-                Hookfall.Progression.MetaProgress.Add(ShardsEarned);
                 Hookfall.Online.Leaderboard.SubmitRun(RunTime, Hookfall.Player.CharacterRoster.ActiveId, stage);
             }
             SetState(RunState.Dead);

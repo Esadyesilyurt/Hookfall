@@ -11,7 +11,7 @@ namespace Hookfall.Progression
 {
     public class ChoiceTokens : MonoBehaviour
     {
-        [Tooltip("Rerolls at the start of a run (the upgrade shop adds to it).")]
+        [Tooltip("Rerolls at the start of a run.")]
         [SerializeField] private int rerolls = 2;
         [Tooltip("Banishes at the start of a run.")]
         [SerializeField] private int banishes = 2;
@@ -20,14 +20,11 @@ namespace Hookfall.Progression
 
         private readonly HashSet<string> banished = new HashSet<string>();
 
-        // The upgrades bought in the menu's shop: free stat picks, more rerolls and banishes.
-        private void Start() => MetaProgress.ApplyTo(GetComponent<PlayerStats>(), this);
-
         public int Rerolls => rerolls;
         public int Banishes => banishes;
         public int SkipGold => skipGold;
 
-        /// <summary>More rerolls and banishes for this run (permanent upgrades).</summary>
+        /// <summary>More rerolls and banishes for this run.</summary>
         public void Add(int moreRerolls, int moreBanishes)
         {
             rerolls += moreRerolls;
