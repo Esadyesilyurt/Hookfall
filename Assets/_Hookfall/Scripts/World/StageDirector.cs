@@ -48,6 +48,8 @@ namespace Hookfall.World
 
         [Header("Prefabs")]
         [SerializeField] private Boss bossPrefab;
+        [Tooltip("The boss of every second stage (2, 4, ...); the first prefab takes them all when this is empty.")]
+        [SerializeField] private Boss wyrmPrefab;
         [SerializeField] private Portal portalPrefab;
         [Tooltip("Additive material for the boss's beacon and the portal's beam (M_LightBeam).")]
         [SerializeField] private Material beamMaterial;
@@ -102,8 +104,18 @@ namespace Hookfall.World
         public float GrowthScale { get; private set; } = 1f;
         public float SpawnScale { get; private set; } = 1f;
         public Vector3 ArenaCentre => arenaCentre;
-        public string BossName => Stage <= BossNames.Length ? Loc.T(BossNames[Stage - 1])
-            : $"{Loc.T(BossNames[BossNames.Length - 1])} {Stage - BossNames.Length + 1}";
+        private bool WyrmStage => wyrmPrefab != null && Stage % 2 == 0;
+        private Boss StageBossPrefab => WyrmStage ? wyrmPrefab : bossPrefab;
+        /// <summary>The Wyrm takes the even stages and the Colossus, under a new name each time, the odd ones.</summary>
+        public string BossName
+        {
+            get
+            {
+                if (WyrmStage) return Stage <= 2 ? Loc.T("Tempest Wyrm") : $"{Loc.T("Tempest Wyrm")} {Stage / 2}";
+                int nth = wyrmPrefab != null ? (Stage + 1) / 2 : Stage;
+                return nth <= BossNames.Length ? Loc.T(BossNames[nth - 1]) : $"{Loc.T(BossNames[BossNames.Length - 1])} {nth - BossNames.Length + 1}";
+            }
+        }
         public string BossTitle => Loc.F("Guardian of Stage {0}", Stage);
 
         /// <summary>XP and gold per kill on this stage (EnemyBase.Die).</summary>
@@ -218,7 +230,7 @@ namespace Hookfall.World
             while (gm != null && gm.State != RunState.Playing) yield return null;   // a choice screen finishes first
 
             BuildArena();
-            Boss = Instantiate(bossPrefab, arenaCentre + Vector3.up * 55f, Quaternion.identity);
+            Boss = Instantiate(StageBossPrefab, arenaCentre + Vector3.up * 55f, Quaternion.identity);
             Boss.name = "Boss";
             Boss.Bind(vfx, audioManager, feel);
             enemies.InitBoss(Boss);

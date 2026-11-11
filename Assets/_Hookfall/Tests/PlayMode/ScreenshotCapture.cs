@@ -322,6 +322,34 @@ namespace Hookfall.Tests
                 yield return new WaitForSecondsRealtime(1.5f);
                 Alive();
                 yield return Grab("stage2_start");
+
+                // Stage 2's boss, the Tempest Wyrm: its entrance, then the fight from the Warden and from the side.
+                stageType.GetMethod("SummonBoss").Invoke(stage, null);
+                yield return new WaitForSecondsRealtime(4f);
+                yield return Grab("wyrm_entrance");
+                end = Time.realtimeSinceStartup + 12f;
+                while (Time.realtimeSinceStartup < end && state() != "Playing") { Alive(); yield return null; }
+                var wyrm = (Component)stageType.GetProperty("Boss").GetValue(stage);
+                if (wyrm != null)
+                {
+                    Vector3 wyrmCentre = (Vector3)stageType.GetProperty("ArenaCentre").GetValue(stage);
+                    Vector3 seat = wyrmCentre + new Vector3(0f, 6f, -14f);
+                    end = Time.realtimeSinceStartup + 5f;
+                    while (Time.realtimeSinceStartup < end)
+                    {
+                        Alive();
+                        player.GetComponent<Rigidbody>().position = seat;
+                        player.transform.position = seat;
+                        player.GetComponent<Rigidbody>().linearVelocity = Vector3.zero;
+                        yield return null;
+                    }
+                    yield return Grab("wyrm_fight");
+                    var side = new GameObject("Wyrm Overview").AddComponent<Camera>();
+                    side.CopyFrom(Camera.main);
+                    side.fieldOfView = 55f;
+                    LookAt(side, wyrm.transform.position, new Vector3(64f, 22f, -64f));
+                    Render(side, "wyrm_side");
+                }
             }
         }
 

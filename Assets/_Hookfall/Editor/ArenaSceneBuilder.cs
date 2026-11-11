@@ -104,6 +104,7 @@ namespace Hookfall.EditorTools
             Venomwing venomPrefab = EnemyPrefabs.Venomwing(EnemyPrefabs.VenomGlob());
             GloomJelly jellyPrefab = EnemyPrefabs.GloomJelly();
             Boss bossPrefab = EnemyPrefabs.Boss();   // stages (2026-11-08)
+            TempestWyrm wyrmPrefab = EnemyPrefabs.Wyrm();   // the boss of every second stage (2026-11-11)
             Portal portalPrefab = EnemyPrefabs.Portal();
             List<ItemBase> itemPrefabs = ItemPrefabs.CreateItems();
             Chest chestPrefab = ItemPrefabs.CreateChest();
@@ -342,6 +343,7 @@ namespace Hookfall.EditorTools
             SetRef(stages, "vfx", vfx);
             SetRef(stages, "feel", feel);
             SetRef(stages, "bossPrefab", bossPrefab);
+            SetRef(stages, "wyrmPrefab", wyrmPrefab);
             SetRef(stages, "portalPrefab", portalPrefab);
             SetRef(stages, "beamMaterial", ItemPrefabs.BeamMaterial());
 
