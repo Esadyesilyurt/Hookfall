@@ -111,6 +111,10 @@ namespace Hookfall.Enemies
         protected override IEnemyState DefaultState => state;
 
         public bool Fighting => fighting;
+        /// <summary>The entrance cutscene: when its arrival starts, how long it takes, and whether it lands with a crash.</summary>
+        public virtual float EntranceStart => 0.8f;
+        public virtual float EntranceTime => 1.5f;
+        public virtual bool LandsHeavy => true;
         public bool Raging => Health < MaxHealth * rageBelow;
         /// <summary>The weak point the items see: the crystal core in the chest.</summary>
         public Vector3 CorePosition => core != null ? core.position : transform.position;
@@ -168,7 +172,7 @@ namespace Hookfall.Enemies
         // ---------- The entrance (driven by the CutsceneDirector in unscaled time) ----------
 
         /// <summary>Somewhere on the way down to its place: t 0 is high in the sky, 1 is landed.</summary>
-        public void Descend(Vector3 rest, float t)
+        public virtual void Descend(Vector3 rest, float t)
         {
             float fall = 1f - t * t;   // speeds up like something heavy falling
             transform.position = rest + Vector3.up * (55f * fall);

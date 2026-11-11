@@ -100,7 +100,6 @@ namespace Hookfall.UI
             Stat("Star", "Level", (xp != null ? xp.Level : 1).ToString());
             Stat("Kills", "Kills", gm.Kills.ToString());
             Stat("Gold", "Gold", (gold != null ? gold.Earned : 0).ToString());
-            Stat("Shard", "Shards", "+" + gm.ShardsEarned);   // for the menu's upgrade shop (2026-11-11)
 
             foreach (Transform child in items) Destroy(child.gameObject);
             foreach (Transform child in damage) Destroy(child.gameObject);

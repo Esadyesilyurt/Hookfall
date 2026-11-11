@@ -74,7 +74,33 @@ namespace Hookfall.EditorTools
             camGo.AddComponent<AudioListener>();
             FeelSetup.EnablePostProcessing(cam);
             camGo.transform.SetPositionAndRotation(new Vector3(0f, 14f, -46f), Quaternion.Euler(8f, 0f, 0f));
-            camGo.AddComponent<MenuCameraDrift>();   // a slow sway around the tower (2026-11-10)
+            // The menu's stage (2026-11-11): the camera on the tower top, the chosen character on watch, flyers in an evening sky.
+            var stage = camGo.AddComponent<MenuStage>();
+            CharacterDefinition[] menuCharacters = CreateCharacters();
+            foreach (CharacterDefinition character in menuCharacters)
+            {
+                GameObject model = InstantiateModel(character.id, null);
+                if (model == null) continue;
+                model.name = character.id;
+                model.SetActive(false);
+                AddToList(stage, "models", model);
+            }
+            for (int i = 0; i < 9; i++)
+            {
+                GameObject flyer = InstantiateModel(i == 4 ? "Wyvern" : "Bat", null);
+                if (flyer == null) continue;
+                flyer.name = "Menu Flyer";
+                AddToList(stage, "flyers", flyer.transform);
+            }
+            Color dusk = new Color(0.5f, 0.43f, 0.74f);   // Atmosphere's violet dusk, with a warm low sun on the watcher
+            cam.backgroundColor = dusk;
+            cam.fieldOfView = 50f;
+            RenderSettings.fogColor = dusk;
+            RenderSettings.fogStartDistance = 160f;
+            RenderSettings.fogEndDistance = 620f;
+            RenderSettings.ambientLight = new Color(0.47f, 0.43f, 0.62f);
+            RenderSettings.sun.color = new Color(1f, 0.78f, 0.58f);
+            RenderSettings.sun.transform.rotation = Quaternion.Euler(22f, 165f, 0f);   // low, from behind the camera
 
             var generator = new GameObject("IslandGenerator").AddComponent<IslandGenerator>();
             WireIslandGenerator(generator, null);
@@ -82,7 +108,7 @@ namespace Hookfall.EditorTools
             FeelSetup.AddVolume();
 
             var menu = new GameObject("Main Menu").AddComponent<MainMenuUI>();
-            foreach (CharacterDefinition character in CreateCharacters()) AddToList(menu, "characters", character);
+            foreach (CharacterDefinition character in menuCharacters) AddToList(menu, "characters", character);
             foreach (ItemBase item in ItemPrefabs.CreateItems()) AddToList(menu, "items", item);   // the codex (2026-11-11)
             EditorSceneManager.SaveScene(scene, MenuPath);
         }

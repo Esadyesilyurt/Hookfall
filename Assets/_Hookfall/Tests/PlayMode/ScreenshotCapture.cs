@@ -30,7 +30,7 @@ namespace Hookfall.Tests
             locType.GetProperty("Turkish").SetValue(null, Environment.GetEnvironmentVariable("HOOKFALL_SHOT_LANG") == "tr");
 
             SceneManager.LoadScene("MainMenu");
-            yield return new WaitForSecondsRealtime(1f);
+            yield return new WaitForSecondsRealtime(2f);
             yield return Grab("menu");
             var menu = UnityEngine.Object.FindAnyObjectByType(Type.GetType("Hookfall.UI.MainMenuUI, Assembly-CSharp"));
             menu.GetType().GetMethod("OnPlay", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).Invoke(menu, null);
@@ -43,7 +43,7 @@ namespace Hookfall.Tests
             menuType.GetMethod("Pick", menuFlags).Invoke(menu, new object[] { roster.GetValue(Mathf.Min(4, roster.Length - 1)) });
             yield return new WaitForSecondsRealtime(0.5f);
             yield return Grab("menu_character_other");
-            foreach (string panel in new[] { "settings", "leaderboard", "shop", "codex", "creditsPanel", "intro" })
+            foreach (string panel in new[] { "settings", "leaderboard", "codex", "creditsPanel", "intro" })
             {
                 menuType.GetMethod("Show", menuFlags).Invoke(menu, new[] { menuType.GetField(panel, menuFlags).GetValue(menu) });
                 yield return new WaitForSecondsRealtime(panel == "intro" ? 2.2f : 0.8f);
@@ -325,7 +325,11 @@ namespace Hookfall.Tests
 
                 // Stage 2's boss, the Tempest Wyrm: its entrance, then the fight from the Warden and from the side.
                 stageType.GetMethod("SummonBoss").Invoke(stage, null);
-                yield return new WaitForSecondsRealtime(4f);
+                yield return new WaitForSecondsRealtime(1.2f);
+                yield return Grab("wyrm_entrance_1");
+                yield return new WaitForSecondsRealtime(0.9f);
+                yield return Grab("wyrm_entrance_2");
+                yield return new WaitForSecondsRealtime(1.9f);
                 yield return Grab("wyrm_entrance");
                 end = Time.realtimeSinceStartup + 12f;
                 while (Time.realtimeSinceStartup < end && state() != "Playing") { Alive(); yield return null; }

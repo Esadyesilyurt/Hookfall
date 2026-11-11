@@ -47,6 +47,7 @@ namespace Hookfall.Enemies
         private float angle, spitTimer, diveTimer, wait, diveLeft;
         private Transform bodyRoot;
         private Transform[] pieces;
+        private Vector3[] chain;   // where each piece is on the chain, without its sway
 
         protected override Color ShardTint => StormColor;
         protected override string CallLine => "The Wyrm calls the storm!";
@@ -74,10 +75,42 @@ namespace Hookfall.Enemies
                 piece.SetParent(bodyRoot, false);
                 // Thinner towards the tail.
                 piece.localScale = (i < segments ? segmentTemplate.localScale : tail.localScale) * Mathf.Lerp(1f, 0.6f, i / (float)segments);
-                piece.SetPositionAndRotation(transform.position - transform.forward * spacing * (i + 1), transform.rotation);
                 pieces[i] = piece;
             }
             segmentTemplate.gameObject.SetActive(false);
+            chain = new Vector3[pieces.Length];
+            Trail();
+        }
+
+        // ---------- The entrance: it does not fall like the Colossus, it comes up out of the deep in a closing spiral ----------
+
+        public override float EntranceStart => 0.2f;
+        public override float EntranceTime => 2.4f;
+        public override bool LandsHeavy => false;
+
+        private Quaternion? faceAfter;
+
+        public override void Descend(Vector3 rest, float t)
+        {
+            if (t <= 0f) faceAfter = transform.rotation;   // the cutscene has just turned it to the camera
+            float left = (1f - t) * (1f - t);              // fast at first, slowing as it arrives
+            float turn = left * Mathf.PI * 2.6f;
+            // A wide, almost level circle that closes on its place, so the whole body streams out behind the head.
+            // It ends 16 m over the arena's middle: clear of the islands the camera looks past from below.
+            Vector3 at = rest + new Vector3(Mathf.Cos(turn) * 110f * left, 16f - 26f * left, Mathf.Sin(turn) * 110f * left);
+            if (Visual != null) Visual.localScale = Vector3.one;   // time stands still in the cutscene: no spawn pop
+            Vector3 step = at - transform.position;
+            Quaternion along = step.sqrMagnitude > 0.0001f && t > 0f ? Quaternion.LookRotation(step) : transform.rotation;
+            transform.SetPositionAndRotation(at, Quaternion.Slerp(along, faceAfter ?? transform.rotation, Mathf.SmoothStep(0f, 1f, (t - 0.8f) / 0.2f)));
+            if (t <= 0f) Trail();
+        }
+
+        /// <summary>Lays the body out straight behind the head (the start of the entrance).</summary>
+        private void Trail()
+        {
+            if (chain == null) return;
+            for (int i = 0; i < chain.Length; i++)
+                chain[i] = transform.position - transform.forward * spacing * (i + 1);
         }
 
         public override void BeginFight()
@@ -178,13 +211,13 @@ namespace Hookfall.Enemies
             Vector3 lead = transform.position;
             for (int i = 0; i < pieces.Length; i++)
             {
-                Vector3 back = pieces[i].position - lead;
+                Vector3 back = chain[i] - lead;
                 if (back.sqrMagnitude < 0.0001f) back = -transform.forward;
-                // Each piece keeps its distance to the one before it, and sways a little as it follows.
-                Vector3 at = lead + back.normalized * spacing;
-                at += Vector3.up * (Mathf.Sin(age * 2.2f - i * 0.8f) * 0.25f);
-                pieces[i].SetPositionAndRotation(at, Quaternion.LookRotation(lead - at, Vector3.up));
-                lead = at;
+                // Each piece keeps its distance to the one before it; the sway is only drawn, never fed back into the chain.
+                chain[i] = lead + back.normalized * spacing;
+                Vector3 shown = chain[i] + Vector3.up * (Mathf.Sin(age * 2.2f - i * 0.8f) * 0.6f);
+                pieces[i].SetPositionAndRotation(shown, Quaternion.LookRotation(lead - chain[i], Vector3.up));
+                lead = chain[i];
             }
         }
 
@@ -194,6 +227,7 @@ namespace Hookfall.Enemies
                 foreach (Transform piece in pieces) vfx.Burst(piece.position, 24, StormColor, 12f, 0.4f, 0.9f);
             bodyRoot = null;
             pieces = null;
+            chain = null;
             base.OnDied(killed);
         }
     }

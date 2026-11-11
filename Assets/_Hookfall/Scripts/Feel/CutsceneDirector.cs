@@ -127,15 +127,19 @@ namespace Hookfall.Feel
                 SetCard(Smooth(2.9f, 3.4f, t) * (1f - Smooth(4.4f, 4.9f, t)));
 
                 arena.position = Vector3.Lerp(arenaFrom, arenaTo, Smooth(0.3f, 2.4f, t));
-                float fall = Mathf.Clamp01((t - 0.8f) / 1.5f);
+                float fall = Mathf.Clamp01((t - boss.EntranceStart) / boss.EntranceTime);
                 boss.Descend(rest, fall);
                 if (!landed && fall >= 1f)
                 {
                     landed = true;
-                    shake = 1.3f;
-                    Burst(rest + Vector3.down * 7f, 140, DustColor, 24f, 0.7f, 1.4f, true);
                     Burst(rest, 60, BossColor, 14f, 0.4f, 1f, false);
-                    if (audioManager != null) audioManager.Play(SoundId.BossSlam, rest);
+                    if (boss.LandsHeavy)
+                    {
+                        // The Colossus crashes down; a boss that flies in just arrives.
+                        shake = 1.3f;
+                        Burst(rest + Vector3.down * 7f, 140, DustColor, 24f, 0.7f, 1.4f, true);
+                        if (audioManager != null) audioManager.Play(SoundId.BossSlam, rest);
+                    }
                 }
                 if (!roared && t >= 2.6f)
                 {
