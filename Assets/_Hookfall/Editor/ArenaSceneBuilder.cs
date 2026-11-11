@@ -122,7 +122,9 @@ namespace Hookfall.EditorTools
             var gold = player.AddComponent<GoldWallet>();
             var combat = player.AddComponent<CombatSystem>();
             player.AddComponent<SynergySystem>();   // set bonuses and school statuses (2026-11-08)
+            player.AddComponent<ChoiceTokens>();   // rerolls, banishes, skips (2026-11-10); before LevelUpSystem, which looks for it
             var levelUp = player.AddComponent<LevelUpSystem>();
+            player.AddComponent<FlowChain>();      // the flight chain (2026-11-10)
 
             var ropeGo = new GameObject("Rope") { layer = Layers.NoOutline };
             ropeGo.transform.SetParent(player.transform, false);
@@ -222,6 +224,7 @@ namespace Hookfall.EditorTools
 
             var gm = new GameObject("GameManager").AddComponent<GameManager>();
             SetRef(gm, "playerXP", xp);
+            new GameObject("Atmosphere").AddComponent<Atmosphere>();   // the sky of each stage (2026-11-10)
 
             var generator = new GameObject("IslandGenerator").AddComponent<IslandGenerator>();
             WireIslandGenerator(generator, stats);

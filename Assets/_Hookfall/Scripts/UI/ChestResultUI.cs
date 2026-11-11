@@ -25,6 +25,7 @@ namespace Hookfall.UI
         private Image raysImage;
         private TextMeshProUGUI title, subtitle;
         private GameObject backButton;
+        private ChoiceToolbar tools;
         private CombatSystem combat;
         private ChestReward? replacing;   // the new item waiting for a slot
         private List<ItemBase> replaceOptions;
@@ -79,16 +80,17 @@ namespace Hookfall.UI
             UIFactory.Dim(canvas.transform, 0.66f);
             rays = UIFactory.Centre(canvas.transform, "Rays", new Vector2(0f, 300f), new Vector2(900f, 900f));
             raysImage = UIFactory.Image(rays, Color.white, UISkin.Rays);
-            title = UIFactory.Title(UIFactory.Centre(canvas.transform, "Title", new Vector2(0f, 330f), new Vector2(1300f, 96f)),
+            title = UIFactory.Title(UIFactory.Centre(canvas.transform, "Title", new Vector2(0f, 350f), new Vector2(1300f, 96f)),
                 "Text", "CHEST", 68f, UITheme.Gold, TextAlignmentOptions.Center, true, true);
             UIFactory.Stretch((RectTransform)title.transform);
             title.characterSpacing = 12f;
             UIPop.Add(title, 0f, 1.4f);
-            subtitle = UIFactory.Text(UIFactory.Centre(canvas.transform, "Subtitle", new Vector2(0f, 270f), new Vector2(1200f, 40f)),
+            subtitle = UIFactory.Text(UIFactory.Centre(canvas.transform, "Subtitle", new Vector2(0f, 290f), new Vector2(1200f, 40f)),
                 "Choose one", 26f, UITheme.TextMuted, TextAlignmentOptions.Center, true);
-            cardRow = UIFactory.Centre(canvas.transform, "Cards", new Vector2(0f, -60f), new Vector2(1780f, 560f));   // room for 4 (Fortune set)
+            cardRow = UIFactory.Centre(canvas.transform, "Cards", new Vector2(0f, -30f), new Vector2(1780f, 560f));   // room for 4 (Fortune set)
             UIFactory.Row(cardRow, 44f, 0);
-            RectTransform back = UIFactory.Centre(canvas.transform, "Back", new Vector2(0f, -420f), new Vector2(360f, 64f));
+            tools = new ChoiceToolbar(canvas.transform, new Vector2(0f, -384f), Reroll, null);   // a chest was paid for: no skip
+            RectTransform back = UIFactory.Centre(canvas.transform, "Back", new Vector2(0f, -462f), new Vector2(360f, 64f));
             backButton = UIFactory.Button(back, "Back", BackToChoices).gameObject;
             backButton.SetActive(false);
             root.SetActive(false);
@@ -118,6 +120,22 @@ namespace Hookfall.UI
             return true;
         }
 
+        private Hookfall.Progression.ChoiceTokens Tokens => combat != null ? combat.GetComponent<Hookfall.Progression.ChoiceTokens>() : null;
+
+        /// <summary>Rolls the chest again; costs a reroll.</summary>
+        private void Reroll()
+        {
+            if (replacing != null || choices == null || Tokens == null || !Tokens.TryReroll()) return;
+            Redeal();
+        }
+
+        private void Redeal()
+        {
+            choices = combat.RollChest(shownRarity);
+            ShowChoices();
+            shownAt = Time.unscaledTime;
+        }
+
         private void ClearCards()
         {
             foreach (GameObject card in cards) Destroy(card);
@@ -133,6 +151,7 @@ namespace Hookfall.UI
             cardRow.localScale = Vector3.one;
             Color color = UITheme.ForRarity(shownRarity);
             raysImage.color = new Color(color.r, color.g, color.b, 0.3f);
+            tools.Refresh(Tokens);
             title.text = shownTitle ?? Loc.T(shownRarity.ToString().ToUpperInvariant() + " CHEST");
             title.color = color;
             subtitle.text = Loc.T("Choose one");
@@ -212,12 +231,24 @@ namespace Hookfall.UI
             for (int i = 0; i < 6; i++)
                 if (k[(Key)((int)Key.Digit1 + i)].wasPressedThisFrame || k[(Key)((int)Key.Numpad1 + i)].wasPressedThisFrame) { Pick(i); return; }
             if (k.backspaceKey.wasPressedThisFrame) BackToChoices();
+            else if (replacing == null) tools.HandleKeys(k, Tokens);
         }
 
         private void Pick(int index)
         {
             // A short guard so a click or key held from before the chest opened does not pick for the player.
             if (!root.activeSelf || choices == null || Time.unscaledTime - shownAt < 0.3f) return;
+            if (tools.Banishing && replacing == null)
+            {
+                // The card goes for the rest of the run, and the chest is rolled again at no cost.
+                if (index >= choices.Count) return;
+                ChestReward gone = choices[index];
+                Hookfall.Progression.ChoiceTokens tokens = Tokens;
+                bool done = tokens != null && (gone.Item != null ? tokens.TryBanish(gone.Item) : tokens.TryBanish(gone.FallbackStat));
+                tools.SetBanishing(false, tokens);
+                if (done) Redeal();
+                return;
+            }
             ItemBase replaced = null;
             ChestReward choice;
             if (replacing != null)

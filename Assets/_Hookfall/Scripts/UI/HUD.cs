@@ -79,6 +79,7 @@ namespace Hookfall.UI
         private HudMarkers markers;
         private HudBuild build;
         private HudDamageRing damageRing;
+        private HudFlow flow;
 
         private UIBar xpBar, healthBar, bossGoldBar, bossBar, chargeBar;
         private Image portrait, xpGlow, crosshair, zipRing, attackBack;
@@ -130,6 +131,7 @@ namespace Hookfall.UI
             BuildSlots(c);
             BuildAbilities(c);
             BuildHints(c);
+            flow = new HudFlow(c, new Vector2(0f, 142f));   // over the ability row
             damageRing = new HudDamageRing(c);
 
             announce = UIFactory.Title(UIFactory.Rect(c, "Announce", TopCentre, TopCentre, new Vector2(0f, -262f), new Vector2(1500f, 84f)),
@@ -439,6 +441,7 @@ namespace Hookfall.UI
             DrawStage();
             DrawMarkers();
             damageRing.Tick(dt);
+            flow.Tick(dt);
 
             float age = Time.unscaledTime - announceTime;
             announce.gameObject.SetActive(age < 2.6f);

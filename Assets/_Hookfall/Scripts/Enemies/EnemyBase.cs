@@ -424,9 +424,12 @@ namespace Hookfall.Enemies
                 PickupSpawner drops = PickupSpawner.Instance;
                 if (drops != null)
                 {
-                    float stage = Hookfall.World.StageDirector.RewardScale;   // later stages pay more
-                    drops.DropXP(transform.position, xpReward * rewardMultiplier * stage);
-                    drops.DropGold(transform.position, Mathf.RoundToInt(goldReward * rewardMultiplier * stage));
+                    // Later stages pay more, and so does a kill deep in a flight chain.
+                    float scale = Hookfall.World.StageDirector.RewardScale * FlowChain.Reward;
+                    drops.DropXP(transform.position, xpReward * rewardMultiplier * scale);
+                    // Gold comes in whole coins: the fraction is a chance of one more, so +10% is worth +10%.
+                    float coins = goldReward * rewardMultiplier * scale;
+                    drops.DropGold(transform.position, Mathf.FloorToInt(coins) + (Random.value < coins - Mathf.Floor(coins) ? 1 : 0));
                 }
             }
             OnDied(giveReward);

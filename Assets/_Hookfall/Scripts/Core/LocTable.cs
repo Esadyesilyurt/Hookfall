@@ -525,6 +525,16 @@ namespace Hookfall.Core
             { "Dash in the air", "Havada atıl" },
             { "Open a chest", "Sandık aç" },
             { "Pick a card", "Kart seç" },
+            // Run systems (2026-11-11): reroll, banish, skip, the flight chain.
+            { "[R]  Reroll  ·  {0}", "[R]  Yenile  ·  {0}" },
+            { "[B]  Banish  ·  {0}", "[B]  Yasakla  ·  {0}" },
+            { "[X]  Skip  ·  +{0} gold", "[X]  Atla  ·  +{0} altın" },
+            { "Pick a card to banish", "Yasaklanacak kartı seç" },
+            { "FLOW", "AKIŞ" },
+            { "FLOW BROKEN  ·  {0}", "AKIŞ KOPTU  ·  {0}" },
+            { "Gust", "Esinti" },
+            { "Gale", "Bora" },
+            { "Tempest", "Kasırga" },
         };
     }
 }
