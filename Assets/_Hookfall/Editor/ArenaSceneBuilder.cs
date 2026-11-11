@@ -97,6 +97,11 @@ namespace Hookfall.EditorTools
             Wyvern wyvernPrefab = EnemyPrefabs.Wyvern();
             Golem golemPrefab = EnemyPrefabs.Golem();
             Boulder boulderPrefab = EnemyPrefabs.Boulder();
+            // The wider horde (2026-11-10).
+            Blightpuff puffPrefab = EnemyPrefabs.Blightpuff();
+            Razorwing razorPrefab = EnemyPrefabs.Razorwing();
+            Venomwing venomPrefab = EnemyPrefabs.Venomwing(EnemyPrefabs.VenomGlob());
+            GloomJelly jellyPrefab = EnemyPrefabs.GloomJelly();
             Boss bossPrefab = EnemyPrefabs.Boss();   // stages (2026-11-08)
             Portal portalPrefab = EnemyPrefabs.Portal();
             List<ItemBase> itemPrefabs = ItemPrefabs.CreateItems();
@@ -249,6 +254,11 @@ namespace Hookfall.EditorTools
             SetRef(director, "wyvernPrefab", wyvernPrefab);
             SetRef(director, "golemPrefab", golemPrefab);
             SetRef(director, "boulderPrefab", boulderPrefab);
+            SetRef(director, "blightpuffPrefab", puffPrefab);
+            SetRef(director, "razorwingPrefab", razorPrefab);
+            SetRef(director, "venomwingPrefab", venomPrefab);
+            SetRef(director, "jellyPrefab", jellyPrefab);
+            SetRef(director, "warningMaterial", Mat("M_Warning"));
 
             // Effects and sound
             var vfx = new GameObject("VFX").AddComponent<VfxManager>();

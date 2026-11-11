@@ -359,6 +359,13 @@ MonoBehaviour:
   flapAngle: 45
   knockback: 0
   hitPunch: 0.02
+  bankAngle: 30
+  bobHeight: 0.12
+  bobSpeed: 3.2
+  spawnTime: 0.25
+  deathTime: 0.16
+  shieldShare: 0.6
+  swiftFactor: 1.45
   head: {fileID: 6296271335518168083}
   jaw: {fileID: 1216380447438382086}
   armLeft: {fileID: 53466111006462929}

@@ -83,6 +83,9 @@ namespace Hookfall.Feel
             if (levelUp != null) levelUp.OfferReady += OnLevelUp;
             EnemyDirector.Died += OnEnemyDied;
             EnemyDirector.Slammed += OnSlam;
+            EnemyDirector.Exploded += OnBlast;
+            EnemyDirector.Pulsed += OnJellyPulse;
+            EnemyDirector.ShieldBroken += OnShieldBroken;
             TetherCoil.ShockwaveFired += OnShockwave;
             HeartstoneCore.Pulsed += OnShockwave;
             SynergySystem.ChainFired += OnChain;
@@ -104,6 +107,9 @@ namespace Hookfall.Feel
             if (levelUp != null) levelUp.OfferReady -= OnLevelUp;
             EnemyDirector.Died -= OnEnemyDied;
             EnemyDirector.Slammed -= OnSlam;
+            EnemyDirector.Exploded -= OnBlast;
+            EnemyDirector.Pulsed -= OnJellyPulse;
+            EnemyDirector.ShieldBroken -= OnShieldBroken;
             TetherCoil.ShockwaveFired -= OnShockwave;
             HeartstoneCore.Pulsed -= OnShockwave;
             SynergySystem.ChainFired -= OnChain;
@@ -192,6 +198,26 @@ namespace Hookfall.Feel
         {
             float d = Vector3.Distance(golem.transform.position, player.transform.position);
             if (d < slamShakeRange) Shake(0.5f * (1f - d / slamShakeRange));
+        }
+
+        /// <summary>A burst (a Blightpuff, an Explosive elite): fire and a ring, and a shake when it is near.</summary>
+        private void OnBlast(Vector3 position, float radius)
+        {
+            float d = Vector3.Distance(position, player.transform.position);
+            if (d < slamShakeRange) Shake(0.6f * (1f - d / slamShakeRange));
+            if (vfx == null) return;
+            vfx.Burst(position, 36, new Color(1f, 0.5f, 0.15f), radius * 2.4f, 0.4f, 0.5f);
+            vfx.Ring(position, 28, new Color(1f, 0.35f, 0.1f), radius * 3f);
+        }
+
+        private void OnJellyPulse(Vector3 position, float radius)
+        {
+            if (vfx != null) vfx.Ring(position, 26, new Color(0.9f, 0.3f, 0.85f), radius * 3f);
+        }
+
+        private void OnShieldBroken(EnemyBase enemy)
+        {
+            if (vfx != null) vfx.Burst(enemy.transform.position, 18, new Color(0.4f, 0.8f, 1f), 9f, 0.25f, 0.4f);
         }
 
         private void OnShockwave(Vector3 position, float radius)

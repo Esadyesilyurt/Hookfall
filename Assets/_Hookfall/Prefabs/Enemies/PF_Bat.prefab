@@ -203,6 +203,13 @@ MonoBehaviour:
   flapAngle: 40
   knockback: 7
   hitPunch: 0.3
+  bankAngle: 30
+  bobHeight: 0.12
+  bobSpeed: 3.2
+  spawnTime: 0.25
+  deathTime: 0.16
+  shieldShare: 0.6
+  swiftFactor: 1.45
   biteRange: 1.5
   biteRecovery: 0.25
   pursuitLookAhead: 0.5

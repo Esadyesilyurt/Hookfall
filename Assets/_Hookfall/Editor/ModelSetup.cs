@@ -46,6 +46,14 @@ namespace Hookfall.EditorTools
             ("M_StormArmor", new Color(0.22f, 0.28f, 0.5f), false), ("M_StormGold", new Color(1f, 0.82f, 0.25f), false),
             // The stage boss (2026-11-08).
             ("M_BossStone", new Color(0.3f, 0.27f, 0.34f), false),
+            // The wider horde and the second boss (2026-11-10).
+            ("M_Razor", new Color(0.2f, 0.17f, 0.44f), false), ("M_RazorEdge", new Color(0.86f, 0.36f, 0.8f), false),
+            ("M_Puff", new Color(0.34f, 0.13f, 0.32f), false), ("M_PuffCore", new Color(1f, 0.42f, 0.16f), true),
+            ("M_Wasp", new Color(0.26f, 0.13f, 0.36f), false), ("M_WaspWing", new Color(0.8f, 0.76f, 0.96f), false),
+            ("M_Venom", new Color(0.72f, 1f, 0.3f), true),
+            ("M_Jelly", new Color(0.62f, 0.44f, 0.86f), false), ("M_JellyDark", new Color(0.36f, 0.22f, 0.58f), false),
+            ("M_Wyrm", new Color(0.2f, 0.24f, 0.5f), false), ("M_WyrmBelly", new Color(0.56f, 0.52f, 0.86f), false),
+            ("M_WyrmFin", new Color(0.86f, 0.82f, 1f), false), ("M_Lightning", new Color(1f, 0.92f, 0.4f), true),
         };
 
         /// <summary>Far scenery colours: pale and blue-shifted, so it reads as distant haze (SG_Backdrop has no fog).</summary>

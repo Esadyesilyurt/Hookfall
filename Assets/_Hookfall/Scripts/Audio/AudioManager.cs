@@ -95,6 +95,9 @@ namespace Hookfall.Audio
             EnemyDirector.Slammed += OnSlam;
             EnemyDirector.BoulderBroke += OnBoulder;
             EnemyDirector.EliteWave += OnEliteWave;
+            EnemyDirector.Exploded += OnBlast;
+            EnemyDirector.Pulsed += OnJellyPulse;
+            EnemyDirector.ShieldBroken += OnShieldBroken;
             if (pickups != null) pickups.Collected += OnCollected;
             if (chests != null) chests.ChestOpened += OnChest;
             if (towerCache != null) { towerCache.Opened += OnCache; towerCache.Appeared += OnCacheAppeared; }
@@ -117,6 +120,9 @@ namespace Hookfall.Audio
             EnemyDirector.Slammed -= OnSlam;
             EnemyDirector.BoulderBroke -= OnBoulder;
             EnemyDirector.EliteWave -= OnEliteWave;
+            EnemyDirector.Exploded -= OnBlast;
+            EnemyDirector.Pulsed -= OnJellyPulse;
+            EnemyDirector.ShieldBroken -= OnShieldBroken;
             if (pickups != null) pickups.Collected -= OnCollected;
             if (chests != null) chests.ChestOpened -= OnChest;
             if (towerCache != null) { towerCache.Opened -= OnCache; towerCache.Appeared -= OnCacheAppeared; }
@@ -194,6 +200,10 @@ namespace Hookfall.Audio
         private void OnDied(EnemyBase enemy, bool killed) { if (killed) Play(SoundId.EnemyDeath, enemy.transform.position); }
         private void OnSlam(Golem golem) => Play(SoundId.GolemSlam, golem.transform.position);
         private void OnBoulder(Vector3 position) => Play(SoundId.BoulderBreak, position);
+        // The wider horde (2026-11-10) reuses the stone sounds: a burst thuds like a slam, a jelly's shock cracks.
+        private void OnBlast(Vector3 position, float radius) => Play(SoundId.GolemSlam, position);
+        private void OnJellyPulse(Vector3 position, float radius) => Play(SoundId.BoulderBreak, position);
+        private void OnShieldBroken(EnemyBase enemy) => Play(SoundId.HookAttach, enemy.transform.position);
         /// <summary>Every music layer plays while the boss fights (the StageDirector calls it every frame).</summary>
         public void KeepMusicFull() => eliteMusicTimer = Mathf.Max(eliteMusicTimer, 2f);
 

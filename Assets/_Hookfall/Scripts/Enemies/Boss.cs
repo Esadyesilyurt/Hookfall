@@ -99,6 +99,8 @@ namespace Hookfall.Enemies
         protected override bool ImmuneToFreeze => true;
         protected override bool Anchored => true;
         protected override bool CanGetStuck => false;
+        protected override bool Flies => false;         // it stands: no banking or bobbing
+        protected override float DeathTime => 0f;       // it stages its own fall (StageDirector.BossDied)
         protected override IEnemyState DefaultState => state;
 
         public bool Fighting => fighting;

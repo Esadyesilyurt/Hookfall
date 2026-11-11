@@ -14,7 +14,14 @@ namespace Hookfall.Tests
     {
         private readonly RecordGuard record = new RecordGuard();
 
-        [SetUp] public void SaveRecord() => record.Save();
+        [SetUp]
+        public void SaveRecord()
+        {
+            record.Save();
+            // Every test starts as the Warden (one double jump, one dash), whoever the player picked last: two tests
+            // failed on 2026-11-10 because the saved choice was Lumen. TearDown puts the player's choice back.
+            PlayerPrefs.SetString("hf_character", "Warden");
+        }
         [TearDown] public void RestoreRecord() => record.Restore();
 
         /// <summary>A test Warden hovers in place, which the horde punishes fast; keep it alive so the run goes on.</summary>
@@ -1331,6 +1338,117 @@ namespace Hookfall.Tests
             Assert.IsTrue(sawWyvern, "No wyvern spawned");
             Assert.IsTrue(sawGolem, "No golem spawned");
             Assert.IsTrue(sawElite, "No elite wave spawned");
+        }
+
+        /// <summary>The wider horde (2026-11-10): a Blightpuff bursts near the Warden, a Razorwing flock makes its run and
+        /// wheels, a Venomwing spits, a Gloom Jelly shocks and leaves three young; and the elite traits: a barrier takes
+        /// the first blows, a Splitting elite leaves two behind, an Explosive one bursts.</summary>
+        [UnityTest]
+        public IEnumerator WiderHordeAndEliteTraitsWork()
+        {
+            SceneManager.LoadScene("Arena");
+            yield return null;
+            var flags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+            GameObject player = GameObject.Find("Player");
+            Type directorType = Type.GetType("Hookfall.Enemies.EnemyDirector, Assembly-CSharp");
+            Type enemyType = Type.GetType("Hookfall.Enemies.EnemyBase, Assembly-CSharp");
+            Type affixType = Type.GetType("Hookfall.Enemies.EliteAffix, Assembly-CSharp");
+            Type levelUpType = Type.GetType("Hookfall.Progression.LevelUpSystem, Assembly-CSharp");
+            Component levelUp = player.GetComponent(levelUpType);
+            var director = (Component)UnityEngine.Object.FindAnyObjectByType(directorType);
+            var active = (IList)enemyType.GetField("Active").GetValue(null);
+            var spawn = directorType.GetMethod("SpawnFlyer", flags);
+            Func<string, Vector3, Component> make = (field, at) =>
+                (Component)spawn.Invoke(director, new[] { directorType.GetField(field, flags).GetValue(director), (object)at, 0f });
+            Func<Component, string> state = e => (string)enemyType.GetProperty("CurrentStateName").GetValue(e);
+
+            int bursts = 0, shocks = 0;
+            directorType.GetEvent("Exploded").AddEventHandler(null, (Action<Vector3, float>)((p, r) => bursts++));
+            directorType.GetEvent("Pulsed").AddEventHandler(null, (Action<Vector3, float>)((p, r) => shocks++));
+
+            // The Warden hangs in open sky, well above every island.
+            Vector3 hold = new Vector3(40f, 62f, 40f);
+            Func<float, Func<bool>, IEnumerator> wait = null;
+            wait = (seconds, done) => Hold(player, levelUp, levelUpType, hold, seconds, done);
+
+            make("blightpuffPrefab", hold + new Vector3(7f, 0f, 0f));
+            yield return wait(8f, () => bursts > 0);
+            Assert.Greater(bursts, 0, "A Blightpuff beside the Warden should burst");
+
+            int birds = (int)directorType.GetMethod("SpawnRazorFlock", flags).Invoke(director, new object[] { 0f, false });
+            Assert.GreaterOrEqual(birds, 5, "A Razorwing flock should be at least five birds");
+            bool strafed = false, wheeled = false;
+            yield return wait(14f, () =>
+            {
+                foreach (Component e in active)
+                {
+                    if (e.GetType().Name != "Razorwing") continue;
+                    strafed |= state(e) == "Strafe";
+                    wheeled |= state(e) == "Wheel";
+                }
+                return strafed && wheeled;
+            });
+            Assert.IsTrue(strafed, "The Razorwings should make an attack run");
+            Assert.IsTrue(wheeled, "A Razorwing should wheel round after its pass");
+
+            Component wasp = make("venomwingPrefab", hold + new Vector3(16f, 4f, 0f));
+            bool spat = false;
+            yield return wait(9f, () => spat |= wasp != null && state(wasp) == "Spit");
+            Assert.IsTrue(spat, "A Venomwing in range should wind up to spit");
+
+            Component jelly = make("jellyPrefab", hold + new Vector3(4f, 0f, 0f));
+            int before = shocks;
+            yield return wait(6f, () => shocks > before);
+            Assert.Greater(shocks, before, "A Gloom Jelly beside the Warden should shock");
+            if (!(bool)enemyType.GetProperty("IsDead").GetValue(jelly))
+                enemyType.GetMethod("TakeDamage").Invoke(jelly, new object[] { 1000000f, false });
+            int young = 0;
+            foreach (Component e in active)
+                if (e.GetType().Name == "GloomJelly" && (bool)e.GetType().GetProperty("IsYoung").GetValue(e)) young++;
+            Assert.AreEqual(3, young, "A killed Gloom Jelly should leave three young");
+
+            // Elite traits, on bats set well away from the Warden's blades.
+            object[] Elite(int affix) => new object[] { 3f, 1.5f, 1.4f, 3f, Color.magenta, Enum.ToObject(affixType, affix), Color.magenta };
+            Component shielded = make("batPrefab", hold + new Vector3(0f, 30f, 0f));
+            enemyType.GetMethod("MakeElite").Invoke(shielded, Elite(1));
+            float barrier = (float)enemyType.GetProperty("Shield").GetValue(shielded);
+            Assert.Greater(barrier, 0f, "A Shielded elite should have a barrier");
+            enemyType.GetMethod("TakeDamage").Invoke(shielded, new object[] { barrier * 0.5f, true });
+            Assert.AreEqual((float)enemyType.GetProperty("MaxHealth").GetValue(shielded), (float)enemyType.GetProperty("Health").GetValue(shielded), 0.01f,
+                "The barrier should take the blow, not the elite's health");
+
+            Vector3 far = hold + new Vector3(0f, 30f, 60f);
+            Component splitter = make("batPrefab", far);
+            enemyType.GetMethod("MakeElite").Invoke(splitter, Elite(4));
+            enemyType.GetMethod("TakeDamage").Invoke(splitter, new object[] { 1000000f, false });
+            int left = 0;
+            foreach (Component e in active)
+                if (e.GetType().Name == "Bat" && (e.transform.position - far).sqrMagnitude < 9f) left++;
+            Assert.GreaterOrEqual(left, 2, "A Splitting elite should leave two of its kind behind");
+
+            before = bursts;
+            Component bomb = make("batPrefab", hold + new Vector3(0f, 30f, -60f));
+            enemyType.GetMethod("MakeElite").Invoke(bomb, Elite(3));
+            enemyType.GetMethod("TakeDamage").Invoke(bomb, new object[] { 1000000f, false });
+            yield return wait(3f, () => bursts > before);
+            Assert.Greater(bursts, before, "An Explosive elite should burst when it dies");
+            LogAssert.NoUnexpectedReceived();
+        }
+
+        /// <summary>Keeps the Warden alive and in one place in the sky for a while, or until done says so.</summary>
+        private static IEnumerator Hold(GameObject player, Component levelUp, Type levelUpType, Vector3 at, float seconds, Func<bool> done)
+        {
+            float end = Time.realtimeSinceStartup + seconds;
+            while (Time.realtimeSinceStartup < end && !done())
+            {
+                KeepAlive(player);
+                var body = player.GetComponent<Rigidbody>();
+                body.position = at;
+                player.transform.position = at;
+                body.linearVelocity = Vector3.zero;
+                if (Time.timeScale == 0f && levelUp != null) levelUpType.GetMethod("Pick").Invoke(levelUp, new object[] { 0 });
+                yield return null;
+            }
         }
     }
 }

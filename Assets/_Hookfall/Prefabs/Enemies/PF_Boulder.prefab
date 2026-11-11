@@ -48,6 +48,7 @@ MonoBehaviour:
   hitRadius: 1.3
   lifetime: 3
   spinSpeed: 360
+  quiet: 0
 --- !u!1 &5587152582538390788
 GameObject:
   m_ObjectHideFlags: 0

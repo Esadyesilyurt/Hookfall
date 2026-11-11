@@ -77,6 +77,22 @@ namespace Hookfall.Enemies
         [Tooltip("The body swells by this much on a hit and settles back.")]
         [SerializeField] private float hitPunch = 0.3f;
 
+        [Header("Motion (2026-11-10: flyers bank into turns, bob, pop in and pop out)")]
+        [Tooltip("The most a flyer rolls into a turn, in degrees.")]
+        [SerializeField] private float bankAngle = 30f;
+        [SerializeField] private float bobHeight = 0.12f;
+        [SerializeField] private float bobSpeed = 3.2f;
+        [Tooltip("Seconds a fresh enemy takes to grow to its size.")]
+        [SerializeField] private float spawnTime = 0.25f;
+        [Tooltip("Seconds a killed enemy takes to burst and vanish before it returns to the pool.")]
+        [SerializeField] private float deathTime = 0.16f;
+
+        [Header("Elite traits (2026-11-10)")]
+        [Tooltip("Shielded: a barrier worth this share of the elite's health takes the first blows.")]
+        [SerializeField] private float shieldShare = 0.6f;
+        [Tooltip("Swift: speed multiplier.")]
+        [SerializeField] private float swiftFactor = 1.45f;
+
         private readonly StateMachine machine = new StateMachine();
         private Renderer[] renderers;
         private MaterialPropertyBlock block;
@@ -94,18 +110,30 @@ namespace Hookfall.Enemies
         private float flapPhase;
         private bool built;
         private Transform visual;
-        private float punch;
+        private Quaternion visualRotation = Quaternion.identity;
+        private Vector3 visualPosition;
+        private float punch, bank, pitch, jab, spawnTimer, dying;
+        private float flapClock, wingSpread = 1f, wingLift;
         // School statuses (SynergySystem applies them): timers in seconds, damage per second.
         private float burnTimer, burnDps, bleedTimer, bleedDps, chillTimer, chillSlow, shockTimer, freezeTimer, dotTimer;
         private Hookfall.Combat.SynergySystem synergy;
         private Color statusGlow = Color.black;
+        private Color unshieldedGlow = Color.black;
 
         public string DisplayName => displayName;
         public float Health { get; private set; }
         public float MaxHealth => maxHealth * healthMultiplier;
         public bool IsDead { get; private set; }
         public bool IsElite { get; private set; }
-        public float MoveSpeed => moveSpeed;
+        /// <summary>What sets this elite apart (None for the plain horde).</summary>
+        public EliteAffix Affix { get; private set; }
+        /// <summary>What is left of a Shielded elite's barrier; hits wear it down before they reach its health.</summary>
+        public float Shield { get; private set; }
+        /// <summary>The speed multiplier of the enemy's trait (a Swift elite), 1 otherwise.</summary>
+        public float SpeedTrait => Affix == EliteAffix.Swift ? swiftFactor : 1f;
+        public float MoveSpeed => moveSpeed * SpeedTrait;
+        /// <summary>How much bigger than its prefab the enemy is (elites) or smaller (a jelly's young).</summary>
+        public float SizeFactor => transform.localScale.x / Mathf.Max(0.01f, baseScale.x);
         public bool Burning => burnTimer > 0f;
         public bool Bleeding => bleedTimer > 0f;
         public bool Frozen => freezeTimer > 0f;
@@ -117,7 +145,7 @@ namespace Hookfall.Enemies
         public float Damage => contactDamage * damageMultiplier;
         /// <summary>Time and elite scaling for damage that is not contact damage (boulders, slams).</summary>
         public float DamageScale => damageMultiplier;
-        public float HitRadius => hitRadius * transform.localScale.x / Mathf.Max(0.01f, baseScale.x);
+        public float HitRadius => hitRadius * SizeFactor;
         public Vector3 Velocity { get; private set; }
         public string CurrentStateName => machine.Current?.Name ?? "None";
         public EnemyBase SourcePrefab { get; set; }
@@ -130,6 +158,12 @@ namespace Hookfall.Enemies
         protected virtual bool ImmuneToFreeze => false;
         /// <summary>Never moved by the fallbacks (too far, stuck, below the abyss): the boss stays where it rose.</summary>
         protected virtual bool Anchored => false;
+        /// <summary>Flyers bank and bob; the ones that stand (golems, the boss) do not.</summary>
+        protected virtual bool Flies => true;
+        /// <summary>Seconds of the death pop; 0 for an enemy that stages its own death (the boss).</summary>
+        protected virtual float DeathTime => deathTime;
+        /// <summary>The model under the enemy, for subclasses that pose it.</summary>
+        protected Transform Visual => visual;
 
         public EnemyDirector Director { get; private set; }
         public PlayerController Player { get; private set; }
@@ -142,6 +176,11 @@ namespace Hookfall.Enemies
             glowId = Shader.PropertyToID(glowProperty);
             baseScale = transform.localScale;
             visual = transform.Find("Visual");
+            if (visual != null)
+            {
+                visualRotation = visual.localRotation;   // the model's own import pose: motion is layered on it
+                visualPosition = visual.localPosition;
+            }
             flapPhase = Random.value * 10f;
         }
 
@@ -159,6 +198,8 @@ namespace Hookfall.Enemies
             damageMultiplier = damageMult;
             rewardMultiplier = 1f;
             IsElite = false;
+            Affix = EliteAffix.None;
+            Shield = 0f;
             IsDead = false;
             transform.localScale = baseScale;
             Health = MaxHealth;
@@ -168,8 +209,14 @@ namespace Hookfall.Enemies
             baseGlow = Color.black;
             warning = false;
             flashTimer = 0f;
-            punch = 0f;
-            if (visual != null) visual.localScale = Vector3.one;
+            punch = bank = pitch = jab = dying = 0f;
+            spawnTimer = spawnTime;
+            if (visual != null)
+            {
+                visual.localScale = spawnTime > 0f ? Vector3.one * 0.2f : Vector3.one;
+                visual.localRotation = visualRotation;
+                visual.localPosition = visualPosition;
+            }
             ApplyGlow();
 
             if (!built)
@@ -184,16 +231,30 @@ namespace Hookfall.Enemies
         }
 
         /// <summary>Elite version: bigger, tougher, more reward, glowing (GDD 4.8, 7.3).</summary>
-        public void MakeElite(float healthMult, float damageMult, float scale, float rewardMult, Color glow)
+        /// <param name="plainGlow">The glow a Shielded elite falls back to once its barrier is broken.</param>
+        public void MakeElite(float healthMult, float damageMult, float scale, float rewardMult, Color glow, EliteAffix affix = EliteAffix.None,
+            Color plainGlow = default)
         {
             IsElite = true;
+            Affix = affix;
+            unshieldedGlow = plainGlow == default ? glow : plainGlow;
             healthMultiplier *= healthMult;
             damageMultiplier *= damageMult;
             rewardMultiplier = rewardMult;
             Health = MaxHealth;
+            Shield = affix == EliteAffix.Shielded ? MaxHealth * shieldShare : 0f;
             transform.localScale = baseScale * scale;
             baseGlow = glow;
             ApplyGlow();
+        }
+
+        /// <summary>A smaller, weaker copy (what a split leaves, a jelly's young): scaled health, size and rewards.</summary>
+        public void MakeLesser(float healthMult, float scale, float rewardMult)
+        {
+            healthMultiplier *= healthMult;
+            rewardMultiplier = rewardMult;
+            Health = MaxHealth;
+            transform.localScale = baseScale * scale;
         }
 
         protected abstract void BuildStates();
@@ -206,6 +267,7 @@ namespace Hookfall.Enemies
 
         protected virtual void Update()
         {
+            if (dying > 0f) { TickDeath(Time.deltaTime); return; }
             if (IsDead || Player == null) return;
             float dt = Time.deltaTime;
 
@@ -241,24 +303,38 @@ namespace Hookfall.Enemies
         // ---------- Health and rewards ----------
 
         /// <param name="dot">A burn or bleed tick: no crit, flash or knockback.</param>
-        public void TakeDamage(float amount, bool dot = false)
+        public virtual void TakeDamage(float amount, bool dot = false)
         {
             if (IsDead || Invulnerable) return;
             if (!dot && PlayerStats != null && PlayerStats.CritChance > 0f && Random.value < PlayerStats.CritChance) amount *= 2f;   // Hunter's Eye
             if (synergy != null) amount *= 1f + (Shocked ? synergy.ShockAmp : 0f) + (Chilled ? synergy.ChillAmp : 0f);
+            float dealt = amount;
+            bool shielded = Shield > 0f;
+            if (shielded)
+            {
+                // The barrier takes the blow first; what is left over goes through.
+                float absorbed = Mathf.Min(Shield, amount);
+                Shield -= absorbed;
+                amount -= absorbed;
+                if (Shield <= 0f)
+                {
+                    baseGlow = unshieldedGlow;
+                    EnemyDirector.RaiseShieldBroken(this);
+                }
+            }
             Health -= amount;
             if (!dot)
             {
                 flashTimer = flashDuration;
                 punch = hitPunch;
-                if (knockback > 0f && Player != null)
+                if (knockback > 0f && Player != null && !shielded)
                 {
                     Vector3 away = transform.position - Player.transform.position;
                     if (away.sqrMagnitude > 0.01f) Velocity += away.normalized * knockback;
                 }
                 ApplyGlow();
             }
-            EnemyDirector.RaiseHit(this, amount);
+            EnemyDirector.RaiseHit(this, dealt);
             if (Health <= 0f) Die(true);
         }
 
@@ -354,11 +430,28 @@ namespace Hookfall.Enemies
                 }
             }
             OnDied(giveReward);
-            if (Director != null) Director.Release(this, giveReward);
-            else Destroy(gameObject);
+            if (Director == null) { Destroy(gameObject); return; }
+            if (giveReward && Affix == EliteAffix.Explosive) Director.EliteBurst(this);
+            else if (giveReward && Affix == EliteAffix.Splitting) Director.Split(this);
+            Director.NotifyDeath(this, giveReward);
+            // A killed enemy bursts for a moment before it goes back to the pool; one that only leaves goes at once.
+            if (giveReward && visual != null && DeathTime > 0f) dying = DeathTime;
+            else Director.Recycle(this);
         }
 
         protected virtual void OnDied(bool killed) { }
+
+        /// <summary>The death pop: the body swells, spins and shrinks to nothing, then the enemy returns to its pool.</summary>
+        private void TickDeath(float dt)
+        {
+            dying -= dt;
+            float t = 1f - Mathf.Clamp01(dying / Mathf.Max(0.01f, DeathTime));
+            visual.localScale = Vector3.one * ((1f + 0.45f * Mathf.Sin(t * Mathf.PI)) * (1f - t * t));
+            visual.Rotate(0f, 0f, 900f * dt, Space.Self);
+            if (dying > 0f) return;
+            dying = 0f;
+            Director.Recycle(this);
+        }
 
         // ---------- Steering ----------
 
@@ -424,12 +517,46 @@ namespace Hookfall.Enemies
             ApplyGlow();
         }
 
+        /// <summary>A quick lunge of the body towards the player and back (a bite, a sting).</summary>
+        public void Jab(float distance = 0.6f) => jab = distance;
+
+        /// <summary>Squashes the body for a moment (a stomp, a heavy landing), like a hit does.</summary>
+        public void Squash(float amount) => punch = Mathf.Max(punch, amount);
+
+        /// <summary>How wide the wings beat right now (1 = the prefab's flap; a dash holds them almost still).</summary>
+        protected virtual float FlapScale => 1f;
+        /// <summary>Degrees both wings are raised on top of the beat (swept up in a dash).</summary>
+        protected virtual float WingRest => 0f;
+        /// <summary>Degrees the body pitches (negative rears up).</summary>
+        protected virtual float Pitch => 0f;
+
         private void Animate(float dt)
         {
-            if (visual != null && punch > 0f)
+            if (visual != null)
             {
-                punch = Mathf.MoveTowards(punch, 0f, dt * 2.5f);
-                visual.localScale = new Vector3(1f + punch, 1f - punch * 0.5f, 1f + punch);
+                // Size: the spawn pop (a little overshoot) times the swell of a hit.
+                if (spawnTimer > 0f || punch > 0f)
+                {
+                    float grow = 1f;
+                    if (spawnTimer > 0f)
+                    {
+                        spawnTimer -= dt;
+                        float t = 1f - Mathf.Clamp01(spawnTimer / Mathf.Max(0.01f, spawnTime)), e = t - 1f;
+                        grow = Mathf.Max(0.2f, 1f + e * e * (2.70158f * e + 1.70158f));   // back-out easing
+                    }
+                    punch = Mathf.MoveTowards(punch, 0f, dt * 2.5f);
+                    visual.localScale = new Vector3(1f + punch, 1f - punch * 0.5f, 1f + punch) * grow;
+                }
+                if (Flies)
+                {
+                    // Roll into the turn, bob on the air, lunge on a bite.
+                    Vector3 turn = transform.InverseTransformDirection(desiredVelocity - Velocity);
+                    bank = Mathf.Lerp(bank, Mathf.Clamp(-turn.x * 2.4f, -bankAngle, bankAngle), dt * 6f);
+                    jab = Mathf.MoveTowards(jab, 0f, dt * 3.5f);
+                    pitch = Mathf.Lerp(pitch, Pitch, dt * 10f);
+                    visual.localRotation = Quaternion.Euler(pitch, 0f, bank) * visualRotation;
+                    visual.localPosition = visualPosition + new Vector3(0f, Mathf.Sin((Time.time + flapPhase) * bobSpeed) * bobHeight, jab);
+                }
             }
             if (flashTimer > 0f)
             {
@@ -437,7 +564,11 @@ namespace Hookfall.Enemies
                 if (flashTimer <= 0f) ApplyGlow();
             }
             if (wingLeft == null || wingRight == null) return;
-            float angle = Mathf.Sin((Time.time + flapPhase) * flapSpeed) * flapAngle;
+            // The beat quickens with speed; the phase is summed so a change of pace never makes the wings jump.
+            flapClock += dt * flapSpeed * Mathf.Lerp(0.8f, 1.5f, Velocity.magnitude / Mathf.Max(1f, moveSpeed * 1.6f));
+            wingSpread = Mathf.Lerp(wingSpread, FlapScale, dt * 12f);
+            wingLift = Mathf.Lerp(wingLift, WingRest, dt * 12f);
+            float angle = Mathf.Sin(flapClock + flapPhase) * flapAngle * wingSpread + wingLift;
             wingLeft.localRotation = Quaternion.Euler(0f, 0f, angle);
             wingRight.localRotation = Quaternion.Euler(0f, 0f, -angle);
         }
