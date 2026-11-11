@@ -173,6 +173,7 @@ namespace Hookfall.Combat
                 }
                 ItemBase item = Instantiate(choice.Item, itemsRoot);
                 item.name = choice.Item.name;
+                Hookfall.Core.Codex.MarkItem(item.name);   // owned once: open in the menu's codex
                 item.SetLevel(choice.LevelsGained);
                 items.Insert(slot, item);   // in the given-up item's slot
                 item.SetActiveVisuals(AttacksActive);

@@ -30,10 +30,12 @@ namespace Hookfall.UI
 
         [Tooltip("The playable characters, set by the scene builder.")]
         [SerializeField] private CharacterDefinition[] characters = new CharacterDefinition[0];
+        [Tooltip("Every item, for the codex.")]
+        [SerializeField] private ItemBase[] items = new ItemBase[0];
 
         private static bool introShown;
         private GameObject select;
-        private GameObject main, settings, creditsPanel, intro, leaderboard, shop;
+        private GameObject main, settings, creditsPanel, intro, leaderboard, shop, codex;
 
         // Character select: the roster's tiles and the detail view of the one that is picked.
         private readonly List<Image> tileFrames = new List<Image>();
@@ -71,6 +73,7 @@ namespace Hookfall.UI
             UIFactory.Column(menu, 14f, 0, TextAnchor.UpperLeft);
             UIFactory.Button(menu, "Play", OnPlay, -1f, 84f, UITheme.ButtonPrimary, UISkin.Icon("Play"));
             UIFactory.Button(menu, "Upgrades", () => Show(shop), -1f, 62f, null, UISkin.Icon("Shard"));
+            UIFactory.Button(menu, "Codex", () => Show(codex), -1f, 62f, null, UISkin.Icon("Codex"));
             UIFactory.Button(menu, "Leaderboard", () => Show(leaderboard), -1f, 62f, null, UISkin.Icon("Leaderboard"));
             UIFactory.Button(menu, "Settings", () => Show(settings), -1f, 62f, null, UISkin.Icon("Settings"));
             UIFactory.Button(menu, "Credits", () => Show(creditsPanel), -1f, 62f, null, UISkin.Icon("Credits"));
@@ -96,6 +99,7 @@ namespace Hookfall.UI
             settings = SettingsPanel.Build(c, () => Show(main));
             leaderboard = LeaderboardPanel.Build(c, () => Show(main));
             shop = ShopPanel.Build(c, () => Show(main));
+            codex = CodexPanel.Build(c, () => Show(main), items);
             select = BuildSelect(c);
 
             Image creditsImage = UIFactory.Panel(c, "Credits", new Vector2(980f, 640f), UITheme.Panel);
@@ -130,6 +134,7 @@ namespace Hookfall.UI
             settings.SetActive(panel == settings);
             leaderboard.SetActive(panel == leaderboard);
             shop.SetActive(panel == shop);
+            codex.SetActive(panel == codex);
             select.SetActive(panel == select);
             creditsPanel.SetActive(panel == creditsPanel);
             intro.SetActive(panel == intro);

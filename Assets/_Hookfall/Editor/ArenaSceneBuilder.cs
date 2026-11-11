@@ -83,6 +83,7 @@ namespace Hookfall.EditorTools
 
             var menu = new GameObject("Main Menu").AddComponent<MainMenuUI>();
             foreach (CharacterDefinition character in CreateCharacters()) AddToList(menu, "characters", character);
+            foreach (ItemBase item in ItemPrefabs.CreateItems()) AddToList(menu, "items", item);   // the codex (2026-11-11)
             EditorSceneManager.SaveScene(scene, MenuPath);
         }
 

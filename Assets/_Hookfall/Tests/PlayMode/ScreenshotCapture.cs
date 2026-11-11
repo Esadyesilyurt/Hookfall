@@ -43,7 +43,7 @@ namespace Hookfall.Tests
             menuType.GetMethod("Pick", menuFlags).Invoke(menu, new object[] { roster.GetValue(Mathf.Min(4, roster.Length - 1)) });
             yield return new WaitForSecondsRealtime(0.5f);
             yield return Grab("menu_character_other");
-            foreach (string panel in new[] { "settings", "leaderboard", "shop", "creditsPanel", "intro" })
+            foreach (string panel in new[] { "settings", "leaderboard", "shop", "codex", "creditsPanel", "intro" })
             {
                 menuType.GetMethod("Show", menuFlags).Invoke(menu, new[] { menuType.GetField(panel, menuFlags).GetValue(menu) });
                 yield return new WaitForSecondsRealtime(panel == "intro" ? 2.2f : 0.8f);

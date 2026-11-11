@@ -12,7 +12,7 @@ namespace Hookfall.Tests
         private static readonly string[] FloatKeys = { "hf_best_time", "hf_longest_time" };
         private static readonly string[] IntKeys = { "hf_best_level", "hf_best_kills", "hf_best_stage", "hf_total_kills", "hf_max_level", "hf_hints_done", "hf_shards",
             "hf_up_health", "hf_up_damage", "hf_up_flight", "hf_up_pickup", "hf_up_luck", "hf_up_xp", "hf_up_reroll", "hf_up_banish" };   // MetaProgress
-        private static readonly string[] StringKeys = { "hf_character", "hf_language" };
+        private static readonly string[] StringKeys = { "hf_character", "hf_language", "hf_codex_items", "hf_codex_kills" };
         private readonly Dictionary<string, object> saved = new Dictionary<string, object>();
 
         public void Save()

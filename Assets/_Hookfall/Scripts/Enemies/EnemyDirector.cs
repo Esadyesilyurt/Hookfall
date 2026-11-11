@@ -566,7 +566,11 @@ namespace Hookfall.Enemies
         }
 
         /// <summary>Called by EnemyBase.Die at the moment of death (effects and sound hang on it).</summary>
-        public void NotifyDeath(EnemyBase enemy, bool killed) => Died?.Invoke(enemy, killed);
+        public void NotifyDeath(EnemyBase enemy, bool killed)
+        {
+            if (killed) Hookfall.Core.Codex.AddKill(enemy.GetType().Name);   // for the menu's codex
+            Died?.Invoke(enemy, killed);
+        }
 
         /// <summary>Called by EnemyBase once the enemy is done (after its death pop): back to its pool.</summary>
         public void Recycle(EnemyBase enemy)
