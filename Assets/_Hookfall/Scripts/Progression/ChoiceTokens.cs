@@ -20,6 +20,9 @@ namespace Hookfall.Progression
 
         private readonly HashSet<string> banished = new HashSet<string>();
 
+        // The upgrades bought in the menu's shop: free stat picks, more rerolls and banishes.
+        private void Start() => MetaProgress.ApplyTo(GetComponent<PlayerStats>(), this);
+
         public int Rerolls => rerolls;
         public int Banishes => banishes;
         public int SkipGold => skipGold;

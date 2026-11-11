@@ -43,7 +43,7 @@ namespace Hookfall.Tests
             menuType.GetMethod("Pick", menuFlags).Invoke(menu, new object[] { roster.GetValue(Mathf.Min(4, roster.Length - 1)) });
             yield return new WaitForSecondsRealtime(0.5f);
             yield return Grab("menu_character_other");
-            foreach (string panel in new[] { "settings", "leaderboard", "creditsPanel", "intro" })
+            foreach (string panel in new[] { "settings", "leaderboard", "shop", "creditsPanel", "intro" })
             {
                 menuType.GetMethod("Show", menuFlags).Invoke(menu, new[] { menuType.GetField(panel, menuFlags).GetValue(menu) });
                 yield return new WaitForSecondsRealtime(panel == "intro" ? 2.2f : 0.8f);
@@ -78,7 +78,7 @@ namespace Hookfall.Tests
             // A flight chain for the shot: the meter needs a few frames to fade in.
             Type flowType = Type.GetType("Hookfall.Progression.FlowChain, Assembly-CSharp");
             Component flow = player.GetComponent(flowType);
-            for (int i = 0; i < 60; i++)
+            for (float until = Time.realtimeSinceStartup + 0.6f; Time.realtimeSinceStartup < until;)
             {
                 flowType.GetProperty("Count").SetValue(flow, 27);
                 flowType.GetField("timer", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(flow, 3.5f);
