@@ -106,6 +106,7 @@ namespace Hookfall.EditorTools
             Portal portalPrefab = EnemyPrefabs.Portal();
             List<ItemBase> itemPrefabs = ItemPrefabs.CreateItems();
             Chest chestPrefab = ItemPrefabs.CreateChest();
+            GameObject shrinePrefab = ItemPrefabs.CreateShrine();
 
             // Player
             GameObject player = GameObject.CreatePrimitive(PrimitiveType.Capsule);
@@ -242,6 +243,9 @@ namespace Hookfall.EditorTools
             var chests = new GameObject("ChestSpawner").AddComponent<ChestSpawner>();
             SetRef(chests, "player", controller);
             SetRef(chests, "chestPrefab", chestPrefab);
+            var shrines = new GameObject("ShrineSpawner").AddComponent<ShrineSpawner>();   // island shrines (2026-11-11)
+            SetRef(shrines, "player", controller);
+            SetRef(shrines, "shrinePrefab", shrinePrefab);
             var cache = new GameObject("TowerCache").AddComponent<TowerCache>();
             SetRef(cache, "player", controller);
             SetRef(cache, "islands", generator);
@@ -350,6 +354,10 @@ namespace Hookfall.EditorTools
             SetRef(hud, "gold", gold);
             SetRef(hud, "combat", combat);
             SetRef(hud, "hook", hook);
+            var hints = new GameObject("Hints").AddComponent<HintGuide>();   // first run only (2026-11-11)
+            SetRef(hints, "hook", hook);
+            SetRef(hints, "controller", controller);
+            SetRef(hints, "combat", combat);
             var levelUpUI = new GameObject("Level Up UI").AddComponent<LevelUpUI>();
             SetRef(levelUpUI, "levelUp", levelUp);
             SetRef(levelUpUI, "stats", stats);

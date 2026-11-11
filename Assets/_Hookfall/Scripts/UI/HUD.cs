@@ -53,6 +53,8 @@ namespace Hookfall.UI
 
         /// <summary>Set with InteractPrompt when the line is a status, not something a key does (the tower cache opening).</summary>
         public static bool InteractWithoutKey;
+        /// <summary>A shrine being prayed at, 0..1; set every frame it applies, -1 otherwise.</summary>
+        public static float ShrineProgress = -1f;
 
         private static Vector3? objective;
         private static string objectiveLabel, objectiveIcon = "Boss";
@@ -430,8 +432,10 @@ namespace Hookfall.UI
             InteractPrompt = null;
             InteractWithoutKey = false;
 
-            chargeBar.gameObject.SetActive(TowerCacheProgress >= 0f);
-            if (TowerCacheProgress >= 0f) chargeBar.Set(TowerCacheProgress);
+            float charge = Mathf.Max(TowerCacheProgress, ShrineProgress);
+            ShrineProgress = -1f;
+            chargeBar.gameObject.SetActive(charge >= 0f);
+            if (charge >= 0f) chargeBar.Set(charge);
 
             float storm = StormWall.Pressure;
             stormText.gameObject.SetActive(storm > 0.15f);
@@ -605,6 +609,9 @@ namespace Hookfall.UI
                 if (b != null) markers.Show(b.transform.position + Vector3.up * 2f, icon, UITheme.Gold, 14f, null, alpha * 0.8f);
                 if (third != null) markers.Show(third.transform.position + Vector3.up * 2f, icon, UITheme.Gold, 14f, null, alpha * 0.6f);
             }
+            if (ShrineSpawner.Instance != null)
+                foreach (Transform shrine in ShrineSpawner.Instance.Shrines)
+                    markers.Show(shrine.position + Vector3.up * 3.4f, UISkin.Icon("Shrine"), UITheme.Player, 14f, null, 0.75f);
             if (TowerCacheMarker.HasValue)
                 markers.Show(TowerCacheMarker.Value, UISkin.Icon("Tower"), UITheme.ForRarity(Rarity.Legendary), 10f, Loc.T("Tower cache ready"));
             if (objective.HasValue)
