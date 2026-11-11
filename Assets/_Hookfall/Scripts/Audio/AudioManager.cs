@@ -100,6 +100,7 @@ namespace Hookfall.Audio
             EnemyDirector.ShieldBroken += OnShieldBroken;
             if (pickups != null) pickups.Collected += OnCollected;
             if (chests != null) chests.ChestOpened += OnChest;
+            ShrineSpawner.Blessed += OnCache;
             if (towerCache != null) { towerCache.Opened += OnCache; towerCache.Appeared += OnCacheAppeared; }
             if (levelUp != null) levelUp.OfferReady += OnLevelUp;
             if (player != null && player.TryGetComponent(out PlayerStats s)) { s.Damaged += OnDamaged; s.ShieldBlocked += OnShieldBlocked; s.Revived += OnRevived; }
@@ -125,6 +126,7 @@ namespace Hookfall.Audio
             EnemyDirector.ShieldBroken -= OnShieldBroken;
             if (pickups != null) pickups.Collected -= OnCollected;
             if (chests != null) chests.ChestOpened -= OnChest;
+            ShrineSpawner.Blessed -= OnCache;
             if (towerCache != null) { towerCache.Opened -= OnCache; towerCache.Appeared -= OnCacheAppeared; }
             if (levelUp != null) levelUp.OfferReady -= OnLevelUp;
             if (player != null && player.TryGetComponent(out PlayerStats s)) { s.Damaged -= OnDamaged; s.ShieldBlocked -= OnShieldBlocked; s.Revived -= OnRevived; }

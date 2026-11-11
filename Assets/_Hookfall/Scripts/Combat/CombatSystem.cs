@@ -28,6 +28,7 @@ namespace Hookfall.Combat
         [SerializeField] private int chestChoices = 3;
 
         private readonly List<ItemBase> items = new List<ItemBase>();
+        private Hookfall.Progression.ChoiceTokens tokens;   // cards the player banished are never offered
         private float airborneTime;
         private float groundedTime;
 
@@ -45,6 +46,7 @@ namespace Hookfall.Combat
         {
             if (player == null) player = GetComponent<PlayerController>();
             if (itemsRoot == null) itemsRoot = transform;
+            tokens = GetComponent<Hookfall.Progression.ChoiceTokens>();
             GetComponentsInChildren(true, items);
         }
 
@@ -99,16 +101,17 @@ namespace Hookfall.Combat
             {
                 pool.Clear();
                 foreach (ItemBase prefab in itemPrefabs)
-                    if ((int)prefab.Rarity == tier && Find(prefab) == null)
+                    if ((int)prefab.Rarity == tier && Find(prefab) == null && (tokens == null || !tokens.IsBanished(prefab)))
                         pool.Add(new ChestReward(prefab.Rarity, prefab, true, 1));
                 TakeRandom(pool, offer, newLimit);
             }
             pool.Clear();
             foreach (ItemBase item in items)
-                if (!item.IsMaxed) pool.Add(new ChestReward(item.Rarity, item, false, 1));
+                if (!item.IsMaxed && (tokens == null || !tokens.IsBanished(item))) pool.Add(new ChestReward(item.Rarity, item, false, 1));
             TakeRandom(pool, offer);
             pool.Clear();
-            foreach (StatType stat in Enum.GetValues(typeof(StatType))) pool.Add(new ChestReward(rarity, null, false, 1, stat));
+            foreach (StatType stat in Enum.GetValues(typeof(StatType)))
+                if (tokens == null || !tokens.IsBanished(stat)) pool.Add(new ChestReward(rarity, null, false, 1, stat));
             TakeRandom(pool, offer);
             return offer;
         }
@@ -170,6 +173,7 @@ namespace Hookfall.Combat
                 }
                 ItemBase item = Instantiate(choice.Item, itemsRoot);
                 item.name = choice.Item.name;
+                Hookfall.Core.Codex.MarkItem(item.name);   // owned once: open in the menu's codex
                 item.SetLevel(choice.LevelsGained);
                 items.Insert(slot, item);   // in the given-up item's slot
                 item.SetActiveVisuals(AttacksActive);

@@ -71,6 +71,7 @@ namespace Hookfall.VFX
             if (pickups != null) pickups.Collected += OnCollected;
             if (chests != null) chests.ChestOpened += OnChest;
             if (towerCache != null) towerCache.Opened += OnCache;
+            ShrineSpawner.Blessed += OnCache;
             if (stats != null) stats.Damaged += OnDamaged;
         }
 
@@ -82,6 +83,7 @@ namespace Hookfall.VFX
             EnemyDirector.BoulderBroke -= OnBoulder;
             if (pickups != null) pickups.Collected -= OnCollected;
             if (chests != null) chests.ChestOpened -= OnChest;
+            ShrineSpawner.Blessed -= OnCache;
             if (towerCache != null) towerCache.Opened -= OnCache;
             if (stats != null) stats.Damaged -= OnDamaged;
         }

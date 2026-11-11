@@ -364,6 +364,19 @@ namespace Hookfall.EditorTools
             return SavePrefab(root, $"{Root}/Prefabs/World/PF_Chest.prefab").GetComponent<Chest>();
         }
 
+        /// <summary>An island shrine (2026-11-11): three stone steps, a pillar and a floating crystal.</summary>
+        public static GameObject CreateShrine()
+        {
+            var root = new GameObject("PF_Shrine");
+            Part(root.transform, "Step 1", PrimitiveType.Cylinder, new Vector3(0f, 0.1f, 0f), new Vector3(2.4f, 0.1f, 2.4f), Mat("M_Stone"));
+            Part(root.transform, "Step 2", PrimitiveType.Cylinder, new Vector3(0f, 0.3f, 0f), new Vector3(1.7f, 0.1f, 1.7f), Mat("M_Stone"));
+            Part(root.transform, "Pillar", PrimitiveType.Cube, new Vector3(0f, 1.1f, 0f), new Vector3(0.55f, 1.4f, 0.55f), Mat("M_Tower"));
+            Part(root.transform, "Cap", PrimitiveType.Cube, new Vector3(0f, 1.85f, 0f), new Vector3(0.8f, 0.14f, 0.8f), Mat("M_Stone"));
+            Part(root.transform, "Crystal", PrimitiveType.Cube, new Vector3(0f, 2.55f, 0f), new Vector3(0.5f, 0.8f, 0.5f), Mat("M_Crystal"), new Vector3(0f, 45f, 0f));
+            Part(root.transform, "Moss", PrimitiveType.Sphere, new Vector3(0.5f, 0.32f, 0.4f), new Vector3(0.7f, 0.25f, 0.6f), Mat("M_Moss"));
+            return SavePrefab(root, $"{Root}/Prefabs/World/PF_Shrine.prefab");
+        }
+
         private const float BeamHeight = 14f;
 
         /// <summary>An open cone, narrow at the top and wide at the chest, fading in towards the ground.</summary>

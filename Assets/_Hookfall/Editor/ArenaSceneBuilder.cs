@@ -83,6 +83,7 @@ namespace Hookfall.EditorTools
 
             var menu = new GameObject("Main Menu").AddComponent<MainMenuUI>();
             foreach (CharacterDefinition character in CreateCharacters()) AddToList(menu, "characters", character);
+            foreach (ItemBase item in ItemPrefabs.CreateItems()) AddToList(menu, "items", item);   // the codex (2026-11-11)
             EditorSceneManager.SaveScene(scene, MenuPath);
         }
 
@@ -106,6 +107,7 @@ namespace Hookfall.EditorTools
             Portal portalPrefab = EnemyPrefabs.Portal();
             List<ItemBase> itemPrefabs = ItemPrefabs.CreateItems();
             Chest chestPrefab = ItemPrefabs.CreateChest();
+            GameObject shrinePrefab = ItemPrefabs.CreateShrine();
 
             // Player
             GameObject player = GameObject.CreatePrimitive(PrimitiveType.Capsule);
@@ -122,7 +124,9 @@ namespace Hookfall.EditorTools
             var gold = player.AddComponent<GoldWallet>();
             var combat = player.AddComponent<CombatSystem>();
             player.AddComponent<SynergySystem>();   // set bonuses and school statuses (2026-11-08)
+            player.AddComponent<ChoiceTokens>();   // rerolls, banishes, skips (2026-11-10); before LevelUpSystem, which looks for it
             var levelUp = player.AddComponent<LevelUpSystem>();
+            player.AddComponent<FlowChain>();      // the flight chain (2026-11-10)
 
             var ropeGo = new GameObject("Rope") { layer = Layers.NoOutline };
             ropeGo.transform.SetParent(player.transform, false);
@@ -222,6 +226,7 @@ namespace Hookfall.EditorTools
 
             var gm = new GameObject("GameManager").AddComponent<GameManager>();
             SetRef(gm, "playerXP", xp);
+            new GameObject("Atmosphere").AddComponent<Atmosphere>();   // the sky of each stage (2026-11-10)
 
             var generator = new GameObject("IslandGenerator").AddComponent<IslandGenerator>();
             WireIslandGenerator(generator, stats);
@@ -239,6 +244,9 @@ namespace Hookfall.EditorTools
             var chests = new GameObject("ChestSpawner").AddComponent<ChestSpawner>();
             SetRef(chests, "player", controller);
             SetRef(chests, "chestPrefab", chestPrefab);
+            var shrines = new GameObject("ShrineSpawner").AddComponent<ShrineSpawner>();   // island shrines (2026-11-11)
+            SetRef(shrines, "player", controller);
+            SetRef(shrines, "shrinePrefab", shrinePrefab);
             var cache = new GameObject("TowerCache").AddComponent<TowerCache>();
             SetRef(cache, "player", controller);
             SetRef(cache, "islands", generator);
@@ -347,6 +355,10 @@ namespace Hookfall.EditorTools
             SetRef(hud, "gold", gold);
             SetRef(hud, "combat", combat);
             SetRef(hud, "hook", hook);
+            var hints = new GameObject("Hints").AddComponent<HintGuide>();   // first run only (2026-11-11)
+            SetRef(hints, "hook", hook);
+            SetRef(hints, "controller", controller);
+            SetRef(hints, "combat", combat);
             var levelUpUI = new GameObject("Level Up UI").AddComponent<LevelUpUI>();
             SetRef(levelUpUI, "levelUp", levelUp);
             SetRef(levelUpUI, "stats", stats);

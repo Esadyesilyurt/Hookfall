@@ -1,7 +1,8 @@
 // Hookfall - level-up screen: the game pauses and shows 3 cards; pick by click or 1, 2, 3 (GDD 9.1).
 // Cards pop in one after another; items are framed in reward gold, stats in player cyan, each with its icon.
-// AI disclosure: written with Claude (Anthropic) on 2026-11-07, restyled the same day with the UI skin.
-// Prompts and changes are recorded in Docs/PromptLog.md.
+// Under the cards: Reroll, Banish and Skip (ChoiceToolbar).
+// AI disclosure: written with Claude (Anthropic) on 2026-11-07, restyled the same day with the UI skin; the toolbar
+// was added on 2026-11-10. Prompts and changes are recorded in Docs/PromptLog.md.
 using System.Collections.Generic;
 using Hookfall.Core;
 using Hookfall.Player;
@@ -21,6 +22,7 @@ namespace Hookfall.UI
         private GameObject root;
         private RectTransform cardRow, rays;
         private TextMeshProUGUI title, subtitle;
+        private ChoiceToolbar tools;
         private readonly List<GameObject> cards = new List<GameObject>();
 
         private void Awake()
@@ -31,16 +33,17 @@ namespace Hookfall.UI
 
             rays = UIFactory.Centre(canvas.transform, "Rays", new Vector2(0f, 300f), new Vector2(900f, 900f));
             UIFactory.Image(rays, new Color(0.35f, 0.9f, 1f, 0.18f), UISkin.Rays);
-            title = UIFactory.Title(UIFactory.Centre(canvas.transform, "Title", new Vector2(0f, 330f), new Vector2(1100f, 96f)),
+            title = UIFactory.Title(UIFactory.Centre(canvas.transform, "Title", new Vector2(0f, 350f), new Vector2(1100f, 96f)),
                 "Text", "LEVEL UP", 76f, UITheme.Player, TextAlignmentOptions.Center, true, true);
             UIFactory.Stretch((RectTransform)title.transform);
             title.characterSpacing = 14f;
             UIPop.Add(title, 0f, 1.4f);
-            subtitle = UIFactory.Text(UIFactory.Centre(canvas.transform, "Subtitle", new Vector2(0f, 270f), new Vector2(900f, 40f)),
+            subtitle = UIFactory.Text(UIFactory.Centre(canvas.transform, "Subtitle", new Vector2(0f, 290f), new Vector2(900f, 40f)),
                 "Choose one", 26f, UITheme.TextMuted, TextAlignmentOptions.Center, true);
 
-            cardRow = UIFactory.Centre(canvas.transform, "Cards", new Vector2(0f, -60f), new Vector2(1320f, 560f));
+            cardRow = UIFactory.Centre(canvas.transform, "Cards", new Vector2(0f, -30f), new Vector2(1320f, 560f));
             UIFactory.Row(cardRow, 44f, 0);
+            tools = new ChoiceToolbar(canvas.transform, new Vector2(0f, -384f), Reroll, Skip);
             root.SetActive(false);
         }
 
@@ -49,7 +52,9 @@ namespace Hookfall.UI
             if (levelUp != null)
             {
                 levelUp.OfferReady += Show;
+                levelUp.OfferChanged += Redraw;
                 levelUp.Picked += OnPicked;
+                levelUp.Skipped += Close;
             }
         }
 
@@ -58,24 +63,34 @@ namespace Hookfall.UI
             if (levelUp != null)
             {
                 levelUp.OfferReady -= Show;
+                levelUp.OfferChanged -= Redraw;
                 levelUp.Picked -= OnPicked;
+                levelUp.Skipped -= Close;
             }
         }
 
         // However the card was chosen, the screen closes; a queued level opens it again right after.
-        private void OnPicked(LevelUpOption option) => root.SetActive(false);
+        private void OnPicked(LevelUpOption option) => Close();
+        private void Close() => root.SetActive(false);
 
         private void Show()
         {
-            foreach (GameObject card in cards) Destroy(card);
-            cards.Clear();
-
-            IReadOnlyList<LevelUpOption> offer = levelUp.Offer;
-            for (int i = 0; i < offer.Count; i++) cards.Add(BuildCard(i, offer[i]));
-            subtitle.text = levelUp.PendingLevels > 1 ? Loc.F("Choose one  ·  {0} levels to spend", levelUp.PendingLevels) : Loc.T("Choose one");
+            tools.SetBanishing(false, levelUp.Tokens);
+            Redraw();
             root.SetActive(true);
             title.gameObject.SetActive(false);
             title.gameObject.SetActive(true);   // replays the title pop
+        }
+
+        /// <summary>The cards on the table, and what is left of the rerolls and banishes.</summary>
+        private void Redraw()
+        {
+            foreach (GameObject card in cards) Destroy(card);
+            cards.Clear();
+            IReadOnlyList<LevelUpOption> offer = levelUp.Offer;
+            for (int i = 0; i < offer.Count; i++) cards.Add(BuildCard(i, offer[i]));
+            subtitle.text = levelUp.PendingLevels > 1 ? Loc.F("Choose one  ·  {0} levels to spend", levelUp.PendingLevels) : Loc.T("Choose one");
+            tools.Refresh(levelUp.Tokens);
         }
 
         private GameObject BuildCard(int index, LevelUpOption option)
@@ -99,11 +114,22 @@ namespace Hookfall.UI
             if (keyboard.digit1Key.wasPressedThisFrame || keyboard.numpad1Key.wasPressedThisFrame) Pick(0);
             else if (keyboard.digit2Key.wasPressedThisFrame || keyboard.numpad2Key.wasPressedThisFrame) Pick(1);
             else if (keyboard.digit3Key.wasPressedThisFrame || keyboard.numpad3Key.wasPressedThisFrame) Pick(2);
+            else tools.HandleKeys(keyboard, levelUp.Tokens);
         }
+
+        private void Reroll() => levelUp.Reroll();
+        private void Skip() => levelUp.Skip();
 
         private void Pick(int index)
         {
             if (!root.activeSelf || index >= levelUp.Offer.Count) return;
+            if (tools.Banishing)
+            {
+                // The card goes for the rest of the run and a fresh set is drawn; the screen stays open.
+                levelUp.Banish(index);
+                tools.SetBanishing(false, levelUp.Tokens);
+                return;
+            }
             root.SetActive(false);
             levelUp.Pick(index);   // may raise OfferReady again for a queued level
         }

@@ -10,8 +10,9 @@ namespace Hookfall.Tests
     public class RecordGuard
     {
         private static readonly string[] FloatKeys = { "hf_best_time", "hf_longest_time" };
-        private static readonly string[] IntKeys = { "hf_best_level", "hf_best_kills", "hf_best_stage", "hf_total_kills", "hf_max_level" };
-        private static readonly string[] StringKeys = { "hf_character", "hf_language" };
+        private static readonly string[] IntKeys = { "hf_best_level", "hf_best_kills", "hf_best_stage", "hf_total_kills", "hf_max_level", "hf_hints_done", "hf_shards",
+            "hf_up_health", "hf_up_damage", "hf_up_flight", "hf_up_pickup", "hf_up_luck", "hf_up_xp", "hf_up_reroll", "hf_up_banish" };   // MetaProgress
+        private static readonly string[] StringKeys = { "hf_character", "hf_language", "hf_codex_items", "hf_codex_kills" };
         private readonly Dictionary<string, object> saved = new Dictionary<string, object>();
 
         public void Save()
@@ -20,6 +21,8 @@ namespace Hookfall.Tests
             foreach (string key in FloatKeys) if (PlayerPrefs.HasKey(key)) saved[key] = PlayerPrefs.GetFloat(key);
             foreach (string key in IntKeys) if (PlayerPrefs.HasKey(key)) saved[key] = PlayerPrefs.GetInt(key);
             foreach (string key in StringKeys) if (PlayerPrefs.HasKey(key)) saved[key] = PlayerPrefs.GetString(key);
+            // Tests fly a Warden with no shop upgrades, whatever the player has bought.
+            foreach (string key in IntKeys) if (key.StartsWith("hf_up_")) PlayerPrefs.DeleteKey(key);
         }
 
         public void Restore()

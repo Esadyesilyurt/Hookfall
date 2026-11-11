@@ -1435,6 +1435,71 @@ namespace Hookfall.Tests
             LogAssert.NoUnexpectedReceived();
         }
 
+        /// <summary>The run systems of 2026-11-11: shrines appear and bless a Warden who stands by one; a level-up can be
+        /// rerolled, a card banished for good, and the level skipped for gold.</summary>
+        [UnityTest]
+        public IEnumerator ShrinesAndChoiceTokensWork()
+        {
+            SceneManager.LoadScene("Arena");
+            yield return null;
+            GameObject player = GameObject.Find("Player");
+            Type levelUpType = Type.GetType("Hookfall.Progression.LevelUpSystem, Assembly-CSharp");
+            Type tokensType = Type.GetType("Hookfall.Progression.ChoiceTokens, Assembly-CSharp");
+            Type shrineType = Type.GetType("Hookfall.World.ShrineSpawner, Assembly-CSharp");
+            Type goldType = Type.GetType("Hookfall.Progression.GoldWallet, Assembly-CSharp");
+            Type xpType = Type.GetType("Hookfall.Progression.XPSystem, Assembly-CSharp");
+            Component levelUp = player.GetComponent(levelUpType), tokens = player.GetComponent(tokensType), gold = player.GetComponent(goldType);
+            object spawner = shrineType.GetProperty("Instance").GetValue(null);
+            var shrines = (System.Collections.Generic.IReadOnlyList<Transform>)shrineType.GetProperty("Shrines").GetValue(spawner);
+            Func<IList> offer = () => (IList)levelUpType.GetProperty("Offer").GetValue(levelUp);
+            Func<string, int> left = name => (int)tokensType.GetProperty(name).GetValue(tokens);
+
+            float end = Time.realtimeSinceStartup + 10f;
+            while (Time.realtimeSinceStartup < end && shrines.Count == 0) { KeepAlive(player); yield return null; }
+            Assert.AreEqual(3, shrines.Count, "Three shrines should stand on the islands of a stage");
+
+            // Stand by a shrine: its blessing comes and the shrine goes.
+            Teleport(player, shrines[0].position + new Vector3(1.2f, 1.5f, 0f));
+            end = Time.realtimeSinceStartup + 12f;
+            while (Time.realtimeSinceStartup < end && shrines.Count == 3)
+            {
+                KeepAlive(player);
+                if (Time.timeScale == 0f) levelUpType.GetMethod("Pick").Invoke(levelUp, new object[] { 0 });
+                yield return null;
+            }
+            Assert.AreEqual(2, shrines.Count, "A shrine should give its blessing to a Warden who stands by it");
+
+            // A level-up: reroll, banish, skip.
+            while (offer().Count > 0) { levelUpType.GetMethod("Pick").Invoke(levelUp, new object[] { 0 }); yield return null; }
+            xpType.GetMethod("AddXP").Invoke(player.GetComponent(xpType), new object[] { 5f });
+            end = Time.realtimeSinceStartup + 5f;
+            while (Time.realtimeSinceStartup < end && offer().Count == 0)
+            {
+                KeepAlive(player);
+                xpType.GetMethod("AddXP").Invoke(player.GetComponent(xpType), new object[] { 20f });
+                yield return null;
+            }
+            Assert.AreEqual(3, offer().Count, "A level-up should offer three cards");
+            int rerolls = left("Rerolls"), banishes = left("Banishes");
+            Assert.IsTrue((bool)levelUpType.GetMethod("Reroll").Invoke(levelUp, null), "A reroll should be allowed");
+            Assert.AreEqual(rerolls - 1, left("Rerolls"));
+            string gone = offer()[0].ToString();
+            object goneCard = offer()[0];
+            Assert.IsTrue((bool)levelUpType.GetMethod("Banish").Invoke(levelUp, new object[] { 0 }), "A banish should be allowed");
+            Assert.AreEqual(banishes - 1, left("Banishes"));
+            for (int i = 0; i < 30; i++)
+            {
+                foreach (object card in offer()) Assert.AreNotEqual(goneCard, card, "A banished card should never be offered again: " + gone);
+                if (!(bool)levelUpType.GetMethod("Reroll").Invoke(levelUp, null)) tokensType.GetMethod("Add").Invoke(tokens, new object[] { 5, 0 });
+            }
+            int before = (int)goldType.GetProperty("Gold").GetValue(gold);
+            int pending = (int)levelUpType.GetProperty("PendingLevels").GetValue(levelUp);
+            levelUpType.GetMethod("Skip").Invoke(levelUp, null);
+            Assert.AreEqual(before + left("SkipGold"), (int)goldType.GetProperty("Gold").GetValue(gold), "Skipping a level should pay gold");
+            Assert.AreEqual(pending - 1, (int)levelUpType.GetProperty("PendingLevels").GetValue(levelUp));
+            LogAssert.NoUnexpectedReceived();
+        }
+
         /// <summary>Keeps the Warden alive and in one place in the sky for a while, or until done says so.</summary>
         private static IEnumerator Hold(GameObject player, Component levelUp, Type levelUpType, Vector3 at, float seconds, Func<bool> done)
         {
