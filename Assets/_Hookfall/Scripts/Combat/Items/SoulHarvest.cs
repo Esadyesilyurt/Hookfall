@@ -19,7 +19,7 @@ namespace Hookfall.Combat.Items
 
         private void OnDied(EnemyBase enemy, bool killed)
         {
-            if (killed && Stats != null) Stats.Heal(HealPerKill);
+            if (killed && Stats != null) Stats.HealFromCombat(HealPerKill);   // shares lifesteal's cap per second
         }
 
         public override IEnumerable<string> StatLines()

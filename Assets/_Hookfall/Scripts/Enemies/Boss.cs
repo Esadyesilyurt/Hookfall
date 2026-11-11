@@ -68,8 +68,8 @@ namespace Hookfall.Enemies
 
         [Header("Calls and rage")]
         [SerializeField] private float[] callAt = { 0.7f, 0.35f };
-        [SerializeField] private int calledWyverns = 5;
-        [SerializeField] private int calledBats = 10;
+        [SerializeField] private int calledWyverns = 3;   // 5 and 10 until 2026-11-12: the escorts made the fight too long
+        [SerializeField] private int calledBats = 6;
         [SerializeField] private float rageBelow = 0.3f;
         [SerializeField] private float rageSpeedUp = 1.45f;
         [SerializeField] private int rageExtraShards = 2;

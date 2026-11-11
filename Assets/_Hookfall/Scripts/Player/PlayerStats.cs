@@ -35,6 +35,9 @@ namespace Hookfall.Player
         [SerializeField] private float regenPerPick = 0.5f;
         [Tooltip("Lifesteal per pick, in percent of damage dealt (added 2026-11-08).")]
         [SerializeField] private float lifestealPercentPerPick = 2f;
+        [Tooltip("The most that lifesteal and heal-on-kill can give back per second, as a share of max health. Without it a " +
+                 "late build healed faster than anything could hurt it (2026-11-12).")]
+        [SerializeField] private float combatHealPerSecond = 0.04f;
         [SerializeField] private float xpPercentPerPick = 10f;
         [SerializeField] private float luckPercentPerPick = 10f;
 
@@ -156,11 +159,25 @@ namespace Hookfall.Player
 
         private void OnEnemyHit(EnemyBase enemy, float damage)
         {
-            if (lifesteal > 0f) Heal(damage * lifesteal * (synergy != null ? synergy.LifestealMultiplier : 1f));
+            if (lifesteal > 0f) HealFromCombat(damage * lifesteal);
+        }
+
+        private float combatHealBudget;
+
+        /// <summary>Healing earned by fighting (lifesteal, heal on kill): at most combatHealPerSecond of max health per
+        /// second, twice that while the Blood set doubles lifesteal. The budget holds one second's worth.</summary>
+        public void HealFromCombat(float amount)
+        {
+            float given = Mathf.Min(amount * (synergy != null ? synergy.LifestealMultiplier : 1f), combatHealBudget);
+            if (given <= 0f) return;
+            combatHealBudget -= given;
+            Heal(given);
         }
 
         private void Update()
         {
+            float healCap = maxHealth * combatHealPerSecond * (synergy != null ? synergy.LifestealMultiplier : 1f);
+            combatHealBudget = Mathf.Min(healCap, combatHealBudget + healCap * Time.deltaTime);
             if (healthRegenPerSecond > 0f && CurrentHealth > 0f)
                 CurrentHealth = Mathf.Min(maxHealth, CurrentHealth + healthRegenPerSecond * Time.deltaTime);
 

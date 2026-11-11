@@ -18,6 +18,8 @@ namespace Hookfall.Player
         [Header("Hook")]
         [SerializeField] private float travelSpeed = 120f;
         [SerializeField] private float rethrowCooldown = 0.2f;
+        [Tooltip("Seconds a hook holds in a boss before the boss shakes it off; it can be thrown again at once.")]
+        [SerializeField] private float bossHoldTime = 2.5f;
 
         [Header("Rope (SpringJoint)")]
         [Tooltip("Rope length right after attaching, as a share of the distance. 0.9 = 10% reel-in.")]
@@ -81,6 +83,8 @@ namespace Hookfall.Player
         private float wobbleDuration = 1f;
         private float zipRecharge;
         private bool buttonsDetached;   // set by a pause or menu: see Update
+        private bool onBoss;            // the hook is in a boss, which shakes it off after bossHoldTime
+        private float bossHold;
 
         public bool IsAttached => joint != null;
         public bool IsZipping { get; private set; }
@@ -119,6 +123,12 @@ namespace Hookfall.Player
             HasZipTarget = TryFindTarget(ZipRange, out _, out _);
             RechargeZip(Time.deltaTime);
             FollowAnchor();
+            if (onBoss && joint != null)
+            {
+                // A boss does not carry the Warden for long: it shakes the hook off, or dies and takes the anchor with it.
+                bossHold += Time.deltaTime;
+                if (bossHold >= bossHoldTime || anchorBody == null) Release();
+            }
 
             // The hook head flies on even with no mouse (a gamepad, or a test driving the hook).
             if (travelling)
@@ -231,7 +241,8 @@ namespace Hookfall.Player
 
         /// <summary>The hook catches islands (with their tower and props) and the floating hook anchors.</summary>
         public static bool IsHookable(Collider collider) =>
-            collider.GetComponentInParent<Island>() != null || collider.GetComponentInParent<HookAnchor>() != null;
+            collider.GetComponentInParent<Island>() != null || collider.GetComponentInParent<HookAnchor>() != null ||
+            collider.GetComponentInParent<Hookfall.Enemies.Boss>() != null;   // bosses too, for a short while (2026-11-12)
 
         private bool TryFindTarget(float range, out Vector3 point, out Transform target)
         {
@@ -284,6 +295,8 @@ namespace Hookfall.Player
         {
             travelling = false;
             Wobble(attachTwangTime);
+            onBoss = anchorBody != null && anchorBody.GetComponentInParent<Hookfall.Enemies.Boss>() != null;
+            bossHold = 0f;
 
             float distance = Vector3.Distance(transform.position, anchorPoint);
             joint = gameObject.AddComponent<SpringJoint>();
