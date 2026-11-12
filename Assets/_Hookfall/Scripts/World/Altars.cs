@@ -34,7 +34,7 @@ namespace Hookfall.World
         [SerializeField] private int miniPerStage = 2;
         [Tooltip("Mini-boss altars stand on islands at least this far from the tower, and this wide.")]
         [SerializeField] private float miniMinDistance = 170f;
-        [SerializeField] private float miniMinIslandWidth = 8f;
+        [SerializeField] private float miniMinIslandWidth = 5.5f;   // 8 until 2026-11-13: outer islands are 4-8 m wide, so no altar ever stood
         [Tooltip("Seconds into the stage before the altars appear (the islands of a new stage are built first).")]
         [SerializeField] private float appearAfter = 4f;
         [Tooltip("A mini boss is a wyvern with this many times its health, damage, size and reward.")]
@@ -147,13 +147,17 @@ namespace Hookfall.World
             Vector3 top = islands != null ? islands.TowerTop : Vector3.up * 20f;
             bossAltar = Instantiate(bossAltarPrefab, top + towerOffset, Quaternion.identity, transform).transform;
 
+            // Inner and outer islands wide enough to stand on, the farthest first; the far ones are picked at random, and
+            // if too few are far enough the farthest of the rest are taken, so the altars always stand.
+            float Far(Island island) => new Vector2(island.Top.x - top.x, island.Top.z - top.z).sqrMagnitude;
             var candidates = new List<Island>();
             foreach (Island island in Island.All)
-                if (island.Kind == IslandKind.Outer && island.Width >= miniMinIslandWidth &&
-                    new Vector2(island.Top.x - top.x, island.Top.z - top.z).magnitude >= miniMinDistance) candidates.Add(island);
+                if ((island.Kind == IslandKind.Outer || island.Kind == IslandKind.Inner) && island.Width >= miniMinIslandWidth) candidates.Add(island);
+            candidates.Sort((a, b) => Far(b).CompareTo(Far(a)));
+            int far = candidates.FindAll(island => Far(island) >= miniMinDistance * miniMinDistance).Count;
             for (int i = 0; i < miniPerStage && candidates.Count > 0; i++)
             {
-                int pick = Random.Range(0, candidates.Count);
+                int pick = far > 0 ? Random.Range(0, far--) : 0;
                 Island island = candidates[pick];
                 candidates.RemoveAt(pick);
                 miniAltars.Add(Instantiate(miniAltarPrefab, island.Top, Quaternion.Euler(0f, Random.Range(0f, 360f), 0f), transform).transform);
