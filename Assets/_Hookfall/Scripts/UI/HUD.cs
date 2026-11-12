@@ -612,6 +612,13 @@ namespace Hookfall.UI
             if (ShrineSpawner.Instance != null)
                 foreach (Transform shrine in ShrineSpawner.Instance.Shrines)
                     markers.Show(shrine.position + Vector3.up * 3.4f, UISkin.Icon("Shrine"), UITheme.Player, 14f, null, 0.75f);
+            if (Altars.Instance != null)
+            {
+                foreach (Transform altar in Altars.Instance.MiniAltars)
+                    markers.Show(altar.position + Vector3.up * 4f, UISkin.Icon("Boss"), new Color(1f, 0.55f, 0.2f), 14f, null, 0.7f);
+                if (Altars.Instance.MiniBoss != null)
+                    markers.Show(Altars.Instance.MiniBoss.transform.position, UISkin.Icon("Boss"), new Color(1f, 0.55f, 0.2f), 20f, Loc.T("Mini boss"));
+            }
             if (TowerCacheMarker.HasValue)
                 markers.Show(TowerCacheMarker.Value, UISkin.Icon("Tower"), UITheme.ForRarity(Rarity.Legendary), 10f, Loc.T("Tower cache ready"));
             if (objective.HasValue)

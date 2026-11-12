@@ -137,6 +137,25 @@ namespace Hookfall.EditorTools
                     "A vial of minotaur blood; the closer to falling, the harder you hit.", i => { }, Rarity.Epic),
                 Charm("BloodMoonChalice", "Blood Moon Chalice", Rarity.Epic, "A chalice that fills under the blood moon; drink deep from every blow.",
                     StatType.Lifesteal, StatType.Lifesteal, StatType.Lifesteal, StatType.Damage),
+                // Relics of the old gods (2026-11-12): six Legendary and three Epic charms.
+                Charm("RaStaff", "Staff of Ra", Rarity.Legendary, "The sun god's own staff; noon follows whoever carries it.",
+                    StatType.Damage, StatType.Damage, StatType.Damage, StatType.AttackSpeed, StatType.AttackSpeed),
+                Charm("HermesBoots", "Boots of Hermes", Rarity.Legendary, "Winged boots that never touched the ground twice in the same place.",
+                    StatType.FlightSpeed, StatType.FlightSpeed, StatType.FlightSpeed, StatType.WalkSpeed, StatType.WalkSpeed),
+                Charm("IcarusWings", "Wings of Icarus", Rarity.Legendary, "Wax and feathers, mended with Heartstone wire; this time they hold.",
+                    StatType.FlightSpeed, StatType.FlightSpeed, StatType.HookRange, StatType.HookRange, StatType.ZipCooldown),
+                Charm("ThorHammer", "Hammer of Thor", Rarity.Legendary, "It comes back when thrown, and brings the thunder with it.",
+                    StatType.AttackSpeed, StatType.AttackSpeed, StatType.AttackSpeed, StatType.Damage, StatType.Damage),
+                Charm("AtlasGirdle", "Girdle of Atlas", Rarity.Legendary, "The belt of the one who held up the sky; the sky is lighter than it looks.",
+                    StatType.MaxHealth, StatType.MaxHealth, StatType.MaxHealth, StatType.Armor, StatType.Armor),
+                Charm("OdinEye", "Eye of Odin", Rarity.Legendary, "The eye the Allfather gave for wisdom; it still sees what is worth finding.",
+                    StatType.Luck, StatType.Luck, StatType.Luck, StatType.XPGain, StatType.XPGain),
+                Charm("AnubisScales", "Scales of Anubis", Rarity.Epic, "Every blow is weighed against a feather; the difference is yours.",
+                    StatType.Lifesteal, StatType.Damage, StatType.Damage),
+                Charm("PoseidonPearl", "Pearl of Poseidon", Rarity.Epic, "A pearl from the sea god's crown; it remembers the tide.",
+                    StatType.Regen, StatType.Regen, StatType.MaxHealth, StatType.MaxHealth),
+                Charm("ValkyrieHelm", "Helm of the Valkyrie", Rarity.Epic, "Worn by one who chose who falls; it does not choose you.",
+                    StatType.Armor, StatType.Armor, StatType.AttackSpeed, StatType.AttackSpeed),
                 Item<PhoenixFeather>("PhoenixFeather", "Phoenix Feather", 0f, 1f,
                     "The last feather of the tower's firebird; once in a long while it refuses to let its keeper die.", i => { }, Rarity.Legendary),
                 Item<HeartstoneCore>("HeartstoneCore", "Heartstone Core", 40f, 7f,
@@ -159,6 +178,15 @@ namespace Hookfall.EditorTools
         /// <summary>The schools of every item: set bonuses, and the status its hits leave (SynergySystem).</summary>
         private static readonly Dictionary<string, School[]> ItemSchools = new Dictionary<string, School[]>
         {
+            { "RaStaff", new[] { School.Flame } },
+            { "HermesBoots", new[] { School.Wild } },
+            { "IcarusWings", new[] { School.Arcane } },
+            { "ThorHammer", new[] { School.Storm } },
+            { "AtlasGirdle", new[] { School.Guardian } },
+            { "OdinEye", new[] { School.Fortune } },
+            { "AnubisScales", new[] { School.Blood } },
+            { "PoseidonPearl", new[] { School.Frost } },
+            { "ValkyrieHelm", new[] { School.Guardian } },
             { "OrbitBlades", new[] { School.Frost, School.Guardian } },
             { "ShardBurst", new[] { School.Frost, School.Arcane } },
             { "ArcLaser", new[] { School.Flame } },
@@ -228,6 +256,15 @@ namespace Hookfall.EditorTools
         /// <summary>What each item does, in one plain sentence (shown on the cards above its stat lines).</summary>
         private static readonly Dictionary<string, string> Summaries = new Dictionary<string, string>
         {
+            { "RaStaff", "Much more damage and faster attacks." },
+            { "HermesBoots", "Much faster in the air and on the ground." },
+            { "IcarusWings", "Faster flight, a longer hook and a quicker Zip." },
+            { "ThorHammer", "Much faster attacks and more damage." },
+            { "AtlasGirdle", "Much more health and armor." },
+            { "OdinEye", "Much more luck and XP." },
+            { "AnubisScales", "More damage and a little lifesteal." },
+            { "PoseidonPearl", "More health and health regen." },
+            { "ValkyrieHelm", "More armor and faster attacks." },
             { "OrbitBlades", "Blades circle you and cut every enemy they pass." },
             { "ShardBurst", "Shards burst out in every direction around you." },
             { "ArcLaser", "A beam sweeps in front of you and burns what it touches." },
@@ -375,6 +412,21 @@ namespace Hookfall.EditorTools
             Part(root.transform, "Crystal", PrimitiveType.Cube, new Vector3(0f, 2.55f, 0f), new Vector3(0.5f, 0.8f, 0.5f), Mat("M_Crystal"), new Vector3(0f, 45f, 0f));
             Part(root.transform, "Moss", PrimitiveType.Sphere, new Vector3(0.5f, 0.32f, 0.4f), new Vector3(0.7f, 0.25f, 0.6f), Mat("M_Moss"));
             return SavePrefab(root, $"{Root}/Prefabs/World/PF_Shrine.prefab");
+        }
+
+        /// <summary>An altar where a boss is called (2026-11-12): a dark dais, two horns and a crystal; the stage boss's
+        /// is larger and pink, a mini boss's smaller and red.</summary>
+        public static GameObject CreateAltar(bool main)
+        {
+            float s = main ? 1f : 0.8f;
+            Material crystal = Mat(main ? "M_EnemyEye" : "M_Warning");
+            var root = new GameObject(main ? "PF_BossAltar" : "PF_MiniBossAltar");
+            Part(root.transform, "Dais", PrimitiveType.Cylinder, new Vector3(0f, 0.15f, 0f) * s, new Vector3(2.6f, 0.15f, 2.6f) * s, Mat("M_TowerDark"));
+            Part(root.transform, "Block", PrimitiveType.Cube, new Vector3(0f, 0.7f, 0f) * s, new Vector3(1.3f, 0.8f, 0.9f) * s, Mat("M_TowerDark"));
+            Part(root.transform, "Horn L", PrimitiveType.Cube, new Vector3(-0.95f, 1.5f, 0f) * s, new Vector3(0.28f, 1.9f, 0.28f) * s, Mat("M_Stone"), new Vector3(0f, 0f, 16f));
+            Part(root.transform, "Horn R", PrimitiveType.Cube, new Vector3(0.95f, 1.5f, 0f) * s, new Vector3(0.28f, 1.9f, 0.28f) * s, Mat("M_Stone"), new Vector3(0f, 0f, -16f));
+            Part(root.transform, "Crystal", PrimitiveType.Cube, new Vector3(0f, 1.75f, 0f) * s, new Vector3(0.55f, 0.9f, 0.55f) * s, crystal, new Vector3(0f, 45f, 0f));
+            return SavePrefab(root, $"{Root}/Prefabs/World/{root.name}.prefab");
         }
 
         private const float BeamHeight = 14f;

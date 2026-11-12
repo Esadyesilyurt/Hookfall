@@ -105,10 +105,16 @@ namespace Hookfall.Tests
             Component combat = player.GetComponent(combatType);
             Component stats = player.GetComponent(statsType);
             var grant = combatType.GetMethod("Grant");
-            for (int i = 0; i < 200; i++) grant.Invoke(combat, new[] { Enum.ToObject(rarityType, 2), (object)stats });   // 40 left a 6% chance of five attack items
+            // Chests of every rarity until both rows are full (at most 600): a fixed count failed now and then, more
+            // often with every passive added to the pool.
             var items = (ICollection)combatType.GetProperty("Items").GetValue(combat);
             int passives = 0;
-            foreach (Component item in items) if ((bool)item.GetType().GetProperty("IsPassive").GetValue(item)) passives++;
+            for (int i = 0; i < 600 && (passives < 6 || items.Count - passives < 6); i++)
+            {
+                grant.Invoke(combat, new[] { Enum.ToObject(rarityType, i % 4), (object)stats });
+                passives = 0;
+                foreach (Component item in items) if ((bool)item.GetType().GetProperty("IsPassive").GetValue(item)) passives++;
+            }
             Assert.AreEqual(6, items.Count - passives, "Chests should fill all six attack slots");
             Assert.AreEqual(6, passives, "Chests should fill all six passive slots");
 
@@ -1014,9 +1020,13 @@ namespace Hookfall.Tests
             for (int i = 0; i < 30; i++) { Screens(); yield return null; }
             Assert.Greater((int)xpType.GetProperty("Level").GetValue(xp), 2, "120 XP should give a few levels");
 
-            // The gold bar fills: the boss rises in a cutscene.
+            // The gold bar fills: the boss waits for the call at its altar (2026-11-12), then rises in a cutscene.
             int target = (int)stageType.GetProperty("GoldTarget").GetValue(stage);
             walletType.GetMethod("Add").Invoke(player.GetComponent(walletType), new object[] { target });
+            for (int i = 0; i < 20; i++) { Alive(); Screens(); yield return null; }
+            Assert.IsTrue((bool)stageType.GetProperty("BossReady").GetValue(stage), "A full gold bar should make the boss callable");
+            Assert.IsNull(stageType.GetProperty("Boss").GetValue(stage), "The boss should not come before it is called");
+            stageType.GetMethod("SummonBoss").Invoke(stage, null);
             bool sawCutscene = false;
             object boss = null;
             float end = Time.realtimeSinceStartup + 15f;

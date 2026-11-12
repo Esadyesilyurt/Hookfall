@@ -135,6 +135,7 @@ namespace Hookfall.EditorTools
             List<ItemBase> itemPrefabs = ItemPrefabs.CreateItems();
             Chest chestPrefab = ItemPrefabs.CreateChest();
             GameObject shrinePrefab = ItemPrefabs.CreateShrine();
+            GameObject bossAltarPrefab = ItemPrefabs.CreateAltar(true), miniAltarPrefab = ItemPrefabs.CreateAltar(false);
 
             // Player
             GameObject player = GameObject.CreatePrimitive(PrimitiveType.Capsule);
@@ -287,6 +288,12 @@ namespace Hookfall.EditorTools
             SetRef(director, "islands", generator);
             SetRef(director, "batPrefab", batPrefab);
             SetRef(director, "wyvernPrefab", wyvernPrefab);
+            var altars = new GameObject("Altars").AddComponent<Altars>();   // the boss's altar and the mini bosses' (2026-11-12)
+            SetRef(altars, "player", controller);
+            SetRef(altars, "islands", generator);
+            SetRef(altars, "enemies", director);
+            SetRef(altars, "bossAltarPrefab", bossAltarPrefab);
+            SetRef(altars, "miniAltarPrefab", miniAltarPrefab);
             SetRef(director, "golemPrefab", golemPrefab);
             SetRef(director, "boulderPrefab", boulderPrefab);
             SetRef(director, "blightpuffPrefab", puffPrefab);

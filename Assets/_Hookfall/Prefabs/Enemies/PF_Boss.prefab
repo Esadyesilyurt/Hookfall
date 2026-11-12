@@ -328,7 +328,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Hookfall.Enemies.Boss
   displayName: Abyss Colossus
-  maxHealth: 10000
+  maxHealth: 12500
   moveSpeed: 0
   contactDamage: 20
   xpReward: 160
@@ -382,19 +382,19 @@ MonoBehaviour:
   bodyHalfHeight: 8.5
   bodyDamage: 20
   bodyPush: 22
-  volleyInterval: 3
+  volleyInterval: 2.6
   volleyWindUp: 0.5
   volleyShards: 6
   volleySpread: 30
   shardSpeed: 34
   shardTurnRate: 38
-  shardDamage: 16
+  shardDamage: 20
   shardLife: 5.5
   volleyRange: 150
   slamRange: 24
   slamInterval: 6.5
   slamWindUp: 0.7
-  slamDamage: 36
+  slamDamage: 44
   ringSpeed: 32
   ringMaxRadius: 46
   ringThickness: 2.6

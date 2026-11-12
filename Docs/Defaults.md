@@ -242,6 +242,10 @@ Bridge passives (Rare, two schools each): Steamforged Gauntlet (Flame, Frost), T
 | Healing from fighting | Lifesteal and the Soul Lantern's heal per kill give back at most 4% of max health per second together (8% while the Blood set doubles lifesteal below half health); regen, Healing Dew and the Heartstone Core are not capped (2026-11-12: a late build was immortal) | PlayerStats, SoulHarvest |
 | Bosses, eased | Colossus 10000 health (14000), Wyrm 8000 (12000); escorts 3 wyverns and 6 bats per call (5 and 10) (2026-11-12: the fights were only long) | EnemyPrefabs, Boss |
 | Hook on a boss | The hook catches a boss's body (the Wyrm's head); the boss shakes it off after 2.5 s, and it can be thrown again at once | GrappleHook |
+| Boss altar | The boss no longer comes by itself: once the stage's gold is earned the altar on the tower top (1.9 m and 1.9 m off its middle) calls it with E from within 5 m; before that it says how much gold is missing | Altars, StageDirector |
+| Mini bosses | 2 altars per stage on outer islands at least 170 m from the tower and 8 m wide, free, one mini boss at a time, not during the boss fight. A mini boss is a wyvern with 28x health, 1.5x damage, 2.4x size and 50x reward (100 gold, 150 XP before stage scaling); killing it gives one Epic pick | Altars, EnemyDirector |
+| Bosses, harder again | With the altar the boss is called when the Warden is ready: Colossus 12500 health, shards every 2.6 s for 20, slam 44; Wyrm 10000 health, spit every 3 s, dive every 7.5 s for 40 | EnemyPrefabs, Boss, TempestWyrm |
+| Relics | Nine stat charms named after the old gods. Legendary (5 picks a level): Staff of Ra, Boots of Hermes, Wings of Icarus, Hammer of Thor, Girdle of Atlas, Eye of Odin. Epic (3-4 picks): Scales of Anubis, Pearl of Poseidon, Helm of the Valkyrie | ItemPrefabs, Tools/UI/icons_items.js |
 | No upgrade shop | Heartstone shards and permanent upgrades were built on 2026-11-11 and removed on 2026-11-12: nothing carries power from one run to the next | Esad's decision |
 
 ## Where the build differs from the GDD
