@@ -1,7 +1,8 @@
 // Hookfall - the altars (2026-11-12). The stage boss no longer comes by itself when the gold bar is full: its altar
 // stands on top of the tower, and the Warden calls the boss there (E) once the gold is earned. Out towards the edge
-// of the map stand a few lesser altars, free to use, each calling a mini boss: far easier than the stage boss, and
-// worth a pile of gold, XP and an Epic pick. The idea: hunt the mini bosses, grow, then call the boss.
+// of the map stand a few lesser altars, each calling a mini boss for a price in gold (since 2026-11-13; rising with
+// every one called in the run): far easier than the stage boss, and worth more gold than it cost, a lot of XP, an
+// Epic pick, full health and one more reroll and banish. The idea: hunt the mini bosses, grow, then call the boss.
 // AI disclosure: written with Claude (Anthropic) on 2026-11-12. Prompts and changes are recorded in Docs/PromptLog.md.
 using System.Collections.Generic;
 using Hookfall.Combat;
@@ -41,14 +42,25 @@ namespace Hookfall.World
         [SerializeField] private float miniHealth = 28f;
         [SerializeField] private float miniDamage = 1.5f;
         [SerializeField] private float miniScale = 2.4f;
-        [SerializeField] private float miniReward = 50f;
+        [SerializeField] private float miniReward = 90f;   // 180 gold and 270 XP before the stage's scaling (50 until 2026-11-13)
+        [Tooltip("Gold to call a mini boss, and how much more each further one costs in the run.")]
+        [SerializeField] private int miniCost = 120;
+        [SerializeField] private int miniCostIncrease = 60;
+        [Tooltip("Rerolls and banishes a mini boss's death gives.")]
+        [SerializeField] private int miniTokens = 1;
 
         private readonly List<Transform> miniAltars = new List<Transform>();
         private PlayerStats stats;
         private CombatSystem combat;
         private Transform bossAltar;
         private EnemyBase miniBoss;
+        private Hookfall.Progression.GoldWallet wallet;
+        private Hookfall.Progression.ChoiceTokens tokens;
+        private int miniCalled;
         private float timer;
+
+        /// <summary>What the next mini boss costs.</summary>
+        public int MiniCost => miniCost + miniCostIncrease * miniCalled;
 
         public static Altars Instance { get; private set; }
         /// <summary>The mini-boss altars not used yet on this stage.</summary>
@@ -63,6 +75,8 @@ namespace Hookfall.World
             Instance = this;
             stats = player.GetComponent<PlayerStats>();
             combat = player.GetComponent<CombatSystem>();
+            wallet = player.GetComponent<Hookfall.Progression.GoldWallet>();
+            tokens = player.GetComponent<Hookfall.Progression.ChoiceTokens>();
             timer = appearAfter;
             StageDirector.StageStarted += OnStage;
         }
@@ -116,13 +130,17 @@ namespace Hookfall.World
                 return;
             }
 
-            // A lesser altar: free, one mini boss at a time, and not while the stage boss fights.
+            // A lesser altar: paid in gold, one mini boss at a time, and not while the stage boss fights.
             if (MiniBoss != null || stage == null || stage.Current != StageDirector.Phase.Gathering) return;
             for (int i = 0; i < miniAltars.Count; i++)
             {
                 if (!Near(miniAltars[i], p)) continue;
-                HUD.InteractPrompt = Loc.T("Call a mini boss");
-                if (!pressed) return;
+                bool canPay = wallet != null && wallet.Gold >= MiniCost;
+                HUD.InteractPrompt = canPay ? Loc.F("Call a mini boss  ·  {0} gold", MiniCost)
+                    : "<color=#F2403A>" + Loc.F("Mini boss  ·  {0} gold needed", MiniCost) + "</color>";
+                if (!canPay) HUD.InteractWithoutKey = true;
+                if (!pressed || !canPay || !wallet.TrySpend(MiniCost)) return;
+                miniCalled++;
                 miniBoss = enemies.SpawnMiniBoss(miniAltars[i].position + Vector3.up * 14f, miniHealth, miniDamage, miniScale, miniReward);
                 HUD.Announce(Loc.T("A Wyvern Matriarch answers the altar!"), MiniColor);
                 Destroy(miniAltars[i].gameObject);
@@ -138,8 +156,11 @@ namespace Hookfall.World
             if (miniBoss == null || enemy != miniBoss) return;
             miniBoss = null;
             if (!killed) return;
+            // Its gold and XP drop like any enemy's (miniReward); on top: full health, a reroll and a banish, an Epic pick.
             HUD.Announce(Loc.T("The Matriarch falls!"), MiniColor);
-            ChestResultUI.Offer(combat, stats, Rarity.Epic);
+            stats.Heal(stats.MaxHealth);
+            if (tokens != null) tokens.Add(miniTokens, miniTokens);
+            ChestResultUI.OfferSeries(combat, stats, Rarity.Epic, 1, Loc.T("MATRIARCH HOARD"));
         }
 
         private void Place()
