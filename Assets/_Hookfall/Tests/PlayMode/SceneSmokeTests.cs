@@ -1564,6 +1564,18 @@ namespace Hookfall.Tests
             float end = Time.realtimeSinceStartup + 10f;
             while (Time.realtimeSinceStartup < end && shrines.Count == 0) { KeepAlive(player); yield return null; }
             Assert.AreEqual(3, shrines.Count, "Three shrines should stand on the islands of a stage");
+            Type altarsType = Type.GetType("Hookfall.World.Altars, Assembly-CSharp");
+            var miniAltars = (ICollection)altarsType.GetProperty("MiniAltars").GetValue(altarsType.GetProperty("Instance").GetValue(null));
+            Assert.AreEqual(2, miniAltars.Count, "Two mini-boss altars should stand on a stage");
+            Assert.IsNotNull(altarsType.GetProperty("BossAltar").GetValue(null), "The boss's altar should stand on the tower");
+            // What an altar calls: a wyvern many times as tough as a plain one.
+            Type directorType = Type.GetType("Hookfall.Enemies.EnemyDirector, Assembly-CSharp");
+            Type enemyType = Type.GetType("Hookfall.Enemies.EnemyBase, Assembly-CSharp");
+            object mini = directorType.GetMethod("SpawnMiniBoss").Invoke(UnityEngine.Object.FindAnyObjectByType(directorType),
+                new object[] { player.transform.position + new Vector3(0f, 30f, 60f), 28f, 1.5f, 2.4f, 50f });
+            Assert.IsNotNull(mini, "An altar should call a mini boss");
+            Assert.Greater((float)enemyType.GetProperty("MaxHealth").GetValue(mini), 1000f, "A mini boss should be far tougher than a wyvern");
+            enemyType.GetMethod("TakeDamage").Invoke(mini, new object[] { 100000000f, false });
 
             // Stand by a shrine: its blessing comes and the shrine goes.
             Teleport(player, shrines[0].position + new Vector3(1.2f, 1.5f, 0f));
