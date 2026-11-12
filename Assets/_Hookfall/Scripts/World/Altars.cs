@@ -1,0 +1,163 @@
+// Hookfall - the altars (2026-11-12). The stage boss no longer comes by itself when the gold bar is full: its altar
+// stands on top of the tower, and the Warden calls the boss there (E) once the gold is earned. Out towards the edge
+// of the map stand a few lesser altars, free to use, each calling a mini boss: far easier than the stage boss, and
+// worth a pile of gold, XP and an Epic pick. The idea: hunt the mini bosses, grow, then call the boss.
+// AI disclosure: written with Claude (Anthropic) on 2026-11-12. Prompts and changes are recorded in Docs/PromptLog.md.
+using System.Collections.Generic;
+using Hookfall.Combat;
+using Hookfall.Core;
+using Hookfall.Enemies;
+using Hookfall.Player;
+using Hookfall.UI;
+using UnityEngine;
+using UnityEngine.InputSystem;
+using Random = UnityEngine.Random;
+
+namespace Hookfall.World
+{
+    public class Altars : MonoBehaviour
+    {
+        private static readonly Color MiniColor = new Color(1f, 0.55f, 0.2f);
+
+        [SerializeField] private PlayerController player;
+        [SerializeField] private IslandGenerator islands;
+        [SerializeField] private EnemyDirector enemies;
+        [SerializeField] private GameObject bossAltarPrefab;
+        [SerializeField] private GameObject miniAltarPrefab;
+
+        [Tooltip("Where the boss's altar stands, from the top of the tower.")]
+        [SerializeField] private Vector3 towerOffset = new Vector3(1.9f, 0f, 1.9f);
+        [Tooltip("The Warden uses an altar from within this distance.")]
+        [SerializeField] private float useDistance = 5f;
+
+        [Header("Mini bosses")]
+        [SerializeField] private int miniPerStage = 2;
+        [Tooltip("Mini-boss altars stand on islands at least this far from the tower, and this wide.")]
+        [SerializeField] private float miniMinDistance = 170f;
+        [SerializeField] private float miniMinIslandWidth = 8f;
+        [Tooltip("Seconds into the stage before the altars appear (the islands of a new stage are built first).")]
+        [SerializeField] private float appearAfter = 4f;
+        [Tooltip("A mini boss is a wyvern with this many times its health, damage, size and reward.")]
+        [SerializeField] private float miniHealth = 28f;
+        [SerializeField] private float miniDamage = 1.5f;
+        [SerializeField] private float miniScale = 2.4f;
+        [SerializeField] private float miniReward = 50f;
+
+        private readonly List<Transform> miniAltars = new List<Transform>();
+        private PlayerStats stats;
+        private CombatSystem combat;
+        private Transform bossAltar;
+        private EnemyBase miniBoss;
+        private float timer;
+
+        public static Altars Instance { get; private set; }
+        /// <summary>The mini-boss altars not used yet on this stage.</summary>
+        public IReadOnlyList<Transform> MiniAltars => miniAltars;
+        /// <summary>Where the boss is called, or null before the altar stands.</summary>
+        public static Vector3? BossAltar => Instance != null && Instance.bossAltar != null ? Instance.bossAltar.position + Vector3.up * 3f : (Vector3?)null;
+        /// <summary>The mini boss that is alive, if one was called.</summary>
+        public EnemyBase MiniBoss => miniBoss != null && !miniBoss.IsDead ? miniBoss : null;
+
+        private void Awake()
+        {
+            Instance = this;
+            stats = player.GetComponent<PlayerStats>();
+            combat = player.GetComponent<CombatSystem>();
+            timer = appearAfter;
+            StageDirector.StageStarted += OnStage;
+        }
+
+        private void OnEnable() => EnemyDirector.Died += OnEnemyDied;
+        private void OnDisable() => EnemyDirector.Died -= OnEnemyDied;
+
+        private void OnDestroy()
+        {
+            StageDirector.StageStarted -= OnStage;
+            if (Instance == this) Instance = null;
+        }
+
+        // A new stage: the old altars go with the old map.
+        private void OnStage(int stage)
+        {
+            foreach (Transform altar in miniAltars) if (altar != null) Destroy(altar.gameObject);
+            miniAltars.Clear();
+            if (bossAltar != null) Destroy(bossAltar.gameObject);
+            miniBoss = null;
+            timer = appearAfter;
+        }
+
+        private void Update()
+        {
+            if (timer > 0f)
+            {
+                timer -= Time.deltaTime;
+                if (timer <= 0f) Place();
+                return;
+            }
+            GameManager gm = GameManager.Instance;
+            if (gm != null && gm.State != RunState.Playing) return;
+            bool pressed = Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame;
+            Vector3 p = player.transform.position;
+            StageDirector stage = StageDirector.Instance;
+
+            // The boss's altar: only once the stage's gold is earned.
+            if (bossAltar != null && stage != null && stage.Current == StageDirector.Phase.Gathering && Near(bossAltar, p))
+            {
+                if (stage.BossReady)
+                {
+                    HUD.InteractPrompt = Loc.F("Call {0}", stage.BossName);
+                    if (pressed) stage.SummonBoss();
+                }
+                else
+                {
+                    HUD.InteractPrompt = "<color=#F2403A>" + Loc.F("The altar asks for {0} more gold", stage.GoldTarget - stage.GoldProgress) + "</color>";
+                    HUD.InteractWithoutKey = true;
+                }
+                return;
+            }
+
+            // A lesser altar: free, one mini boss at a time, and not while the stage boss fights.
+            if (MiniBoss != null || stage == null || stage.Current != StageDirector.Phase.Gathering) return;
+            for (int i = 0; i < miniAltars.Count; i++)
+            {
+                if (!Near(miniAltars[i], p)) continue;
+                HUD.InteractPrompt = Loc.T("Call a mini boss");
+                if (!pressed) return;
+                miniBoss = enemies.SpawnMiniBoss(miniAltars[i].position + Vector3.up * 14f, miniHealth, miniDamage, miniScale, miniReward);
+                HUD.Announce(Loc.T("A Wyvern Matriarch answers the altar!"), MiniColor);
+                Destroy(miniAltars[i].gameObject);
+                miniAltars.RemoveAt(i);
+                return;
+            }
+        }
+
+        private bool Near(Transform altar, Vector3 p) => (altar.position - p).sqrMagnitude <= useDistance * useDistance;
+
+        private void OnEnemyDied(EnemyBase enemy, bool killed)
+        {
+            if (miniBoss == null || enemy != miniBoss) return;
+            miniBoss = null;
+            if (!killed) return;
+            HUD.Announce(Loc.T("The Matriarch falls!"), MiniColor);
+            ChestResultUI.Offer(combat, stats, Rarity.Epic);
+        }
+
+        private void Place()
+        {
+            Vector3 top = islands != null ? islands.TowerTop : Vector3.up * 20f;
+            bossAltar = Instantiate(bossAltarPrefab, top + towerOffset, Quaternion.identity, transform).transform;
+
+            var candidates = new List<Island>();
+            foreach (Island island in Island.All)
+                if (island.Kind == IslandKind.Outer && island.Width >= miniMinIslandWidth &&
+                    new Vector2(island.Top.x - top.x, island.Top.z - top.z).magnitude >= miniMinDistance) candidates.Add(island);
+            for (int i = 0; i < miniPerStage && candidates.Count > 0; i++)
+            {
+                int pick = Random.Range(0, candidates.Count);
+                Island island = candidates[pick];
+                candidates.RemoveAt(pick);
+                miniAltars.Add(Instantiate(miniAltarPrefab, island.Top, Quaternion.Euler(0f, Random.Range(0f, 360f), 0f), transform).transform);
+            }
+        }
+    }
+}

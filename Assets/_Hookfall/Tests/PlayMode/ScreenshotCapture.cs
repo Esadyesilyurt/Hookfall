@@ -85,6 +85,14 @@ namespace Hookfall.Tests
                 yield return null;
             }
             yield return Grab("arena_play");
+            // The tower's deck from above: the boss's altar beside the cache's place.
+            Type genType = Type.GetType("Hookfall.World.IslandGenerator, Assembly-CSharp");
+            Vector3 towerTop = (Vector3)genType.GetProperty("TowerTop").GetValue(UnityEngine.Object.FindAnyObjectByType(genType));
+            var deck = new GameObject("Deck Camera").AddComponent<Camera>();
+            deck.CopyFrom(Camera.main);
+            LookAt(deck, towerTop + Vector3.up, new Vector3(7f, 6f, -7f));
+            Render(deck, "tower_deck");
+            UnityEngine.Object.Destroy(deck.gameObject);
 
             // The screens: level-up, pause, run end.
             Type xpType = Type.GetType("Hookfall.Progression.XPSystem, Assembly-CSharp");

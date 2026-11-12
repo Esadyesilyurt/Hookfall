@@ -99,6 +99,9 @@ namespace Hookfall.World
         public Portal Portal { get; private set; }
         public int GoldTarget => Mathf.RoundToInt(firstBossGold * Mathf.Pow(bossGoldPerStage, Stage - 1) / 10f) * 10;
         public int GoldProgress => wallet != null ? wallet.Earned - earnedAtStart : 0;
+        /// <summary>The stage's gold is earned and the boss can be called at its altar.</summary>
+        public bool BossReady => Current == Phase.Gathering && bossPrefab != null && GoldProgress >= GoldTarget;
+        private bool readyAnnounced;
         public float HealthScale { get; private set; } = 1f;
         public float DamageScale { get; private set; } = 1f;
         public float GrowthScale { get; private set; } = 1f;
@@ -184,8 +187,13 @@ namespace Hookfall.World
             switch (Current)
             {
                 case Phase.Gathering:
-                    HUD.SetObjective(null, null, Color.white);
-                    if (GoldProgress >= GoldTarget && bossPrefab != null) StartCoroutine(BossRises());
+                    // The gold is earned: the boss waits to be called at its altar on the tower (2026-11-12; it came by itself before).
+                    HUD.SetObjective(BossReady ? Altars.BossAltar : null, Loc.T("Boss altar"), BossColor);
+                    if (BossReady && !readyAnnounced)
+                    {
+                        readyAnnounced = true;
+                        HUD.Announce(Loc.T("The altar on the tower awaits"), BossColor);
+                    }
                     break;
                 case Phase.Boss:
                     HUD.SetObjective(Boss != null && Boss.Fighting ? Boss.CorePosition : (Vector3?)null, Loc.T("Boss"), BossColor);
@@ -383,6 +391,7 @@ namespace Hookfall.World
         public void NextStage()
         {
             Stage++;
+            readyAnnounced = false;
             StageTime = 0f;
             earnedAtStart = wallet != null ? wallet.Earned : 0;
             ApplyScales();

@@ -394,6 +394,17 @@ namespace Hookfall.Enemies
             return enemy;
         }
 
+        /// <summary>A mini boss (Altars): a wyvern many times as tough, big and rewarding, with no elite trait.</summary>
+        public EnemyBase SpawnMiniBoss(Vector3 position, float healthMult, float damageMult, float scale, float rewardMult)
+        {
+            EnemyBase prefab = wyvernPrefab != null ? wyvernPrefab : batPrefab;
+            if (prefab == null) return null;
+            EnemyBase enemy = SpawnFlyer(prefab, position, MinutesSurvived);
+            enemy.MakeElite(healthMult, damageMult, scale, rewardMult, eliteGlow, EliteAffix.None, eliteGlow);
+            enemy.transform.position = position;
+            return enemy;
+        }
+
         /// <summary>The boss itself: not pooled, scaled like the stage's enemies.</summary>
         public void InitBoss(EnemyBase boss) => boss.Init(this, player, StageHealth, StageDamage);
 

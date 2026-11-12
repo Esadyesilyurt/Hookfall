@@ -31,16 +31,16 @@ namespace Hookfall.Enemies
         [SerializeField] private float circleBob = 8f;
         [SerializeField] private float circleSpeed = 20f;
         [SerializeField] private float turnRate = 150f;
-        [SerializeField] private float spitInterval = 3.5f;
+        [SerializeField] private float spitInterval = 3f;
         [SerializeField] private float spitRange = 150f;
 
         [Header("Dive")]
-        [SerializeField] private float diveInterval = 9f;
+        [SerializeField] private float diveInterval = 7.5f;
         [SerializeField] private float diveWarning = 0.5f;
         [SerializeField] private float diveSpeed = 62f;
         [Tooltip("Metres the dive carries on past where the Warden was.")]
         [SerializeField] private float diveOvershoot = 28f;
-        [SerializeField] private float diveDamage = 32f;
+        [SerializeField] private float diveDamage = 40f;
 
         private Mode mode;
         private Vector3 home, diveDirection;

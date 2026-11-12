@@ -44,14 +44,14 @@ namespace Hookfall.Enemies
         [SerializeField] protected float bodyPush = 22f;
 
         [Header("Shard volley")]
-        [SerializeField] private float volleyInterval = 3.0f;
+        [SerializeField] private float volleyInterval = 2.6f;   // 3.0 until the altars (2026-11-12): the boss is called when the Warden is ready
         [SerializeField] private float volleyWindUp = 0.5f;
         [SerializeField] private int volleyShards = 6;
         [SerializeField] private float volleySpread = 30f;
         [SerializeField] private float shardSpeed = 34f;
         [Tooltip("Degrees per second the shards turn towards the Warden: enough to follow, not enough to catch a swing.")]
         [SerializeField] private float shardTurnRate = 38f;
-        [SerializeField] private float shardDamage = 16f;
+        [SerializeField] private float shardDamage = 20f;
         [SerializeField] private float shardLife = 5.5f;
         [SerializeField] private float volleyRange = 150f;
 
@@ -59,7 +59,7 @@ namespace Hookfall.Enemies
         [SerializeField] private float slamRange = 24f;
         [SerializeField] private float slamInterval = 6.5f;
         [SerializeField] private float slamWindUp = 0.7f;
-        [SerializeField] private float slamDamage = 36f;
+        [SerializeField] private float slamDamage = 44f;
         [SerializeField] private float ringSpeed = 32f;
         [SerializeField] private float ringMaxRadius = 46f;
         [SerializeField] private float ringThickness = 2.6f;

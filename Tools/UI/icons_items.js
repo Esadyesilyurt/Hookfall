@@ -211,3 +211,47 @@ icon('PhoenixFeather', () => glow(128, 128, 120, C.orange, 0.4) + line('M40 236 
 icon('HeartstoneCore', () => glow(128, 128, 126, C.cyan, 0.6) + [0, 90, 180, 270].map(a => rot(flat(S.kite(128, 22, 7, 16, 16), C.white), a + 45)).join('') +
   line('M34 148 C60 100 196 100 222 148', C.white, 6, { outline: 6 }) + part(S.kite(128, 128, 62, 100, 100), C.cyan, { gloss: [106, 84, 9, 30, 24] }) +
   `<path d="M66 128 L128 112 L190 128 M128 28 V228" fill="none" stroke="${C.cyanD}" stroke-width="5" stroke-linejoin="round"/>` + line('M34 148 C70 196 186 196 222 148', C.white, 6, { outline: 6 }));
+
+// ---------------------------------------------------------------- relics of the old gods (2026-11-12)
+
+icon('RaStaff', () => glow(170, 78, 96, C.fire, 0.55) + part(S.bar(52, 226, 150, 100, 13), C.wood, { stroke: 8 }) +
+  [0, 45, 90, 135, 180, 225, 270, 315].map(a => rot(part(S.kite(170, 22, 8, 14, 14), C.gold, { stroke: 6 }), a, 170, 78)).join('') +
+  part(S.circle(170, 78, 36), C.gold, { dark: C.orange, stroke: 9 }) + flat(S.circle(160, 68, 9), C.white));
+
+icon('HermesBoots', () => both(part(S.poly([[76, 96], [28, 74], [40, 104], [22, 112], [46, 128], [78, 122]]), C.white, { dark: C.steel, stroke: 7 })) +
+  part('M92 40 L140 40 L140 150 L196 172 Q214 182 210 206 L80 206 Q70 150 92 40 Z', C.leather, { dark: C.woodD, stroke: 9 }) +
+  part(S.rrect(74, 204, 142, 20, 8), C.gold, { stroke: 7 }) + part(S.rrect(86, 40, 60, 22, 8), C.gold, { stroke: 7 }));
+
+icon('IcarusWings', () => glow(128, 120, 118, C.gold, 0.35) +
+  both(part('M120 92 C84 34 36 30 14 52 C40 60 30 84 20 96 C44 96 40 122 34 136 C58 132 60 156 58 172 C84 164 108 140 120 112 Z', C.white, { dark: C.steel, stroke: 8 })) +
+  both(flat(S.circle(30, 58, 9), C.gold)) + part(S.kite(128, 150, 14, 62, 70), C.gold, { dark: C.goldD, stroke: 8 }) +
+  part(S.flame(128, 226, 12), C.orange, { dark: C.ember, stroke: 6 }));
+
+icon('ThorHammer', () => glow(128, 100, 110, C.blue, 0.4) + part(S.bar(128, 232, 128, 118, 15), C.leather, { stroke: 8 }) +
+  part(S.rrect(46, 44, 164, 84, 12), C.steel, { dark: C.iron, stroke: 10 }) + part(S.rrect(46, 78, 164, 16, 4), C.gold, { stroke: 6 }) +
+  part(S.bolt(128, 86, 34), C.gold, { stroke: 7 }) + part(S.circle(128, 232, 12), C.gold, { stroke: 7 }));
+
+icon('AtlasGirdle', () => part(S.circle(128, 70, 46), C.blue, { dark: C.navy, stroke: 9 }) +
+  flat(S.ellipse(112, 60, 18, 12), C.green) + flat(S.ellipse(146, 84, 14, 10), C.green) +
+  part(S.rrect(18, 136, 220, 62, 14), C.leather, { dark: C.woodD, stroke: 10 }) +
+  [44, 78, 178, 212].map(x => flat(S.circle(x, 167, 6), C.gold)).join('') +
+  part(S.rrect(98, 124, 60, 86, 10), C.gold, { dark: C.goldD, stroke: 9 }) + flat(S.rrect(114, 142, 28, 50, 5), C.leather));
+
+icon('OdinEye', () => glow(128, 128, 124, C.purple, 0.5) + part('M20 128 C60 60 196 60 236 128 C196 196 60 196 20 128 Z', C.white, { dark: C.steel, stroke: 10 }) +
+  part(S.circle(128, 128, 44), C.blue, { dark: C.navy, stroke: 8 }) + ink(S.circle(128, 128, 20)) + flat(S.circle(114, 112, 9), C.white) +
+  sparkle(206, 62, 18, C.gold) + sparkle(54, 196, 14, C.gold));
+
+icon('AnubisScales', () => part(S.bar(128, 44, 128, 216, 11), C.gold, { stroke: 8 }) + part(S.bar(40, 78, 216, 78, 10), C.gold, { stroke: 8 }) +
+  part(S.rrect(84, 210, 88, 22, 8), C.gold, { stroke: 8 }) + part(S.kite(128, 40, 14, 18, 18), C.gold, { stroke: 7 }) +
+  line('M40 78 L26 150 M40 78 L78 150 M216 78 L178 126 M216 78 L230 126', C.goldD, 5) +
+  part('M14 150 L90 150 Q52 188 14 150 Z', C.gold, { dark: C.goldD, stroke: 8 }) + part('M166 126 L242 126 Q204 164 166 126 Z', C.gold, { dark: C.goldD, stroke: 8 }) +
+  part(S.circle(52, 138, 14), C.red, { dark: C.crimson, stroke: 7 }) + part(S.kite(204, 106, 9, 22, 14), C.white, { stroke: 6 }));
+
+icon('PoseidonPearl', () => glow(128, 120, 118, C.ice, 0.5) + part('M24 150 C24 70 232 70 232 150 Z', C.teal, { dark: C.cyanD, stroke: 10 }) +
+  line('M128 94 L128 150 M84 104 L104 150 M172 104 L152 150 M50 126 L80 150 M206 126 L176 150', C.cyanD, 6) +
+  part('M24 150 C40 214 216 214 232 150 Z', C.cyan, { dark: C.cyanD, stroke: 10 }) +
+  part(S.circle(128, 150, 34), C.frost, { dark: C.glass, stroke: 9 }) + flat(S.circle(116, 138, 9), C.white));
+
+icon('ValkyrieHelm', () => both(part('M92 110 C60 60 30 44 12 50 C34 62 30 80 22 90 C44 90 42 108 40 118 C62 116 76 122 90 128 Z', C.white, { dark: C.steel, stroke: 8 })) +
+  part('M62 196 C54 96 86 50 128 50 C170 50 202 96 194 196 L158 196 L158 150 L98 150 L98 196 Z', C.steel, { dark: C.iron, stroke: 10 }) +
+  part(S.rrect(118, 46, 20, 110, 6), C.gold, { stroke: 7 }) + part(S.rrect(60, 128, 136, 18, 6), C.gold, { stroke: 7 }));
